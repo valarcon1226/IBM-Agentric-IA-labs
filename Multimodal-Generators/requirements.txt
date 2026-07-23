@@ -1,0 +1,5 @@
+ibm-watsonx-ai
+gtts
+openai
+ipython
+requests

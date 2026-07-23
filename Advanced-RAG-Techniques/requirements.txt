@@ -1,0 +1,13 @@
+numpy
+tensorflow
+tensorflow-hub
+faiss-cpu
+scikit-learn
+ibm-watsonx-ai
+langchain
+langchain-ibm
+langchain-community
+chromadb
+llama-index
+llama-index-embeddings-huggingface
+sentence-transformers

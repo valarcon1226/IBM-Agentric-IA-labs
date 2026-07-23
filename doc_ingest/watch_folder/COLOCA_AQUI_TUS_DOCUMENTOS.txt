@@ -1,0 +1,4 @@
+Coloca tus documentos (PDF, DOCX, TXT, MD) en esta carpeta.
+El watcher los detectará automáticamente y los procesará.
+
+Ejecuta primero: python watch.py

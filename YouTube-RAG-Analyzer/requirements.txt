@@ -1,0 +1,7 @@
+gradio
+langchain
+langchain-google-genai
+youtube-transcript-api
+yt-dlp
+langchain-core
+pydantic
