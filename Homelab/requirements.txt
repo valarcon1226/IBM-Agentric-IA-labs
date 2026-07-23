@@ -1,0 +1,2 @@
+# Auto-generated requirements for Homelab project
+# (No python scripts were present in this directory to extract dependencies from)

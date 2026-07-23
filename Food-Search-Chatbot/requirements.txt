@@ -1,0 +1,7 @@
+numpy
+scipy
+torch
+sentence-transformers
+gradio
+chromadb
+openai

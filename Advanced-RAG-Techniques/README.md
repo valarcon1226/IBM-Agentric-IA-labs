@@ -1,13 +1,16 @@
 # Advanced RAG Techniques
 
-This repository section explores advanced strategies for Retrieval-Augmented Generation (RAG) to improve context understanding, search accuracy, and semantic similarity.
+This project demonstrates advanced Retrieval-Augmented Generation (RAG) techniques using multiple frameworks:
+- **FAISS**: For highly efficient semantic similarity search.
+- **LangChain & Watsonx**: For vector store integrations (e.g., Chroma), document splitting, and LLM orchestration.
+- **LlamaIndex**: For implementing advanced retrieval patterns such as vector search, BM25, and query fusion.
 
-## Techniques Explored
-- **Semantic Similarity with FAISS**: Implementing dense vector search using Facebook AI Similarity Search (FAISS).
-- **Advanced Retrievers in LlamaIndex**: Utilizing specialized indexers and node parsers to improve retrieval chunking.
-- **LangChain Context Retrieval**: Building smarter, context-aware document search pipelines.
+## Project Structure
+- `main.py`: The entry point for executing the retrieval workflows.
+- `tools.py`: Contains the refactored classes and utility functions encapsulating the logic for each framework.
+- `requirements.txt`: Lists all Python dependencies required to run the project.
 
-## Tech Stack
-- LangChain & LlamaIndex
-- FAISS
-- Python / Jupyter Notebooks
+## Setup
+1. Create a virtual environment.
+2. Run `pip install -r requirements.txt`.
+3. Execute `python main.py` to see the retrieval pipelines in action.

@@ -1,28 +1,45 @@
-# IBM RAG and Agentic AI Certification - Portfolio
+# AI & LLM Engineering Portfolio
 
-This repository contains the practical projects and labs completed during the **IBM RAG and Agentic AI** certification program. The projects focus on implementing Vector Databases, Text Embeddings, and Similarity Search using Python.
+Welcome to my AI engineering portfolio. This repository contains various practical projects focusing on Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), Autonomous Agents, Vector Databases, and Multimodal AI.
 
 ## Projects Included
 
-### 1. Grocery Store Similarity Search (`similarity_search_chromadb.py`)
-A foundational project demonstrating how to use **Chroma DB** to perform semantic searches on text data. It uses `SentenceTransformers` to convert a list of grocery items into vector embeddings and retrieves the most relevant items based on natural language queries like "red" or "fresh".
+### 1. ?? AI Agents Fundamentals (`AI-Agents-Fundamentals`)
+A collection of scripts demonstrating the core principles of AI Agents using LangChain. Includes an **AI Math Assistant** that leverages tool-calling to solve complex mathematical queries step-by-step, and an **LCEL** (LangChain Expression Language) pipeline for executing data science tasks autonomously.
+* **Tech Stack:** LangChain, Tool Calling, LCEL.
 
-**Technologies Used:** Chroma DB, HuggingFace Sentence Transformers (all-MiniLM-L6-v2)
+### 2. ??? AI Meeting Assistant (`AI-Meeting-Assistant`)
+An intelligent agent designed to process meeting transcripts, summarize key points, and extract actionable action items automatically.
+* **Tech Stack:** Python, LangChain, LLM Summarization.
 
-### 2. HR Employee Advanced Search (`similarity_employeedata.py`)
-An advanced implementation of a Vector Database simulating a Human Resources application. This project demonstrates how to combine **Semantic Similarity Search** with exact **Metadata Filtering** to find ideal candidates (e.g., finding "senior Python developers" who also have "10+ years of experience" and live in specific "major tech cities").
+### 3. ?? Candidate Filter (`Candidate-Filter`)
+An HR simulation application that combines **Semantic Similarity Search** with exact **Metadata Filtering** to find ideal candidates.
+* **Tech Stack:** Chroma DB, HuggingFace Sentence Transformers, Vector Embeddings.
 
-**Technologies Used:** Chroma DB, Metadata Filtering, Vector Embeddings.
+### 4. ?? Document Ingestion Pipeline (`doc_ingest`)
+A complete document processing and ingestion pipeline for building RAG systems. It handles parsing, chunking, and embedding documents into a Vector DB, powered by background watchdog agents that update the database when new files are added.
+* **Tech Stack:** Chroma, SentenceTransformers, Watchdog, LangChain.
+
+### 5. ?? Enterprise QA Agent (`Enterprise-QA-Agent`)
+A robust RAG-based Question Answering agent tailored for enterprise documents. It allows users to query internal company policies or manuals using natural language, providing accurate answers with citations. Includes a web interface built with Gradio.
+* **Tech Stack:** LangChain, Gradio, RAG.
+
+### 6. ?? Food Search Chatbot (`Food-Search-Chatbot`)
+A conversational AI chatbot that helps users find food recipes or restaurant recommendations based on semantic search through a customized dataset.
+* **Tech Stack:** Python, Vector Search.
+
+### 7. ?? Multimodal Generators (`Multimodal-Generators`)
+Projects utilizing multimodal AI capabilities. Includes an **AI Storyteller** that generates narratives, and a script interacting with DALL-E (or similar models) to generate images based on text prompts.
+* **Tech Stack:** Multimodal LLMs, Image Generation APIs.
+
+### 8. ?? YouTube RAG Analyzer (`YouTube-RAG-Analyzer`)
+An intelligent tool that extracts transcripts from YouTube videos and uses RAG to allow users to ask questions, generate summaries, and extract specific information directly from video content.
+* **Tech Stack:** YouTube Transcript API, LangChain, RAG.
+
+### 9. ?? Advanced RAG Techniques (`Advanced-RAG-Techniques`)
+Implementations of advanced retrieval techniques to improve RAG performance, including custom retrievers using **LlamaIndex** and **FAISS**, as well as context-aware retrieval optimization.
+* **Tech Stack:** LlamaIndex, FAISS, Advanced RAG.
 
 ## Setup Instructions
 
-To run these scripts locally, ensure you have Python 3.11+ installed, and run the following command to install the required dependencies:
-
-```bash
-pip install chromadb==1.0.12 sentence-transformers==4.1.0 torch --index-url https://download.pytorch.org/whl/cpu
-```
-
-Then, you can execute any of the scripts:
-```bash
-python similarity_employeedata.py
-```
+Each project is self-contained. Navigate to any project directory and follow the instructions in its respective `README.md` to install dependencies and run the scripts.
