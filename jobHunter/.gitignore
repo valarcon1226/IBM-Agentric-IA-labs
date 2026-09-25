@@ -1,0 +1,9 @@
+# Lista blanca: el repo es público y esta carpeta tiene .env, sesiones de login, jobs.db, CVs y
+# el perfil personal. Se ignora todo y solo se versiona el código.
+/*
+!/.gitignore
+!/*.py
+!/Dockerfile
+!/docker-compose.yml
+!/requirements.txt
+!/PROGRESS.md
