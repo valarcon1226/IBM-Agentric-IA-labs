@@ -1,0 +1,6 @@
+.env
+secrets/
+letsencrypt/
+*.pyc
+__pycache__/
+.pytest_cache/
