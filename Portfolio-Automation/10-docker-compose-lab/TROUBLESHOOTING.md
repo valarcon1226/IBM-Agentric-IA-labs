@@ -28,7 +28,7 @@ This document covers common issues encountered while operating the Docker Compos
   - Check Postgres logs for initialization status: `docker compose logs postgres`
 
 **Symptom: "role does not exist" or "database does not exist"**
-- **Cause:** The `init-db.sql` script did not run during the first startup.
+- **Cause:** The `init-db.sh` script did not run during the first startup.
 - **Solution:**
   - Remove the database volume and restart (WARNING: Destroys data):
     ```bash
@@ -75,7 +75,7 @@ This document covers common issues encountered while operating the Docker Compos
 
 **Symptom: Database connection error**
 - **Cause:** n8n cannot authenticate with PostgreSQL.
-- **Solution:** Verify the `n8n_user` credentials in your `.env` match what was created by `init-db.sql`.
+- **Solution:** Verify `N8N_DB_PASSWORD` in your `.env` is the same value that existed when the postgres volume was first created (init-db.sh only runs on an empty volume; to re-run it, `docker compose down -v` deletes all data).
 
 ## 6. General Docker Issues
 
