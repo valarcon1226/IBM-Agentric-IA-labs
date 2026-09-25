@@ -41,8 +41,9 @@ Before T11, `init-db.sql` and `docker-compose.yml` contained plaintext passwords
     with `-a <password>` → `PONG`.
 
 ### 4. Backend
-- [ ] Add `backend/tests/` with a test for `/health` (healthy and degraded paths, dependencies mocked)
+- [x] Add `backend/tests/` with a test for `/health` (healthy and degraded paths, dependencies mocked)
   following the pattern of `04-data-cleaning-api/tests/`.
+  - Done (T12): 5 passed, cobertura 61%
   - Verify: `pytest` passes locally; then add `10-docker-compose-lab/backend` support to the
     CI workflow (it uses `src/`, not `app/` — adjust the lint/type-check paths for this project).
 - [ ] `docker compose up -d fastapi-gateway celery-worker celery-beat` → all running, gateway healthy.

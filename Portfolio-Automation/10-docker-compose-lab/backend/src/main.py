@@ -4,26 +4,32 @@ FastAPI Gateway — Portfolio Automation Stack
 Central API gateway for the automation portfolio. Serves as the entry point
 for all backend operations and provides health monitoring endpoints.
 """
-import logging
-import asyncio
-from typing import Dict, Any
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from typing import Any
 
 import redis.asyncio as redis
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy import create_engine, text
 
-from .config import settings
+from .config import require_api_settings, settings
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+require_api_settings(settings)
+assert settings.DATABASE_URL is not None  # guaranteed by require_api_settings
+_db_engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+
 
 async def check_redis_connection(url: str) -> bool:
     """Check connection to Redis."""
@@ -36,29 +42,31 @@ async def check_redis_connection(url: str) -> bool:
         logger.error(f"Redis connection failed: {e}")
         return False
 
-async def check_db_connection(url: str) -> bool:
-    """Check connection to the database."""
-    # Placeholder: In a real app, use SQLAlchemy async engine to verify connection.
-    # Avoiding direct psycopg2/asyncpg dependencies in this snippet for simplicity, 
-    # but normally we'd attempt a quick 'SELECT 1'.
-    logger.info(f"Mock checking DB connection to {url}")
-    return True
+
+async def check_db_connection() -> bool:
+    """Run SELECT 1 against the database without blocking the event loop."""
+
+    def _ping() -> None:
+        with _db_engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+
+    try:
+        await asyncio.to_thread(_ping)
+        return True
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        return False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup and shutdown events.
-    """
+    """Lifespan context manager for startup and shutdown events."""
     logger.info(f"Starting up {settings.APP_NAME}...")
-    
-    # Test connections on startup (non-blocking)
-    redis_ok = await check_redis_connection(settings.REDIS_URL)
-    if not redis_ok:
+    if not await check_redis_connection(settings.REDIS_URL):
         logger.warning("Redis is not available on startup.")
-        
     yield
-    
     logger.info(f"Shutting down {settings.APP_NAME}...")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -67,7 +75,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Modify in production to restrict origins
@@ -76,14 +83,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Prometheus instrumentation
 Instrumentator().instrument(app).expose(app)
 
+
 @app.get("/", summary="Root Endpoint")
-async def root() -> Dict[str, str]:
-    """
-    Welcome endpoint returning basic API information.
-    """
+async def root() -> dict[str, str]:
+    """Welcome endpoint returning basic API information."""
     return {
         "message": f"Welcome to the {settings.APP_NAME}",
         "docs": "/docs",
@@ -91,32 +96,27 @@ async def root() -> Dict[str, str]:
         "health": "/health",
     }
 
-@app.get("/health", summary="Health Check")
-async def health_check() -> Dict[str, Any]:
-    """
-    Comprehensive health check endpoint that tests connectivity to backing services.
-    """
-    redis_status = await check_redis_connection(settings.REDIS_URL)
-    db_status = await check_db_connection(settings.DATABASE_URL)
-    
-    status = "healthy" if (redis_status and db_status) else "degraded"
 
-    return {
-        "status": status,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+@app.get("/health", summary="Health Check")
+async def health_check() -> JSONResponse:
+    """Real dependency check. Returns 503 when a dependency is down so that the
+    Docker healthcheck (curl -f /health) marks the container unhealthy."""
+    redis_ok = await check_redis_connection(settings.REDIS_URL)
+    db_ok = await check_db_connection()
+    healthy = redis_ok and db_ok
+    body: dict[str, Any] = {
+        "status": "healthy" if healthy else "degraded",
+        "timestamp": datetime.now(UTC).isoformat(),
         "services": {
             "api": "up",
-            "database": "up" if db_status else "down",
-            "redis": "up" if redis_status else "down",
-        }
+            "database": "up" if db_ok else "down",
+            "redis": "up" if redis_ok else "down",
+        },
     }
+    return JSONResponse(status_code=200 if healthy else 503, content=body)
+
 
 @app.get("/version", summary="Version Info")
-async def version_info() -> Dict[str, str]:
-    """
-    Returns the current application version.
-    """
-    return {
-        "app_name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-    }
+async def version_info() -> dict[str, str]:
+    """Returns the current application version."""
+    return {"app_name": settings.APP_NAME, "version": settings.APP_VERSION}
