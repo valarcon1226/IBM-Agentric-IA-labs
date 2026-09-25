@@ -1,0 +1,104 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: data-cleaning-api:latest
+    container_name: data_cleaning_api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - data_cleaning_net
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: data-cleaning-api:latest
+    container_name: data_cleaning_worker
+    command: ["celery", "-A", "app.core.worker", "worker", "--loglevel=info"]
+    environment:
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - data_cleaning_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: data_cleaning_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=data_cleaning_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d data_cleaning_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_cleaning_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: data_cleaning_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_cleaning_net
+
+  minio:
+    image: minio/minio
+    container_name: data_cleaning_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_cleaning_net
+
+volumes:
+  db_data:
+  minio_data:
+
+networks:
+  data_cleaning_net:
+    driver: bridge
