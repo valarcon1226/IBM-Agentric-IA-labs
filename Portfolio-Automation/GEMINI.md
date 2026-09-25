@@ -12,6 +12,8 @@ In short:
 - If a task contradicts the code or docs, stop and report. Do not invent a third version.
 - No commits, pushes or deletions unless the task says so. Never read `10-docker-compose-lab/secrets/`.
 
+Where the work stands right now (read before starting): [`docs/PROGRESS.md`](docs/PROGRESS.md)
+
 Known defects and why each task exists:
 - Project 04: [`04-data-cleaning-api/docs/RISK-ANALYSIS.md`](04-data-cleaning-api/docs/RISK-ANALYSIS.md)
 - Project 10: [`10-docker-compose-lab/docs/RISK-ANALYSIS.md`](10-docker-compose-lab/docs/RISK-ANALYSIS.md)

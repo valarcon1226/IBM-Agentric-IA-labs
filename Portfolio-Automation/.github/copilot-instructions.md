@@ -36,6 +36,14 @@ file at a time, exactly as written**. You are an executor, not a designer.
   mention with `Select-String` and fix them all.
 - Write files with the editor tools (UTF-8, no BOM, LF line endings). Never use
   `Set-Content` / `Out-File` / `>` to write source files.
+- **Never write or edit file content through PowerShell strings.** PowerShell expands `$VAR`
+  and `${VAR}` inside double-quoted strings and here-strings, silently turning
+  `${FASTAPI_DB_PASSWORD}` into an empty string (this broke `docker-compose.yml` in T11).
+  Use the editor tools only. After editing any file that contains `$`, re-read it and confirm
+  every `${...}` is still there.
+- **Never edit text just to make a verification pass.** If a check matches text that legitimately
+  describes the problem (docs, risk tables, history), report it as a false positive in
+  "Dudas o contradicciones". Do not reword, rename or change the search pattern.
 - Do not commit, push, create branches, delete files, or install global tools unless the task
   says so. Never read, print or edit anything under `10-docker-compose-lab/secrets/`.
 - Do not edit `docs/tasks/*.md` except to mark a task `DONE`.
