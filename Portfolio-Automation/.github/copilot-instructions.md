@@ -51,6 +51,13 @@ file at a time, exactly as written**. You are an executor, not a designer.
   Never invent a third version.
 - No invented numbers: coverage, test counts, versions and dates come from command output.
 - Terminal is **PowerShell 5.1**: no `&&`; use `;` or separate commands.
+- **Ponytail rule — simplest thing that works.** If your tool has the `ponytail` skill, load it
+  before writing code. Either way, apply its ladder to all code you write that is not marked
+  `EXACTO`: question whether it needs to exist (YAGNI), reuse what is already in the repo,
+  standard library before custom code, native features before new dependencies, one line
+  before fifty. Never cut validation, error handling, security or tests to make code shorter.
+  `EXACTO` code is still copied as-is: if you see a simpler version, propose it in the report
+  under "Dudas o contradicciones" instead of changing it.
 
 ## Quality gates — project 04 (run from `04-data-cleaning-api`)
 
