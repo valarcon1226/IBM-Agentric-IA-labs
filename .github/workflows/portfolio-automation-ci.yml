@@ -24,13 +24,18 @@ jobs:
   python-service:
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         # Only projects with real code and tests are listed. Add a project here once it has both.
-        project:
-          - 04-data-cleaning-api
+        include:
+          - project: 04-data-cleaning-api
+            src: app
+            slug: 04-data-cleaning-api
+          - project: 10-docker-compose-lab/backend
+            src: src
+            slug: 10-backend
     defaults:
       run:
         working-directory: Portfolio-Automation/${{ matrix.project }}
@@ -49,13 +54,13 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Lint
-        run: ruff check app tests
+        run: ruff check ${{ matrix.src }} tests
 
       - name: Check formatting
-        run: ruff format --check app tests
+        run: ruff format --check ${{ matrix.src }} tests
 
       - name: Type-check
-        run: mypy app
+        run: mypy ${{ matrix.src }}
 
       - name: Run tests
         run: >-
@@ -63,13 +68,36 @@ jobs:
           --cov --cov-report=term --cov-report=xml
           --junitxml=test-results/junit.xml
 
+      - name: Run integration tests
+        if: ${{ hashFiles(format('Portfolio-Automation/{0}/tests/integration/**', matrix.project)) != '' }}
+        env:
+          REQUIRE_DOCKER: "1"
+        run: pytest -m integration --timeout=300 --junitxml=test-results/junit-integration.xml
+
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.project }}-test-results-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ matrix.slug }}-test-results-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             Portfolio-Automation/${{ matrix.project }}/test-results/
             Portfolio-Automation/${{ matrix.project }}/coverage.xml
           if-no-files-found: ignore
           retention-days: 7
+
+  readme-sync:
+    name: 10-docker-compose-lab README sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: README sections match .env.example, docker-compose.yml and init-db.sh
+        working-directory: Portfolio-Automation/10-docker-compose-lab
+        run: python scripts/sync_readme.py --check
