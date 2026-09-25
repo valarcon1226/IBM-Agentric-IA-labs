@@ -1,6 +1,6 @@
 # Execution Plan — Docker Compose Production Lab
 
-Source of truth: `docker-compose.yml`, `init-db.sql`, `backend/` (the code already exists).
+Source of truth: `docker-compose.yml`, `init-db.sh`, `backend/` (the code already exists).
 `README.md` sections 6–8 are verbatim copies of those files; update them together.
 
 This is a **verify-and-close** plan for existing code, not a greenfield build. Build it last
@@ -19,13 +19,16 @@ This is a **verify-and-close** plan for existing code, not a greenfield build. B
   - Verify: `docker compose --env-file .env.example config -q` → exit code 0, no warnings.
 
 ### 2. Remove hardcoded service passwords (security — do before any deploy)
-Today `init-db.sql` and `docker-compose.yml` contain plaintext passwords for `fastapi_user`,
-`n8n_user` and `grafana_user` (`*_secure_pass`).
-- [ ] Replace `init-db.sql` with `init-db.sh` that reads `FASTAPI_DB_PASSWORD`, `N8N_DB_PASSWORD`,
-  `GRAFANA_DB_PASSWORD` from the environment (or `/run/secrets/*`) and runs the same SQL via `psql`.
-- [ ] Reference those variables in the `fastapi-gateway`, `celery-*`, `n8n` and `grafana` services
+Before T11, `init-db.sql` and `docker-compose.yml` contained plaintext passwords for
+`fastapi_user`, `n8n_user` and `grafana_user`.
+- [x] Replace `init-db.sql` with `init-db.sh` that reads `FASTAPI_DB_PASSWORD`, `N8N_DB_PASSWORD`,
+  `GRAFANA_DB_PASSWORD` from the environment and runs the same SQL via `psql`.
+  - Done (T11): `init-db.sh` created, LF line endings verified.
+- [x] Reference those variables in the `fastapi-gateway`, `celery-*`, `n8n` and `grafana` services
   instead of literals; add them to `.env.example` with `change_me` values.
-  - Verify: `Select-String -Path docker-compose.yml, init-db.* -Pattern "_secure_pass"` → no matches.
+  - Done (T11): no literal role passwords left; compose resolves them from `.env`.
+  - Verify: `docker compose --env-file .env.example config` shows `change_me_fastapi`,
+    `change_me_n8n` and `change_me_grafana` where the passwords go.
   - Verify: README sections 6–8 regenerated from the new files.
 
 ### 3. Data layer
