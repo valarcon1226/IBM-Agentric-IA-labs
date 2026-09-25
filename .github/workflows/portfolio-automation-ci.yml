@@ -1,0 +1,75 @@
+name: Portfolio Automation CI
+
+on:
+  pull_request:
+    paths:
+      - "Portfolio-Automation/**"
+      - ".github/workflows/portfolio-automation-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "Portfolio-Automation/**"
+      - ".github/workflows/portfolio-automation-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-service:
+    name: ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Only projects with real code and tests are listed. Add a project here once it has both.
+        project:
+          - 04-data-cleaning-api
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/${{ matrix.project }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Portfolio-Automation/${{ matrix.project }}/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check app tests
+
+      - name: Check formatting
+        run: ruff format --check app tests
+
+      - name: Type-check
+        run: mypy app
+
+      - name: Run tests
+        run: >-
+          pytest --timeout=60
+          --cov --cov-report=term --cov-report=xml
+          --junitxml=test-results/junit.xml
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.project }}-test-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            Portfolio-Automation/${{ matrix.project }}/test-results/
+            Portfolio-Automation/${{ matrix.project }}/coverage.xml
+          if-no-files-found: ignore
+          retention-days: 7
