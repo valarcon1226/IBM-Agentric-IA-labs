@@ -1,0 +1,37 @@
+# Despliegue 24/7 en el homelab. Uso: docker compose up -d --build
+# network_mode host -> los contenedores llegan a Ollama en localhost:11434 del host.
+x-common: &common
+  build: .
+  image: jobhunter:latest
+  network_mode: host
+  restart: unless-stopped
+  user: "${UID:-1000}:${GID:-1000}"
+  env_file: .env
+  environment:
+    OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+    HOME: /tmp
+  volumes:
+    - ./:/app
+  working_dir: /app
+
+services:
+  scout:
+    <<: *common
+    # busca vacantes nuevas cada SCOUT_INTERVAL_HOURS (default 6h)
+    command: sh -c 'while true; do python -u scout_agent.py; sleep $$(( ${SCOUT_INTERVAL_HOURS:-6} * 3600 )); done'
+
+  tailor:
+    <<: *common
+    # watchdog infinito: arma el CV (template por arquetipo) de cada vacante 'Aprobado'
+    command: python -u run_tailor_resilient.py
+
+  freelance:
+    <<: *common
+    # proyectos pequeños (plata + portafolio) de Freelancer.com y bounties de GitHub, cada 12h
+    command: sh -c 'while true; do python -u freelance_hunter_agent.py; sleep $$(( ${FREELANCE_INTERVAL_HOURS:-12} * 3600 )); done'
+
+  trends:
+    <<: *common
+    # tendencias de demanda en el mercado freelance, una vez al día (arranca 1h tarde para no
+    # competir por la GPU con freelance, que corre al levantar el stack)
+    command: sh -c 'sleep 3600; while true; do python -u trend_spotter_agent.py; sleep $$(( ${TRENDS_INTERVAL_HOURS:-24} * 3600 )); done'
