@@ -68,10 +68,10 @@ En 24h Ollama hizo ~356 de ~450 llamadas. `qwen3:4b` puntúa ~85% casi todo (75 
 
 ### Próximos pasos
 1. Re-correr `validate_scoring.py` con el ajuste y comparar (no se hizo: ~35 min de GPU compitiendo con scout).
-2. Re-evaluar las ~121 vacantes con `CV Generado` que salieron del puntaje sesgado (muchos CVs son de roles que no encajan).
+2. ⏳ Re-evaluando las 146 vacantes `CV Generado` (lanzado 25/09 ~16:00, `rescore.py` en el contenedor `trends`, log en `~/homelab/jobhunter/rescore_cv.log`, termina con `FIN`). Las que no pasan → `Match Insuficiente` (el PDF queda en `CVs_Listos`). Backup previo: `jobs.db.bak_before_rescore_20260925`.
 3. ✅ Freelance funcionando (25/09 tarde): 2 corridas → **11 gigs `Aplicable`**. Intervalo bajado a 6h (`FREELANCE_INTERVAL_HOURS=6` en `.env` del homelab). Chequeo sin LLM: `python test_freelance_scoring.py`. Revisar a mano los repos de bounties `SecureBananaLabs/bug-bounty` y `UnsafeLabs/Bounty-Hunters` (miles de issues con $780/$310: pueden ser granjas); si lo son, agregarlos a un bloqueo por repo.
 4. Pendientes de Valentina: reservar IP en el router; Tailscale para acceso remoto (opcional); empezar a postular y marcarlo en el dashboard.
-5. Nada de esto está commiteado en git todavía.
+5. Código commiteado en `portfolio-automation` (`6eeb785`, sin push). `jobHunter/.gitignore` es lista blanca: solo `*.py`, Dockerfile, compose, requirements y este archivo — nunca `.env`, `auth_state.json`, `jobs.db`, CVs ni el perfil.
 
 ## Estado de los servicios (25 sep, 12:50)
 
