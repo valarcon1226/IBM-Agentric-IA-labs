@@ -1,8 +1,7 @@
 # Project: Docker Compose Production Lab
 
 > **Status (2026-09-24):** scaffolded, not yet run end to end. Known defects and their fixes are
-> tracked in [`docs/RISK-ANALYSIS.md`](docs/RISK-ANALYSIS.md) — four are Critical and open
-> (fake DB health check, healthcheck that cannot fail, ignored JWT secret, committed passwords).
+> tracked in [`docs/RISK-ANALYSIS.md`](docs/RISK-ANALYSIS.md) — the remaining Critical one is DL-R11 (full stack never started).
 
 ## 1. Problem Statement
 Deploying a complex ecosystem of microservices, databases, and background workers requires a robust, reproducible, and secure infrastructure. A single failure in a database or worker node can cascade into systemic failure. This project establishes a production-grade container orchestration setup using Docker Compose to host the entire portfolio stack—ensuring high availability, secure networking, persistent storage, and automated routing with SSL termination.

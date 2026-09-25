@@ -11,6 +11,8 @@ In short:
 - Nothing counts as done without running its verification command and pasting the real output.
 - If a task contradicts the code or docs, stop and report. Do not invent a third version.
 - No commits, pushes or deletions unless the task says so. Never read `10-docker-compose-lab/secrets/`.
+- Ponytail rule: in any code not marked `EXACTO`, write the simplest thing that works (reuse,
+  stdlib, no new dependencies, no speculative code). Load the `ponytail` skill if you have it.
 
 Where the work stands right now (read before starting): [`docs/PROGRESS.md`](docs/PROGRESS.md)
 

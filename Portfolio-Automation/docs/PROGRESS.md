@@ -10,10 +10,12 @@ una tarea (agente o persona). Lo más reciente va primero en cada sección.
 - **Rama de trabajo:** `portfolio-automation` (no trabajar directo en `main`).
 - **GitHub:** `valarcon1226/IBM-Agentric-IA-labs` — **repo público**.
   - PR #1 (línea base: fixes del 04, CI, docs de riesgos, plan de tareas) → **merged** en `main` (`e9333c5`), CI verde.
-  - PR #2 (T11: contraseñas de P10 fuera del código) → **abierto**, CI verde. Falta el merge.
+  - PR #2 (T11: contraseñas de P10 fuera del código) → **merged** en `main` (`f1cd342`).
+  - T12 → en `portfolio-automation`, pendiente de PR.
 - **Proyecto 04:** 27 tests, 58% de cobertura, ruff + mypy limpios, en CI.
-- **Proyecto 10:** contraseñas movidas a `.env` (T11). El backend todavía tiene el health check falso,
-  el 200 cuando está degradado y el secreto JWT ignorado (DL-R01..R03, R05, R10) → T12.
+- **Proyecto 10:** contraseñas en `.env` (T11). Backend: `/health` real (200/503), JWT desde
+  archivo, la API no arranca sin `DATABASE_URL`/secreto; 5 tests, 61% de cobertura, en CI (T12).
+  Falta levantar el stack completo (DL-R11).
 - **Resto de proyectos (01–03, 05–09, 11, 12):** solo diseño (README + EXECUTION_PLAN), sin código.
 
 ## Estado de las tareas (`docs/tasks/`)
@@ -21,11 +23,13 @@ una tarea (agente o persona). Lo más reciente va primero en cada sección.
 | Tarea | Estado | Notas |
 | ----- | ------ | ----- |
 | T11 | DONE (PR #2) | Ejecutada por Gemini, corregida por Claude: PowerShell había vaciado los `${...}` del compose |
-| T12 | **Siguiente** | Backend de P10: health real (200/503), JWT desde archivo, tests, CI |
-| T01–T10 | Pendientes | Proyecto 04: persistencia de jobs/schemas, Excel/JSON, cobertura, docs |
+| T12 | DONE | Ejecutada por Gemini, revisada por Claude: código idéntico al EXACTO, 7 verificaciones OK. Gemini editó este archivo fuera de alcance (corregido) |
+| T01 | **Siguiente** | Proyecto 04: estado de jobs y modelos |
+| T02–T06 | Pendientes | Proyecto 04: persistencia de jobs en Postgres + tests de integración. **Bloquean T13 Fases 2–4** |
+| T07–T10 | Pendientes | Proyecto 04: schemas persistidos, Excel/JSON, cobertura, docs |
 | T13 | Pendiente | Proyectos nuevos. Fase 1 (solo lectura) cuando sea; Fases 2–4 después de T06 |
 
-Orden recomendado: merge del PR #2 → T12 → T01…T06 → proyecto 01 (T13) → T07…T10.
+Orden recomendado: T01…T06 → proyecto 01 (T13) → T07…T10.
 
 ## Cómo se trabaja
 
@@ -63,12 +67,14 @@ Orden recomendado: merge del PR #2 → T12 → T01…T06 → proyecto 01 (T13) �
   integración no.
 - Rutas largas en el directorio temporal rompen los venvs: crearlos dentro del proyecto.
 
-## Mensaje listo para la siguiente tarea (T12)
+## Mensaje listo para la siguiente tarea (T01)
 
 ```
-Ejecuta SOLO la tarea T12: `Portfolio-Automation/docs/tasks/T12-p10-backend-health-real-y-ci.md`.
+Ejecuta SOLO la tarea T01: `Portfolio-Automation/docs/tasks/T01-job-status-y-modelos.md`.
 Antes, lee completos `Portfolio-Automation/GEMINI.md` y `Portfolio-Automation/.github/copilot-instructions.md`
-(tienen dos reglas nuevas: nada de escribir archivos vía PowerShell y nada de cambiar texto para pasar verificaciones).
+(regla nueva: "Ponytail rule" — lo más simple que funcione en todo código que no sea EXACTO).
 Confirma que estás en la rama `portfolio-automation`. No uses subagentes. No hagas git add, commit ni push.
-Al terminar, pega el reporte (salida real de las verificaciones 1–7), marca T12 como DONE y DETENTE.
+Toca SOLO los archivos que lista la tarea (en T12 editaste docs/PROGRESS.md sin permiso; no lo repitas).
+Al terminar, pega el reporte (salida real de las verificaciones 1–2), marca T01 como DONE en
+docs/tasks/README.md y DETENTE.
 ```
