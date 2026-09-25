@@ -1,5 +1,7 @@
 # Tareas — índice y estado
 
+> Estado actual, PRs y siguiente paso: [`../PROGRESS.md`](../PROGRESS.md).
+
 Ejecuta **una tarea por sesión de chat**, en orden. Excepción: **T11 → T12** (bugs de P10) no
 dependen de T01–T10 y se pueden hacer primero. Cómo ejecutarlas: `.github/copilot-instructions.md`.
 Para arrancar una tarea, escribe en Copilot (modo Agent):
@@ -21,7 +23,7 @@ ruff y mypy limpios.
 | T08 | [T08-excel-y-json.md](T08-excel-y-json.md) | 04 | 44 passed, 3 deselected | PENDIENTE |
 | T09 | [T09-cobertura-cleaner-transformer-enricher.md](T09-cobertura-cleaner-transformer-enricher.md) | 04 | 53 passed, 3 deselected | PENDIENTE |
 | T10 | [T10-docs-proyecto-04.md](T10-docs-proyecto-04.md) | 04 | docs sincronizados | PENDIENTE |
-| T11 | [T11-p10-passwords-fuera-del-codigo.md](T11-p10-passwords-fuera-del-codigo.md) | 10 | 0 contraseñas en archivos | DONE |
+| T11 | [T11-p10-passwords-fuera-del-codigo.md](T11-p10-passwords-fuera-del-codigo.md) | 10 | 0 contraseñas en archivos | DONE (PR #2) |
 | T12 | [T12-p10-backend-health-real-y-ci.md](T12-p10-backend-health-real-y-ci.md) | 10 | 5 passed en backend + CI | PENDIENTE |
 | T13 | [T13-protocolo-proyecto-nuevo.md](T13-protocolo-proyecto-nuevo.md) | 01 → … | Fase 1 cuando sea; Fases 2–4 tras T06 | PENDIENTE |
 
