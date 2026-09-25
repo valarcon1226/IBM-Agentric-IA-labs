@@ -59,8 +59,12 @@ flowchart TD
 │   └── jwt_secret.txt     (git-ignored, create locally)
 ├── .env.example
 ├── docker-compose.yml
-├── init-db.sql
+├── init-db.sh
 ├── prometheus.yml
+├── scripts/
+│   └── sync_readme.py     (keeps README sections 6–8 in sync; `--check` runs in CI)
+├── docs/
+│   └── RISK-ANALYSIS.md
 └── README.md
 ```
 
@@ -71,7 +75,7 @@ networks and reached through Traefik routes or service names.
 | Service | Role | Internal port | Healthcheck |
 | --- | --- | --- | --- |
 | `traefik` | Edge router, TLS via Let's Encrypt | 80, 443 (published) | `traefik healthcheck --ping` |
-| `postgres` | Shared PostgreSQL 16 (runs `init-db.sql`) | 5432 | `pg_isready -U postgres` |
+| `postgres` | Shared PostgreSQL 16 (runs `init-db.sh`) | 5432 | `pg_isready -U postgres` |
 | `redis` | Cache + Celery broker (password protected) | 6379 | `redis-cli -a $REDIS_PASSWORD ping` |
 | `fastapi-gateway` | Main API (`backend/`) | 8000 | `curl -f /health` |
 | `celery-worker` | Task processing | — | `celery -A src.celery_app inspect ping` |
@@ -82,8 +86,8 @@ networks and reached through Traefik routes or service names.
 | `grafana` | Dashboards | 3000 | `wget /api/health` |
 
 ## 6. Environment Variables (.env.example)
-Verbatim copy of `.env.example`. The database password is **not** read from `.env`: it comes
-from the Docker secret `secrets/db_password.txt` (`POSTGRES_PASSWORD_FILE`).
+Verbatim copy of `.env.example`. The postgres superuser password is **not** read from
+`.env`: it comes from the Docker secret `secrets/db_password.txt` (`POSTGRES_PASSWORD_FILE`).
 
 ```env
 # =============================================================================
@@ -92,10 +96,15 @@ from the Docker secret `secrets/db_password.txt` (`POSTGRES_PASSWORD_FILE`).
 # =============================================================================
 
 # --- Database (PostgreSQL 16) ---
-DB_PASSWORD=change_me_to_a_secure_password
+DB_PASSWORD=change_me_to_a_strong_password
+# Per-service database roles (created by init-db.sh). Letters and digits only:
+# they are embedded in connection URLs.
+FASTAPI_DB_PASSWORD=change_me_fastapi
+N8N_DB_PASSWORD=change_me_n8n
+GRAFANA_DB_PASSWORD=change_me_grafana
 
 # --- Redis 7 ---
-REDIS_PASSWORD=change_me_to_a_secure_password
+REDIS_PASSWORD=change_me_to_a_strong_password
 
 # --- JWT Authentication ---
 JWT_SECRET=change_me_to_a_random_256bit_string
@@ -108,7 +117,7 @@ ACME_EMAIL=admin@example.com
 
 # --- MinIO (S3-compatible object storage) ---
 MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=change_me_to_a_secure_password
+MINIO_ROOT_PASSWORD=change_me_to_a_strong_password
 
 # --- Grafana ---
 GF_SECURITY_ADMIN_USER=admin
@@ -116,7 +125,7 @@ GF_SECURITY_ADMIN_PASSWORD=change_me
 ```
 
 ## 7. docker-compose.yml (Complete)
-Verbatim copy of `docker-compose.yml` — if you change the file, update this block.
+Verbatim copy of `docker-compose.yml` (regenerate with `py -3 scripts/sync_readme.py`).
 
 ```yaml
 secrets:
@@ -183,9 +192,12 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      FASTAPI_DB_PASSWORD: ${FASTAPI_DB_PASSWORD}
+      N8N_DB_PASSWORD: ${N8N_DB_PASSWORD}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     secrets:
       - db_password
     networks:
@@ -226,7 +238,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://fastapi_user:fastapi_secure_pass@postgres:5432/fastapi_db
+      - DATABASE_URL=postgresql://fastapi_user:${FASTAPI_DB_PASSWORD}@postgres:5432/fastapi_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     secrets:
@@ -264,7 +276,7 @@ services:
       dockerfile: Dockerfile
     command: ["celery", "-A", "src.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
     environment:
-      - DATABASE_URL=postgresql://fastapi_user:fastapi_secure_pass@postgres:5432/fastapi_db
+      - DATABASE_URL=postgresql://fastapi_user:${FASTAPI_DB_PASSWORD}@postgres:5432/fastapi_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
     networks:
@@ -315,7 +327,7 @@ services:
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=n8n_db
       - DB_POSTGRESDB_USER=n8n_user
-      - DB_POSTGRESDB_PASSWORD=n8n_secure_pass
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
       - N8N_HOST=${N8N_DOMAIN}
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
@@ -398,7 +410,7 @@ services:
       - GF_DATABASE_HOST=postgres:5432
       - GF_DATABASE_NAME=grafana_db
       - GF_DATABASE_USER=grafana_user
-      - GF_DATABASE_PASSWORD=grafana_secure_pass
+      - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD}
     volumes:
       - grafana_data:/var/lib/grafana
     networks:
@@ -428,32 +440,36 @@ services:
           memory: 512M
 ```
 
-## 8. Database Initialization (init-db.sql)
-Verbatim copy of `init-db.sql`.
+## 8. Database Initialization (init-db.sh)
+Verbatim copy of `init-db.sh`. Role passwords come from the environment.
 
-```sql
--- =============================================================================
--- Portfolio Stack — Database Initialization
--- This script runs once on first postgres container startup.
--- It creates isolated databases and users for each service.
--- =============================================================================
+```bash
+#!/bin/bash
+# Runs once, on the first start of the postgres container (docker-entrypoint-initdb.d).
+# Creates one database + owner role per service. Passwords come from the environment
+# (see .env.example); nothing secret is stored in this file.
+set -eo pipefail
 
--- FastAPI application database
-CREATE USER fastapi_user WITH PASSWORD 'fastapi_secure_pass';
+: "${FASTAPI_DB_PASSWORD:?FASTAPI_DB_PASSWORD is required}"
+: "${N8N_DB_PASSWORD:?N8N_DB_PASSWORD is required}"
+: "${GRAFANA_DB_PASSWORD:?GRAFANA_DB_PASSWORD is required}"
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres \
+  -v fastapi_pw="$FASTAPI_DB_PASSWORD" \
+  -v n8n_pw="$N8N_DB_PASSWORD" \
+  -v grafana_pw="$GRAFANA_DB_PASSWORD" <<'EOSQL'
+CREATE USER fastapi_user WITH PASSWORD :'fastapi_pw';
 CREATE DATABASE fastapi_db OWNER fastapi_user;
 GRANT ALL PRIVILEGES ON DATABASE fastapi_db TO fastapi_user;
 
--- n8n workflow engine database
-CREATE USER n8n_user WITH PASSWORD 'n8n_secure_pass';
+CREATE USER n8n_user WITH PASSWORD :'n8n_pw';
 CREATE DATABASE n8n_db OWNER n8n_user;
 GRANT ALL PRIVILEGES ON DATABASE n8n_db TO n8n_user;
 
--- Grafana dashboards database
-CREATE USER grafana_user WITH PASSWORD 'grafana_secure_pass';
+CREATE USER grafana_user WITH PASSWORD :'grafana_pw';
 CREATE DATABASE grafana_db OWNER grafana_user;
 GRANT ALL PRIVILEGES ON DATABASE grafana_db TO grafana_user;
 
--- Grant schema permissions (required for Postgres 15+)
 \c fastapi_db
 GRANT ALL ON SCHEMA public TO fastapi_user;
 
@@ -462,6 +478,7 @@ GRANT ALL ON SCHEMA public TO n8n_user;
 
 \c grafana_db
 GRANT ALL ON SCHEMA public TO grafana_user;
+EOSQL
 ```
 
 ## 9. Implementation Steps
@@ -470,7 +487,7 @@ GRANT ALL ON SCHEMA public TO grafana_user;
 
 1. **Server provisioning:** Spin up an Ubuntu 22.04 LTS VPS. *Verify:* `ssh` access works and `docker --version` / `docker compose version` succeed.
 2. **Directory + secrets setup:** Clone repo, run `mkdir -p secrets letsencrypt`, and populate `.env` and `secrets/`.
-3. **Consolidated Postgres schema:** Write one `init-db.sql` that creates schemas per service.
+3. **Consolidated Postgres schema:** Write one `init-db.sh` that creates one database and role per service, reading passwords from the environment.
 4. **Network & DNS:** Point DNS A records for `api.`, `n8n.`, and `grafana.` to the VPS IP.
 5. **Launch:** Run `docker compose up -d`. *Verify:* `docker compose ps` shows services as healthy/running.
 6. **Verification:** Confirm Traefik acquired Let's Encrypt certificates. *Verify:* `curl -I https://api.example.com` returns valid TLS handshake.
