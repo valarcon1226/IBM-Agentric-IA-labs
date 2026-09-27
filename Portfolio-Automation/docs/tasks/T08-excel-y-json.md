@@ -141,7 +141,7 @@ def test_clean_rejects_unsupported_extension():
 ## Verificación
 
 1. Compuertas → **44 passed, 3 deselected**, ruff y mypy limpios.
-2. `Select-String -Path app -Recurse -Pattern "read_csv"` → **1** coincidencia, en
+2. `Get-ChildItem app -Recurse -Filter *.py | Select-String -Pattern "read_csv"` → **1** coincidencia, en
    `app\services\readers.py`.
 
 ## Terminado cuando

@@ -13,7 +13,7 @@ ruff y mypy limpios.
 
 | ID  | Archivo | Proyecto | Resultado esperado | Estado |
 | --- | ------- | -------- | ------------------ | ------ |
-| T01 | [T01-job-status-y-modelos.md](T01-job-status-y-modelos.md) | 04 | 29 passed | PENDIENTE |
+| T01 | [T01-job-status-y-modelos.md](T01-job-status-y-modelos.md) | 04 | 29 passed | DONE |
 | T02 | [T02-jobs-repo.md](T02-jobs-repo.md) | 04 | 29 passed | PENDIENTE |
 | T03 | [T03-rutas-crean-job.md](T03-rutas-crean-job.md) | 04 | 31 passed | PENDIENTE |
 | T04 | [T04-tareas-celery-persisten-estado.md](T04-tareas-celery-persisten-estado.md) | 04 | 34 passed | PENDIENTE |

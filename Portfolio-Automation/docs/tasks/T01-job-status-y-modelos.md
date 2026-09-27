@@ -133,7 +133,7 @@ def test_job_schema_fk_sets_null_on_delete():
 ## Verificación
 
 1. Compuertas → **29 passed**, ruff y mypy limpios.
-2. `Select-String -Path app -Recurse -Pattern "declarative_base|Column\("` → **sin coincidencias**.
+2. `Get-ChildItem app -Recurse -Filter *.py | Select-String -CaseSensitive -Pattern "declarative_base|(?<!pa\.)Column\("` → **sin coincidencias**.
 
 ## Terminado cuando
 

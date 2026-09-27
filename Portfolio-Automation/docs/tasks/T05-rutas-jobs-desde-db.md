@@ -12,7 +12,7 @@
 ## Antes de empezar
 
 - `T04` en `DONE`. Compuertas → **34 passed**.
-- `Select-String -Path app, tests -Recurse -Pattern "models.domain|from app.models import domain"`
+- `Get-ChildItem app, tests -Recurse -Filter *.py | Select-String -Pattern "models.domain|from app.models import domain"`
   → **sin coincidencias**. Si hay alguna, detente y repórtala.
 
 ## Paso 1 — `app/models/domain.py` (reemplazo completo)
@@ -180,7 +180,7 @@ def test_job_result_returns_presigned_url(monkeypatch, fake_db):
 ## Verificación
 
 1. Compuertas → **38 passed**, ruff y mypy limpios.
-2. `Select-String -Path app -Recurse -Pattern "MOCK_JOBS|CleanOptions|SchemaCreate"` → **sin coincidencias**.
+2. `Get-ChildItem app -Recurse -Filter *.py | Select-String -Pattern "MOCK_JOBS|CleanOptions|SchemaCreate"` → **sin coincidencias**.
 
 ## Terminado cuando
 

@@ -156,7 +156,7 @@ def test_transform_task_rejects_unknown_operation(monkeypatch):
 ## Verificación
 
 1. Compuertas → **34 passed**, ruff y mypy limpios.
-2. `Select-String -Path app -Recurse -Pattern "def update_job_status"` → **sin coincidencias**.
+2. `Get-ChildItem app -Recurse -Filter *.py | Select-String -Pattern "def update_job_status"` → **sin coincidencias**.
 
 ## Terminado cuando
 

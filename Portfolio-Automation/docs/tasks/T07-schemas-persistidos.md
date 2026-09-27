@@ -285,7 +285,7 @@ def test_schema_persists_and_duplicate_is_rejected(session_factory):
 
 1. Compuertas → **41 passed, 3 deselected**, ruff y mypy limpios.
 2. Integración (ver T06, Verificación 2) → **3 passed** o **3 skipped** explicado.
-3. `Select-String -Path app -Recurse -Pattern "MOCK_SCHEMAS|^DB: list"` → **sin coincidencias**.
+3. `Get-ChildItem app -Recurse -Filter *.py | Select-String -Pattern "MOCK_SCHEMAS|^DB: list"` → **sin coincidencias**.
 
 ## Terminado cuando
 
