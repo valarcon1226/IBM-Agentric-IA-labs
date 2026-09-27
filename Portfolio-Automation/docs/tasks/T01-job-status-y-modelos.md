@@ -99,9 +99,7 @@ class JobModel(Base):
     schema_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("schemas.schema_id", ondelete="SET NULL"), nullable=True
     )
-    status: Mapped[str] = mapped_column(
-        String(50), nullable=False, default=JobStatus.PENDING.value
-    )
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default=JobStatus.PENDING.value)
     operation_type: Mapped[str] = mapped_column(String(50), nullable=False)
     input_file_path: Mapped[str | None] = mapped_column(String(512))
     output_file_path: Mapped[str | None] = mapped_column(String(512))

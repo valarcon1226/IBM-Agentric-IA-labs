@@ -92,9 +92,7 @@ def process_transform_job(job_id: str, file_path: str, params: dict[str, Any]) -
 
 
 @celery_app.task
-def process_enrich_job(
-    job_id: str, file_path: str, ops: list[str], cols: dict[str, str]
-) -> None:
+def process_enrich_job(job_id: str, file_path: str, ops: list[str], cols: dict[str, str]) -> None:
     _run(job_id, f"enriched_{job_id}.csv", lambda: _enrich(file_path, ops, cols))
 ```
 

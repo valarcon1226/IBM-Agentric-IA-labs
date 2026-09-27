@@ -12,8 +12,6 @@
 - `04-data-cleaning-api/tests/integration/__init__.py` (nuevo, vacío)
 - `04-data-cleaning-api/tests/integration/conftest.py` (nuevo)
 - `04-data-cleaning-api/tests/integration/test_jobs_repo.py` (nuevo)
-- `.github/workflows/portfolio-automation-ci.yml` — **ojo:** está en la raíz del repositorio git
-  (`Portfolio Gemini\.github\...`), una carpeta **arriba** de `Portfolio-Automation`.
 
 ## Antes de empezar
 
@@ -142,19 +140,13 @@ def test_deleting_schema_keeps_its_jobs(session_factory):
     assert job.schema_id is None
 ```
 
-## Paso 6 — CI: `Portfolio Gemini\.github\workflows\portfolio-automation-ci.yml`
+## Paso 6 — CI: ya está hecho (T12)
 
-Justo **después** del paso que empieza con `      - name: Run tests` (y su bloque `run: >-`
-completo), y **antes** de `      - name: Upload test artifacts`, inserta. EXACTO (6 espacios
-de sangría antes de `- name`):
-
-```yaml
-      - name: Run integration tests
-        if: ${{ hashFiles(format('Portfolio-Automation/{0}/tests/integration/**', matrix.project)) != '' }}
-        env:
-          REQUIRE_DOCKER: "1"
-        run: pytest -m integration --timeout=300 --junitxml=test-results/junit-integration.xml
-```
+El paso `Run integration tests` ya existe en `.github/workflows/portfolio-automation-ci.yml`
+(lo agregó T12 al reemplazar el archivo completo). **No edites el workflow.** Solo confirma que
+existe una vez:
+`Select-String -Path ..\..\.github\workflows\portfolio-automation-ci.yml -Pattern "Run integration tests"`
+→ exactamente **1** coincidencia.
 
 ## Verificación
 

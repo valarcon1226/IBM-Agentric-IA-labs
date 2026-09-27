@@ -11,7 +11,7 @@ una tarea (agente o persona). Lo más reciente va primero en cada sección.
 - **GitHub:** `valarcon1226/IBM-Agentric-IA-labs` — **repo público**.
   - PR #1 (línea base: fixes del 04, CI, docs de riesgos, plan de tareas) → **merged** en `main` (`e9333c5`), CI verde.
   - PR #2 (T11: contraseñas de P10 fuera del código) → **merged** en `main` (`f1cd342`).
-  - T12 → en `portfolio-automation`, pendiente de PR.
+  - PR #3 (T12) → **merged** en `main` (`1fa392e`).
 - **Proyecto 04:** 27 tests, 58% de cobertura, ruff + mypy limpios, en CI.
 - **Proyecto 10:** contraseñas en `.env` (T11). Backend: `/health` real (200/503), JWT desde
   archivo, la API no arranca sin `DATABASE_URL`/secreto; 5 tests, 61% de cobertura, en CI (T12).
@@ -24,8 +24,8 @@ una tarea (agente o persona). Lo más reciente va primero en cada sección.
 | ----- | ------ | ----- |
 | T11 | DONE (PR #2) | Ejecutada por Gemini, corregida por Claude: PowerShell había vaciado los `${...}` del compose |
 | T12 | DONE | Ejecutada por Gemini, revisada por Claude: código idéntico al EXACTO, 7 verificaciones OK. Gemini editó este archivo fuera de alcance (corregido) |
-| T01 | **Siguiente** | Proyecto 04: estado de jobs y modelos |
-| T02–T06 | Pendientes | Proyecto 04: persistencia de jobs en Postgres + tests de integración. **Bloquean T13 Fases 2–4** |
+| T01 | DONE | Gemini; la verificación 2 de la tarea no funcionaba en PS 5.1 (corregida) |
+| T02–T06 | **Siguientes** (ensayadas por Claude: pasan) | Proyecto 04: persistencia de jobs en Postgres + tests de integración. **Bloquean T13 Fases 2–4** |
 | T07–T10 | Pendientes | Proyecto 04: schemas persistidos, Excel/JSON, cobertura, docs |
 | T13 | Pendiente | Proyectos nuevos. Fase 1 (solo lectura) cuando sea; Fases 2–4 después de T06 |
 

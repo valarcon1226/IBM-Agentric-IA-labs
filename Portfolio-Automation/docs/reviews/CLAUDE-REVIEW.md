@@ -1,5 +1,8 @@
 # Revisión de Claude — ejecución paralela Gemini (04) + Copilot (01)
 
+> **Actualización 2026-09-27:** todas las decisiones del proyecto 01 están ahora en
+> [`DECISIONES-01.md`](DECISIONES-01.md). T01 cerrada por Claude (commit `1ff0142`).
+
 ## DECISIÓN D1 — ubicación de la app del proyecto 01 (resuelve el bloqueo de `T13-01-fase2.md`)
 
 Manda el README del proyecto: la API vive en **`01-smart-data-intake/backend/`**, igual que P10
@@ -23,3 +26,12 @@ Copilot: retoma la Fase 2 con esta decisión y sigue con la Fase 3 según el pro
 - **Falso positivo en la verificación 2:** `Column\(` coincide con `pa.Column(` de pandera en
   `app/api/routes/validate.py:20`, que no es SQLAlchemy. NO se toca `validate.py`: se reporta como
   falso positivo, y T01 cuenta como cumplida si la única coincidencia es `pa.Column`.
+
+## Ensayo previo de T02–T06 (2026-09-27, Claude)
+
+Claude aplicó el código EXACTO de T02–T06 en un worktree aparte y corrió las compuertas antes de
+dárselas a Gemini: T02 29 · T03 31 · T04 34 · T05 38 · T06 38 passed + 2 deselected (integración:
+2 skipped sin Docker). Defectos corregidos en las tareas:
+- `Select-String -Recurse` no existe en PowerShell 5.1 → `Get-ChildItem ... | Select-String` (T01, T04, T05, T07, T08).
+- EXACTO sin formato ruff → corregido (T01 `db.py`, T04 `process_enrich_job`).
+- T06 Paso 6 insertaba en el CI un paso que T12 ya agregó → ahora solo se verifica que exista.
