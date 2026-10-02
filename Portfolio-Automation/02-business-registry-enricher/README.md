@@ -63,7 +63,7 @@ CREATE TABLE api_logs (
 ```bash
 curl -X POST "http://localhost:8002/api/v1/enrich" \
   -H "Content-Type: application/json" \
-  -H "Authorization: ******" \
+  -H "Authorization: Bearer $API_KEY" \
   -d '{
     "companies": [
       {"country": "GB", "identifier": "00000006"},
@@ -100,7 +100,7 @@ curl -X POST "http://localhost:8002/api/v1/enrich" \
 **Request:**
 ```bash
 curl -X GET "http://localhost:8002/api/v1/enrich/GB/00000006?force_refresh=true" \
-  -H "Authorization: ******" \
+  -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json"
 ```
 
@@ -130,9 +130,9 @@ curl -X GET "http://localhost:8002/api/v1/enrich/GB/00000006?force_refresh=true"
 
 | Service | Image/Dockerfile | Ports | Depends On |
 |---------|------------------|-------|------------|
-| `enricher_api` | `Dockerfile` | 8000:8000 | `postgres` |
-| `postgres` | `postgres:15-alpine` | 5432:5432 | - |
-| `n8n` | `n8nio/n8n` | 5678:5678 | - |
+| `enricher_api` | `Dockerfile` | 8002:8000 | `postgres` |
+| `postgres` | `postgres:15-alpine` | 5434:5432 | - |
+| `n8n` | `n8nio/n8n` | 5679:5678 | - |
 
 No `redis` service: rate limiting is in-process (`aiolimiter`), so there is nothing shared across processes to store there.
 
@@ -147,6 +147,9 @@ No `redis` service: rate limiting is in-process (`aiolimiter`), so there is noth
 │   │   └── vies.py
 │   ├── models.py
 │   └── database.py
+├── n8n/
+│   └── workflows/
+│       └── enrich.json
 ├── docker-compose.yml
 ├── Dockerfile
 ├── requirements.txt
@@ -154,10 +157,27 @@ No `redis` service: rate limiting is in-process (`aiolimiter`), so there is noth
 ```
 
 ## 9. n8n Workflow Description
-1. **Webhook / Read File Node:** Receives a CSV file containing country codes and company identifiers.
-2. **HTTP Request Node:** Posts the payload as a batch to the FastAPI `/api/v1/enrich` endpoint.
-3. **Set/Filter Nodes:** Flattens the enriched JSON response.
-4. **Google Sheets / CRM Node:** Writes the validated `company_name`, `status`, and `incorporation_date` back to the tracking system, automatically enriching leads without human intervention.
+The exported workflow at `n8n/workflows/enrich.json` contains four nodes:
+
+1. **Webhook:** Receives a POST with a JSON body `{"companies": [{"country": ..., "identifier": ...}]}`.
+2. **HTTP Request:** Posts that body to `http://enricher_api:8000/api/v1/enrich`. It uses an n8n
+   Header Auth credential for `Authorization`; the secret is configured in n8n, never in the export.
+3. **Split Out + Set:** Splits the `results` array from the response and flattens each item to
+   `country`, `identifier`, `company_name`, `status`.
+4. **Google Sheets:** Appends each flattened row.
+
+### Import and credentials
+
+In n8n, choose **Workflows → Import from File** and import `n8n/workflows/enrich.json`. Create
+an HTTP Header Auth credential with header name `Authorization` and value `Bearer <your API_KEY>`;
+select it on the HTTP Request node. Create a Google Sheets OAuth2 credential and select it on the
+Google Sheets node. Replace `REPLACE_WITH_GOOGLE_SHEET_ID` and `REPLACE_WITH_SHEET_TAB_NAME` in
+that node with the target spreadsheet and tab in the n8n editor. The export contains no API key,
+Google token, or real spreadsheet ID. Activate the workflow and call its production Webhook URL.
+The real write to Google Sheets is validated by the user.
+
+Compose sets the n8n `WEBHOOK_URL=http://n8n:5678/` and persists n8n state in the `n8n_data`
+volume. The host port is `5679` (see section 7).
 
 ## 10. Implementation Steps
 1. **Repo skeleton + infra** — create the tree from section 8; `docker-compose.yml` with only `postgres` (no Redis — see section 6). *Verify:* `docker compose up -d postgres` → healthy.
@@ -180,8 +200,9 @@ Run in this order:
 
 ## 12. Environment Variables
 ```env
+API_KEY=your_api_key
 CH_API_KEY=your_companies_house_key
-INSEE_BEARER_TOKEN=your_insee_token
+INSEE_API_KEY=your_insee_api_key
 DATABASE_URL=postgresql://postgres:secret@postgres:5432/enricher_db
 ```
 
