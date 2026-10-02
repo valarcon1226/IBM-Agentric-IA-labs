@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import ValidationError
 
@@ -54,8 +56,9 @@ async def _enrich_for_batch(company: CompanyRequest) -> CompanyResult:
 
 @app.post("/api/v1/enrich", dependencies=[Depends(verify_api_key)])
 async def enrich_batch(request: EnrichBatchRequest) -> EnrichBatchResponse:
-    results = [await _enrich_for_batch(company) for company in request.companies]
-    return EnrichBatchResponse(results=results)
+    # Concurrent: per-registry limiters still cap the upstream rate; gather keeps input order.
+    results = await asyncio.gather(*(_enrich_for_batch(c) for c in request.companies))
+    return EnrichBatchResponse(results=list(results))
 
 
 @app.get("/api/v1/enrich/{country}/{identifier}", dependencies=[Depends(verify_api_key)])

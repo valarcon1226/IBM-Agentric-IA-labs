@@ -58,6 +58,7 @@ async def upsert_cache(country_code: str, identifier: str, data: dict[str, Any])
                 "company_name": data.get("company_name"),
                 "status": data.get("status"),
                 "incorporation_date": data.get("incorporation_date"),
-                "raw_data": json.dumps(data.get("raw_data")),
+                # default=str: VIES raw_data carries a date (requestDate) json can't encode.
+                "raw_data": json.dumps(data.get("raw_data"), default=str),
             },
         )
