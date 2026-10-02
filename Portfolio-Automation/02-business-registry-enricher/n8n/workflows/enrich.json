@@ -1,0 +1,148 @@
+{
+  "name": "Business Registry Enricher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "enrich-companies",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a1e0a5a1-3f4a-4c1a-8b64-9b7f4a4d2101",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "a1e0a5a1-3f4a-4c1a-8b64-9b7f4a4d2101"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://enricher_api:8000/api/v1/enrich",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "companies",
+              "value": "={{$json.body.companies}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2f1b6b2-4a5b-4d2b-9c75-0a8f5b5e3212",
+      "name": "Enrich companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "id": "c3a2c7c3-5b6c-4e3c-ad86-1b9a6c6f4323",
+      "name": "Split results",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d4b3d8d4-6c7d-4f4d-be97-2caB7d7a5434",
+              "name": "country",
+              "type": "string",
+              "value": "={{$json.country}}"
+            },
+            {
+              "id": "e5c4e9e5-7d8e-405e-cfa8-3dbc8e8b6545",
+              "name": "identifier",
+              "type": "string",
+              "value": "={{$json.identifier}}"
+            },
+            {
+              "id": "f6d5fafa-8e9f-416f-d0b9-4ecd9f9c7656",
+              "name": "company_name",
+              "type": "string",
+              "value": "={{$json.company_name}}"
+            },
+            {
+              "id": "a7e6fbfb-9fa0-427a-e1ca-5fde0a0d8767",
+              "name": "status",
+              "type": "string",
+              "value": "={{$json.status}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4b3d8d4-6c7d-4f4d-be97-2cab7d7a5434",
+      "name": "Flatten result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "REPLACE_WITH_SHEET_TAB_NAME",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e5c4e9e5-7d8e-405e-cfa8-3dbc8e8b6545",
+      "name": "Append to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1120, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Enrich companies", "type": "main", "index": 0}]]
+    },
+    "Enrich companies": {
+      "main": [[{"node": "Split results", "type": "main", "index": 0}]]
+    },
+    "Split results": {
+      "main": [[{"node": "Flatten result", "type": "main", "index": 0}]]
+    },
+    "Flatten result": {
+      "main": [[{"node": "Append to Google Sheets", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f6d5fafa-8e9f-416f-d0b9-4ecd9f9c7656",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

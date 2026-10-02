@@ -94,3 +94,19 @@ def test_upsert_cache_runs_insert_on_conflict(monkeypatch):
     assert params["identifier"] == "552081317"
     assert params["company_name"] == "SOCIETE AIR FRANCE"
     assert params["raw_data"] == '{"siren": "552081317"}'
+
+
+def test_upsert_cache_serializes_dates_in_raw_data(monkeypatch):
+    # Real VIES responses carry requestDate (a datetime.date) inside raw_data.
+    connection = _FakeConnection()
+    monkeypatch.setattr(cache, "get_engine", lambda: _FakeEngine(connection))
+
+    asyncio.run(
+        cache.upsert_cache(
+            "DE",
+            "123456789",
+            {"status": "valid", "raw_data": {"requestDate": date(2026, 10, 2), "valid": True}},
+        )
+    )
+
+    assert connection.executed[0][1]["raw_data"] == '{"requestDate": "2026-10-02", "valid": true}'
