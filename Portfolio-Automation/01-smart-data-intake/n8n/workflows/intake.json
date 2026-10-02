@@ -1,0 +1,127 @@
+{
+  "name": "Smart Data Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake-upload",
+        "responseMode": "onReceived",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "61a7c9b2-1f37-4df6-a707-4a9e3110c501",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "61a7c9b2-1f37-4df6-a707-4a9e3110c501"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/v1/intake/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "callback_url",
+              "value": "={{$execution.resumeUrl}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1ba2826a-94a8-4ac3-9145-02f58a5a0b02",
+      "name": "Upload CSV",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "id": "2c130f47-10d0-40c1-80fc-cb790b6ac703",
+      "name": "Wait for processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.clean_rows",
+        "options": {}
+      },
+      "id": "372665f4-8de5-4f50-8e2a-6dc9cc9ed804",
+      "name": "Split clean rows",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "REPLACE_WITH_SHEET_TAB_NAME",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4cb169b5-87cc-48fb-9baa-6097d87fd905",
+      "name": "Append clean row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1120, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Upload CSV", "type": "main", "index": 0}]]
+    },
+    "Upload CSV": {
+      "main": [[{"node": "Wait for processing", "type": "main", "index": 0}]]
+    },
+    "Wait for processing": {
+      "main": [[{"node": "Split clean rows", "type": "main", "index": 0}]]
+    },
+    "Split clean rows": {
+      "main": [[{"node": "Append clean row", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "52b51039-680f-45c7-a4a7-a9bd1f43b388",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -35,3 +35,25 @@ dárselas a Gemini: T02 29 · T03 31 · T04 34 · T05 38 · T06 38 passed + 2 de
 - `Select-String -Recurse` no existe en PowerShell 5.1 → `Get-ChildItem ... | Select-String` (T01, T04, T05, T07, T08).
 - EXACTO sin formato ruff → corregido (T01 `db.py`, T04 `process_enrich_job`).
 - T06 Paso 6 insertaba en el CI un paso que T12 ya agregó → ahora solo se verifica que exista.
+
+## Proyecto 01 — revisión Fase 2 + ítems 1–3 (Copilot, 2026-09-27)
+
+Bien: estructura D1, settings requeridas sin defecto, `.env.example` con `change_me_*`, auth Bearer
+copiada de 04, `/health` 503, gates verdes salvo el rojo esperado de rutas. Corregido por Claude:
+- Faltaba `01-smart-data-intake/.gitignore`: un `.env` en la raíz del proyecto se habría
+  commiteado (repo público). Agregado con `.env`.
+- El compose no tenía healthchecks, así que el Verify del ítem 2 ("all healthy") nunca podía
+  pasar. Agregados: `pg_isready`, `redis-cli ping`, `mc ready local` (lección DL-R06/R07 de P10).
+Pendiente de revisar en la Fase 3: las 4 rutas deben llevar `Depends(verify_api_key)`.
+
+## Proyecto 01 — revisión ítems 4–6 (+ ítem 7 en curso)
+
+Bien: las 4 rutas bajo `APIRouter(dependencies=[Depends(verify_api_key)])`; SQL siempre con
+parámetros; las 3 filas del README §9 dan clean/ambiguous/failed; duplicados → `error_log`;
+el callback a n8n no tumba el job; 14 tests en verde (el test de rutas ya pasa).
+Para corregir antes del commit (no bloquean a Copilot):
+- `normalize_row` no garantiza las 5 columnas: un CSV sin la columna `company` (o con otro
+  encabezado) hace fallar `insert_clean` con KeyError y marca TODO el upload como `failed`.
+  Arreglo: normalizar solo `first_name, last_name, email, phone, company` con `""` por defecto.
+- Al momento de la revisión: `ruff check` 14 errores y 3 archivos sin formato (trabajo en curso);
+  revisar que queden en verde al cerrar el ítem 7.

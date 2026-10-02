@@ -28,7 +28,8 @@ lo anota en el reporte y sigue. Estas decisiones mandan sobre T13 cuando lo cont
 
 - `config.py` con pydantic-settings. Requeridas y **sin valor por defecto**: `DATABASE_URL`,
   `REDIS_URL`, `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `API_KEY`.
-  Con defecto: `MINIO_BUCKET_NAME="intake-files"`, `N8N_CALLBACK_URL: str | None = None`.
+  Con defecto: `MINIO_BUCKET_NAME="intake-files"`, `N8N_CALLBACK_URL: str | None = None`,
+  `N8N_RESUME_BASE_URL: str | None = None`.
 - `.env.example` usa `change_me_<nombre>` como valor de las contraseñas (nunca `secret` ni
   `password`). `.env` va en `.gitignore`. Ningún secreto real en archivos versionados.
 - El compose toma todo de `${VAR}` (edita con las herramientas del editor, nunca con strings
@@ -71,23 +72,45 @@ lo anota en el reporte y sigue. Estas decisiones mandan sobre T13 cuando lo cont
   `total_rows`. Si `N8N_CALLBACK_URL` está definido, POST con `upload_id` y los conteos;
   si falla, se registra en el log y **no** marca el upload como fallido.
 
-## D7 — Docker apagado, Google Sheets sin credenciales
+## D7 — Disponibilidad de Docker (actualizada)
 
-El daemon de Docker no está disponible en esta máquina. Para los ítems cuyo `Verify:` necesita
-Docker (`docker compose up`, `psql`, consola MinIO, `redis-cli`) o Google Sheets:
-
-1. Escribe el artefacto igual.
-2. Verifica lo que se pueda sin Docker: `docker compose config -q` **y** revisa el valor
-   resuelto (no solo que no dé error); JSON válido; los tests unitarios con fakes.
-3. Deja el ítem en `- [ ]` con la línea `  - Written; Verify pending: needs Docker` (o
-   `needs Google credentials`) y **sigue con el siguiente ítem**. No lo marques `[x]`.
+El daemon está disponible en esta máquina (confirmado 2026-10-01 con Docker Engine 29.4.3 y
+Compose v5.1.3). La restricción anterior de aplazar verificaciones Docker ya no aplica aquí:
+ejecutar los checks reales y marcar cada ítem solo si su verificación pasa. Google Sheets aún
+requiere credenciales configuradas en n8n para validar una escritura real.
 
 Tests de integración: patrón de `docs/tasks/T06-tests-integracion-postgres.md` (testcontainers,
-marcador `integration`, se saltan con "Docker not available"). No necesitas que T06 esté hecha:
-copia el patrón del archivo de la tarea. `jobs_repo` de 04 **no** aplica a este proyecto.
+marcador `integration`). No necesitas que T06 esté hecha: copia el patrón del archivo de la tarea.
+`jobs_repo` de 04 **no** aplica a este proyecto.
 
-## D8 — Qué no hacer
+## D8 — n8n por ejecución y filas limpias
+
+- `POST /api/v1/intake/upload` acepta el campo multipart opcional `callback_url`.
+- Si se envía `callback_url`, el backend lo valida con `urllib.parse` contra
+  `N8N_RESUME_BASE_URL`: mismo esquema, host y puerto, y path que empieza por el path base.
+  URL inválida o base no configurada → HTTP 400 antes de guardar archivo o registro. No llamar
+  callbacks suministrados por el cliente sin validar.
+- `process_upload(upload_id, callback_url=None)` usa el callback validado; si es `None`, conserva
+  `N8N_CALLBACK_URL`. El callback incluye los campos de `StatusResponse`, `clean_rows` con las
+  filas persistidas de `clean_data`, y `clean_rows_count` para preservar el conteo del status.
+- El flujo tiene exactamente cinco nodos: Webhook → HTTP Request → Wait → Split Out → Google
+  Sheets. HTTP Request manda `callback_url={{$execution.resumeUrl}}`; Split Out divide
+  `body.clean_rows` y Google Sheets agrega cada fila.
+- Compose configura n8n con `WEBHOOK_URL=http://n8n:5678/` y un volumen persistente. El JSON no
+  contiene API keys, credenciales/tokens Google ni IDs reales de hojas; se configuran en n8n
+  después de importar.
+
+## D9 — Qué no hacer
 
 - No hagas la Fase 4 (CI, README raíz, RISK-ANALYSIS): la hace Claude.
 - No agregues Celery, Alembic, ni carpetas que el README no pida.
 - `frontend/`: solo `ruff check` y `ruff format`; sin tests de UI.
+
+## D10 — Imágenes y puertos locales para la verificación Docker
+
+- MinIO usa `chainguard/minio`, porque `minio/minio` ya no está disponible en Docker Hub. La
+  imagen Chainguard incluye `mc`: el healthcheck es `mc ready local` y el API depende de MinIO
+  con `condition: service_healthy`.
+- En este host el puerto 8000 ya lo usa otro proyecto: el API se publica como `8001:8000`.
+- El puerto host 5432 también estaba ocupado por PostgreSQL local; con autorización del usuario,
+  este proyecto publica Postgres como `5433:5432`. No se detiene ni modifica el servicio existente.

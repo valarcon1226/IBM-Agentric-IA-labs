@@ -61,8 +61,9 @@ CREATE TABLE api_logs (
 
 **Request:**
 ```bash
-curl -X POST "http://localhost:8000/api/v1/enrich" \
+curl -X POST "http://localhost:8002/api/v1/enrich" \
   -H "Content-Type: application/json" \
+  -H "Authorization: ******" \
   -d '{
     "companies": [
       {"country": "GB", "identifier": "00000006"},
@@ -98,7 +99,8 @@ curl -X POST "http://localhost:8000/api/v1/enrich" \
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/enrich/GB/00000006?force_refresh=true" \
+curl -X GET "http://localhost:8002/api/v1/enrich/GB/00000006?force_refresh=true" \
+  -H "Authorization: ******" \
   -H "Content-Type: application/json"
 ```
 
