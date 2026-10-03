@@ -8,7 +8,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 from typing import Optional
-from database import init_db, get_approved_jobs, update_job_status
+from database import init_db, get_approved_jobs, get_low_match_jobs, update_job_status
 import profile_paths
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
@@ -21,7 +21,7 @@ from cv_tailoring import Experience, TailoredProfile
 from archetypes import classify_archetype, load_template, needs_adjustment, ARCHETYPE_LABELS
 
 # Debajo de este match, no vale la pena gastar tokens generando un CV a medida.
-MIN_MATCH_THRESHOLD = 65
+MIN_MATCH_THRESHOLD = 70
 
 # CONFIGURACIÓN LLM — cadena de fallback compartida (llm_chain.py): Gemini -> Groq -> Cerebras ->
 # OpenRouter, cada una con su propia cuota diaria gratis. Antes era Ollama local (débil detectando
@@ -51,11 +51,17 @@ def _safe_filename(s: str) -> str:
     return s or "empresa"
 
 
+# Plan de estudio solo para matches de 50 a 89%: a los de 90+ les basta ver los gaps en el dashboard.
+STUDY_MIN, STUDY_MAX = 50, 90
+
+
 def generate_study_guide(job_title: str, company: str, gap_analysis: str, job_id):
     if not gap_analysis or gap_analysis.strip() == "":
         return
     os.makedirs("study_guides", exist_ok=True)
     tutor_filename = f"study_guides/STUDY_GUIDE_{_safe_filename(company)}_{job_id}.txt"
+    if os.path.exists(tutor_filename):
+        return
     print(f"[Tutor] Generando Crash Course para {company}...")
     try:
         text = llm_chain.invoke_text(
@@ -63,6 +69,7 @@ def generate_study_guide(job_title: str, company: str, gap_analysis: str, job_id
             human_template=TUTOR_HUMAN_TEMPLATE,
             variables={"job_title": job_title, "gap_analysis": gap_analysis},
             temperature=0.2,
+            local_only=True,  # una guía por vacante no vale cupo de nube: la hace el modelo del homelab
         )
     except llm_chain.AllProvidersExhausted:
         print("      [!] Los 4 proveedores LLM se quedaron sin cupo — se omite la guía de estudio para este job.")
@@ -203,6 +210,10 @@ async def run_tailor_agent():
         print("[ERROR] No se encontr master_profile.json")
         return
         
+    # 1b. Sin CV pero alcanzables (50-69%): solo plan de estudio, con el modelo local (gratis).
+    for job in get_low_match_jobs(STUDY_MIN, MIN_MATCH_THRESHOLD):
+        generate_study_guide(job['title'], job['company'], job['gap_analysis'], job['id'])
+
     # 2. Obtener trabajos aprobados
     jobs = get_approved_jobs()
     if not jobs:
@@ -233,7 +244,7 @@ async def run_tailor_agent():
         template = load_template(archetype)
 
         try:
-            if template and not needs_adjustment(template, job['gap_analysis']):
+            if template and not needs_adjustment(template, job['gap_analysis'], master_json_str):
                 print(f"   [TEMPLATE] {label} — el template ya cubre el gap analysis, sin llamar al LLM.")
                 tailored_result = TailoredProfile(
                     target_role_title=job['title'],
@@ -274,7 +285,8 @@ async def run_tailor_agent():
         # que el watchdog 24/7 no quede atascado reintentando el mismo job roto para siempre.
         try:
             # Generar Gua de Estudio (El Tutor)
-            generate_study_guide(job['title'], job['company'], job['gap_analysis'], job['id'])
+            if (job['match_percentage'] or 0) < STUDY_MAX:
+                generate_study_guide(job['title'], job['company'], job['gap_analysis'], job['id'])
 
             # Generar PDF con Playwright
             print(f"   [Imprimiendo] Renderizando HTML a PDF con Playwright...")

@@ -87,7 +87,15 @@ def _is_transient_error(e: Exception) -> bool:
 # Un poco por debajo del cupo real documentado arriba, a propósito.
 DAILY_BUDGETS = {
     "Gemini":     (18, None),
+    # Cupo gratis POR MODELO (verificado 2026-09-28: Groq 200k tokens/día por modelo; Gemini muestra
+    # el tope de cada modelo solo en AI Studio). Si un tope real es menor, el 429 salta al siguiente igual.
+    "Gemini-3.8":      (18, None),
+    "Gemini-3.7":      (18, None),
+    "Gemini-3.5":      (18, None),
+    "Gemini-3.5-lite": (18, None),
     "Groq":       (None, 180_000),
+    "Groq-qwen3.8":    (None, 180_000),
+    "Groq-oss-20b":    (None, 180_000),
     "Cerebras":   (4, None),
     "OpenRouter": (45, None),
 }
@@ -213,12 +221,13 @@ def print_budget_status():
         print(f"   - {name}: {' | '.join(parts) if parts else 'sin límite configurado'}{wait_note}")
 
 
-def _gemini():
-    return ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.1)
+def _gemini(model="gemini-3.6-flash"):
+    # sin esto, langchain reintenta un 429 con backoff por minutos y deja colgada la cadena
+    return ChatGoogleGenerativeAI(model=model, temperature=0.1, max_retries=1, timeout=90)
 
 
-def _groq():
-    return ChatGroq(model="openai/gpt-oss-120b", temperature=0.1)
+def _groq(model="openai/gpt-oss-120b"):
+    return ChatGroq(model=model, temperature=0.1)
 
 
 def _cerebras():
@@ -266,7 +275,13 @@ def _ollama():
 # PydanticOutputParser + JSON forzado por prompt (mismo patron que ya usan scout/tailor).
 _CHAIN = [
     ("Gemini", _gemini, True),
+    ("Gemini-3.8", lambda: _gemini("gemini-3.8-flash"), True),
+    ("Gemini-3.7", lambda: _gemini("gemini-3.7-flash"), True),
+    ("Gemini-3.5", lambda: _gemini("gemini-3.5-flash"), True),
     ("Groq", _groq, False),
+    ("Groq-qwen3.8", lambda: _groq("qwen/qwen3.8-27b"), False),
+    ("Groq-oss-20b", lambda: _groq("openai/gpt-oss-20b"), False),
+    ("Gemini-3.5-lite", lambda: _gemini("gemini-3.5-flash-lite"), True),
     ("Cerebras", _cerebras, False),
     ("OpenRouter", _openrouter, False),
     ("Ollama", _ollama, False),  # sin entrada en DAILY_BUDGETS -> sin tope
@@ -275,7 +290,7 @@ _CHAIN = [
 # Limites de requests/minuto conocidos (None = no se ha documentado un tope estricto en este
 # proyecto). Cerebras es el unico con un RPM realmente bajo (5) pese a tener el pool de tokens
 # mas grande, asi que se espacían las llamadas para no chocar ese techo innecesariamente.
-_RPM_LIMITS = {"Gemini": 15, "Groq": None, "Cerebras": 5, "OpenRouter": 20}
+_RPM_LIMITS = {"Gemini": 15, "Gemini-3.8": 15, "Gemini-3.7": 15, "Gemini-3.5": 15, "Gemini-3.5-lite": 15, "Groq": None, "Cerebras": 5, "OpenRouter": 20}
 _last_call_time = {}
 
 
@@ -300,7 +315,7 @@ def _set_temperature(llm, temperature: float):
 
 def invoke_structured(system_prompt: str, human_template: str, variables: dict,
                        pydantic_model: Type[T], temperature: float = 0.1,
-                       allow_local: bool = True) -> T:
+                       allow_local: bool = True, local_only: bool = False) -> T:
     """Invoca un prompt que debe devolver un objeto pydantic_model, probando Gemini -> Groq ->
     Cerebras -> OpenRouter en orden hasta que uno funcione. Levanta AllProvidersExhausted si
     los 4 fallan."""
@@ -309,6 +324,8 @@ def invoke_structured(system_prompt: str, human_template: str, variables: dict,
     tokens_estimate = _estimate_tokens(system_prompt, human_template, str(variables))
 
     for name, build_fn, structured_native in _CHAIN:
+        if local_only and name != "Ollama":
+            continue  # tareas de volumen: nunca gastan cupo de la nube
         if name == "Ollama" and not allow_local:
             # qwen3:4b sirve para no frenar, pero puntúa todo alto (85%+): para juicios donde la
             # calidad importa más que la continuidad, el llamador prefiere esperar cupo.
@@ -372,12 +389,16 @@ def _content_to_text(content) -> str:
     return str(content)
 
 
-def invoke_text(system_prompt: str, human_template: str, variables: dict, temperature: float = 0.2) -> str:
-    """Igual que invoke_structured pero para texto plano (sin schema). Devuelve el string de la respuesta."""
+def invoke_text(system_prompt: str, human_template: str, variables: dict, temperature: float = 0.2,
+                local_only: bool = False) -> str:
+    """Igual que invoke_structured pero para texto plano (sin schema). Devuelve el string de la respuesta.
+    local_only=True usa solo Ollama: para tareas de volumen que no deben gastar cupo de la nube."""
     last_error: Optional[Exception] = None
     tokens_estimate = _estimate_tokens(system_prompt, human_template, str(variables))
 
     for name, build_fn, _structured in _CHAIN:
+        if local_only and name != "Ollama":
+            continue
         if not _budget_available(name):
             print(f"   [PRESUPUESTO] {name} ya alcanzó su cupo diario reservado, saltando sin llamarlo...")
             continue

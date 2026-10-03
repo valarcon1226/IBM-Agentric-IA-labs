@@ -1,0 +1,27 @@
+{
+  "_nota": "Solo herramientas que Valentina ya usa a diario: aplican igual a cualquier rol y no necesitan estudio, sino agregarlas al perfil. Todo lo demás lo genera learning_plan.py por skill + tipo de rol a partir de las descripciones de las vacantes.",
+  "claude code": {
+    "hours_to_mvp": 0,
+    "what_to_learn": ["Ya lo usas a diario: agrégalo a tu perfil y CV", "Prepara 2 ejemplos concretos de cómo lo usas (skills, hooks, subagentes, MCP)"],
+    "practice_project": "Ninguno: describe en el CV cómo construiste jobHunter con agentes de código.",
+    "free_resources": ["docs.claude.com (Claude Code)"]
+  },
+  "copilot": {
+    "hours_to_mvp": 2,
+    "what_to_learn": ["Mismo concepto que Claude Code: autocompletado + chat + agente en el IDE", "Úsalo 1 hora en VS Code en un proyecto real", "Saber comparar herramientas de IA para programar"],
+    "practice_project": "Ninguno: basta con usarlo y mencionarlo junto a Claude Code en el perfil.",
+    "free_resources": ["docs.github.com/copilot (plan gratis)"]
+  },
+  "cursor": {
+    "hours_to_mvp": 2,
+    "what_to_learn": ["Cursor es un editor (fork de VS Code) con IA integrada", "Probar el modo Agent en un proyecto propio", "Reglas de proyecto (.cursor/rules)"],
+    "practice_project": "Ninguno: úsalo una tarde y agrégalo al perfil como herramienta de desarrollo asistido por IA.",
+    "free_resources": ["docs.cursor.com (plan gratis)"]
+  },
+  "ai-assisted development tools": {
+    "hours_to_mvp": 0,
+    "what_to_learn": ["Ya lo haces (Claude Code, Codex, Gemini): agrégalo al perfil con ejemplos"],
+    "practice_project": "Ninguno.",
+    "free_resources": []
+  }
+}

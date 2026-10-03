@@ -214,40 +214,45 @@ def search_jobbers(target_role: str) -> List[Dict]:
 # ORQUESTADOR DE BÚSQUEDA
 # ==========================================
 
+SEARCH_LOCATIONS = ["Colombia", "Latin America", "United States"]  # EE.UU.: solo pasan las de contractor sin papeles (job_filters)
+
+
 def autonomous_job_search(target_role: str) -> List[Dict]:
     print(f"\n[START] Iniciando rastreo con JobSpy (LinkedIn, Indeed, Glassdoor) para: {target_role}")
     all_jobs = []
     
-    try:
-        from jobspy import scrape_jobs
-        jobs_df = scrape_jobs(
-            site_name=["linkedin", "indeed", "glassdoor"],
-            search_term=target_role,
-            location="Remote",
-            results_wanted=20,
-            country_indeed='USA',
-            is_remote=True,
-            # sin esto LinkedIn devuelve description=NaN y el scout evaluaba solo por el título
-            linkedin_fetch_description=True
-        )
-        
-        if jobs_df is not None and not jobs_df.empty:
-            import re
-            negative_pattern = r'\b(senior|sr|sr\.|lead|principal|staff|vp|vice\s?president|director|manager|head|chief|architect)\b'
-            
-            for _, row in jobs_df.iterrows():
-                title = str(row.get('title', ''))
-                if not re.search(negative_pattern, title.lower()):
-                    all_jobs.append({
-                        "title": title,
-                        "company": str(row.get('company', '')),
-                        "url": str(row.get('job_url', '')),
-                        "description": str(row.get('description', ''))
-                    })
-                else:
-                    pass
-    except Exception as e:
-        print(f"[ERROR] JobSpy falló: {e}")
+    # 2026-10-01: con location="Remote" LinkedIn traía remotos de cualquier país (Canadá, EE.UU., India,
+    # Francia...) y ella solo puede trabajar desde Colombia. Se busca donde la puedan contratar.
+    # Indeed/Glassdoor salen: con country_indeed='USA' solo traían EE.UU. y Glassdoor daba 403.
+    import re
+    negative_pattern = r'\b(senior|sr|sr\.|lead|principal|staff|vp|vice\s?president|director|manager|head|chief|architect)\b'
+    for location in SEARCH_LOCATIONS:
+        try:
+            from jobspy import scrape_jobs
+            jobs_df = scrape_jobs(
+                site_name=["linkedin"],
+                search_term=target_role,
+                location=location,
+                results_wanted=20,
+                is_remote=True,
+                # sin esto LinkedIn devuelve description=NaN y el scout evaluaba solo por el título
+                linkedin_fetch_description=True
+            )
+        except Exception as e:
+            print(f"[ERROR] JobSpy falló ({location}): {e}")
+            continue
+        if jobs_df is None or jobs_df.empty:
+            continue
+        for _, row in jobs_df.iterrows():
+            title = str(row.get('title', ''))
+            if not re.search(negative_pattern, title.lower()):
+                all_jobs.append({
+                    "title": title,
+                    "company": str(row.get('company', '')),
+                    "url": str(row.get('job_url', '')),
+                    "description": str(row.get('description', '')),
+                    "location": "" if str(row.get('location', '')) == "nan" else str(row.get('location', '')),
+                })
         
     print(f"\n[DONE] Búsqueda JobSpy terminada. Quedaron {len(all_jobs)} vacantes tras el Filtro Anti-Senior.")
     return all_jobs
