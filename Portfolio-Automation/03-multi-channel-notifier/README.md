@@ -57,12 +57,17 @@ CREATE TABLE delivery_logs (
 
 ## 5. API Endpoints
 
+All endpoints below require `Authorization: Bearer $API_KEY` except `GET /health`. With
+`.env.example` as started by `docker compose --env-file .env.example up -d`, `API_KEY` is
+`change_me_api_key` and the API is published on host port `8003` (see section 6).
+
 ### Send Notification
 **POST /api/v1/notify**
 
 **Request:**
 ```bash
-curl -X POST "http://localhost:8000/api/v1/notify" \
+curl -X POST "http://localhost:8003/api/v1/notify" \
+  -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "template_name": "welcome_email",
@@ -95,7 +100,8 @@ curl -X POST "http://localhost:8000/api/v1/notify" \
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/notifications/987e6543-e21b-34d3-b456-426614174111"
+curl -X GET "http://localhost:8003/api/v1/notifications/987e6543-e21b-34d3-b456-426614174111" \
+  -H "Authorization: Bearer $API_KEY"
 ```
 
 **Response:**
@@ -125,7 +131,8 @@ curl -X GET "http://localhost:8000/api/v1/notifications/987e6543-e21b-34d3-b456-
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/notifications?status=failed&since=2024-01-01"
+curl -X GET "http://localhost:8003/api/v1/notifications?status=failed&since=2024-01-01" \
+  -H "Authorization: Bearer $API_KEY"
 ```
 
 **Response:**
@@ -148,7 +155,8 @@ curl -X GET "http://localhost:8000/api/v1/notifications?status=failed&since=2024
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/templates"
+curl -X GET "http://localhost:8003/api/v1/templates" \
+  -H "Authorization: Bearer $API_KEY"
 ```
 
 **Response:**
@@ -164,12 +172,50 @@ curl -X GET "http://localhost:8000/api/v1/templates"
 
 ## 6. Docker Services
 
-| Service | Image/Dockerfile | Ports | Depends On |
+| Service | Image/Dockerfile | Host Port | Depends On |
 |---------|------------------|-------|------------|
-| `api` | `Dockerfile` | 8000:8000 | `postgres`, `redis` |
-| `worker` | `Dockerfile` | - | `api`, `redis` |
-| `postgres` | `postgres:15-alpine`| 5432:5432 | - |
-| `redis` | `redis:7-alpine` | 6379:6379 | - |
+| `api` | `Dockerfile` | `8003:8000` | `postgres`, `redis` |
+| `worker` | `Dockerfile` | - | `postgres`, `redis` |
+| `postgres` | `postgres:15-alpine`| `5435:5432` | - |
+| `redis` | `redis:7-alpine` | `6380:6379` | - |
+| `mailpit` | `axllent/mailpit` | `8026:8025` (UI; SMTP port not published) | - |
+| `webhook-sink` | `mendhak/http-https-echo` | - (internal only) | - |
+
+Ports 8000/5432/6379 are already used by projects `01` and `02` in this portfolio, hence the
+`8003`/`5435`/`6380` host mappings above (DECISIONES-03 N1).
+
+### Development infrastructure (no real credentials needed)
+
+`.env.example` wires every channel to a local, credential-free sink so the whole flow — API →
+Celery → channel task → "external" service — can be exercised end-to-end without a SendGrid
+account, a real Slack/Discord webhook, or a Telegram bot:
+
+- **`mailpit`** acts as the SMTP server (`SMTP_SERVER=mailpit`, `SMTP_PORT=1025`, no auth
+  required). Every email the `email` channel sends is visible in its web UI at
+  **http://localhost:8026** (and its JSON API at `http://localhost:8026/api/v1/messages`) —
+  nothing leaves the Docker network.
+- **`webhook-sink`** (`mendhak/http-https-echo`) answers `200 OK` to any POST and echoes the
+  request back. `SLACK_WEBHOOK_URL`, `DISCORD_WEBHOOK_URL`, and `TELEGRAM_API_BASE` all point at
+  it by default, so the `slack`, `discord`, and `telegram` channels deliver successfully without
+  any real webhook or bot token.
+
+To send through the real services instead, edit your own `.env` (never `.env.example`, and never
+commit it) with real values and restart the stack:
+
+```env
+SMTP_SERVER=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASSWORD=<your real SendGrid API key>
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/<your real Slack webhook>
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/<your real Discord webhook>
+TELEGRAM_BOT_TOKEN=<your real Telegram bot token>
+TELEGRAM_API_BASE=https://api.telegram.org
+```
+
+Only the channels you configure are accepted by `/api/v1/notify` (`app.config.configured_channels`,
+DECISIONES-03 N6) — requesting an unconfigured channel returns `422`, so a `.env` with only
+`SMTP_*` filled in, for example, still works for `channels: ["email"]`.
 
 ## 7. File Structure
 ```text
