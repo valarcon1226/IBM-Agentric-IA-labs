@@ -10,11 +10,12 @@
 | Health check (DB + Redis, 200/503)                | Working, tested |
 | API-key authentication on `/api/v1/*`             | Working, tested |
 | Clear 400s for unparseable files; no internal details in 500s | Working, tested |
-| Async job status and result retrieval             | **Stubbed** — job state is not persisted yet |
-| User-defined schemas usable in `/validate`        | **Not yet** — schemas are kept in memory only |
-| Excel / JSON input                                | **Not yet** — CSV only |
+| Async job status and result retrieval (Postgres)  | Working, tested (unit + integration) |
+| User-defined schemas persisted and usable in `/validate` | Working, tested (unit + integration) |
+| CSV, Excel (.xlsx) and JSON input                 | Working, tested |
+| Full stack run (`docker compose up`) end to end   | **Not verified yet** (DC-JOB-004, manual) |
 
-**Evidence:** 27 passing tests, 58% line coverage, `ruff` + `mypy` clean, run in CI on every push.
+**Evidence:** 53 passing unit/API tests + 3 integration tests (real Postgres, run in CI), 84% line coverage, `ruff` + `mypy` clean, run in CI on every push.
 Risks and scenario coverage: [`docs/RISK-ANALYSIS.md`](docs/RISK-ANALYSIS.md) ·
 [`docs/TRACEABILITY-MATRIX.md`](docs/TRACEABILITY-MATRIX.md).
 
@@ -96,8 +97,9 @@ API_KEY=change-me
 ```
 
 ## 5. Database Schema
-Applied by `init-db.sql` (mounted into the `db` container). The tables exist today; the API does
-not read or write them yet — see "Current status" (jobs and schemas are still in memory).
+Applied by `init-db.sql` (mounted into the `db` container). `jobs` is written by the API
+(`PENDING`) and by the Celery worker (`PROCESSING` → `COMPLETED`/`FAILED`); `schemas` stores
+user-defined validation schemas.
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -142,7 +144,8 @@ schema/job, `422` body does not match the schema, `500` returns only
 `"Internal processing error"` (details go to the server log).
 
 ### 6.1 POST /api/v1/clean
-Cleans a CSV. Files under `MAX_SYNC_SIZE_MB` (default 5) are cleaned inline; larger files are
+Cleans a `.csv`, `.xlsx` or `.json` (array of records) file; other extensions return `415`.
+Files under `MAX_SYNC_SIZE_MB` (default 5) are cleaned inline; larger files are
 stored in MinIO and queued to Celery.
 
 `options` keys (all optional): `remove_empty_rows` (default `true`), `remove_empty_cols`
@@ -166,8 +169,9 @@ curl -X POST "http://localhost:8000/api/v1/clean" \
 ```
 
 ### 6.2 POST /api/v1/validate
-Validates inline rows against a schema. Today only the built-in `user_schema`
-(`id: int`, `name: str`, `age: int >= 0`) is available.
+Validates inline rows against a schema. `schema_id` is either the built-in `user_schema`
+(`id: int`, `name: str`, `age: int >= 0`) or the `id` of a schema created with
+`POST /api/v1/schemas`.
 ```bash
 curl -X POST "http://localhost:8000/api/v1/validate" \
   -H "Authorization: Bearer $API_KEY" \
@@ -229,15 +233,43 @@ curl -X POST "http://localhost:8000/api/v1/upload" \
 {"status": "success", "file_url": "uploads/1234-5678_massive_dataset.csv", "size": 104857600}
 ```
 
-### 6.6 GET /api/v1/jobs/{job_id} — *stub*
-Job state is not persisted yet (DC-R04), so this returns `{"job_id": "...", "status": "UNKNOWN"}`
-for real job ids. Target: read the `jobs` table.
+### 6.6 GET /api/v1/jobs/{job_id}
+```bash
+curl "http://localhost:8000/api/v1/jobs/3f1c9a52-8b0e-4d2a-9c7e-5a1b2c3d4e5f" \
+  -H "Authorization: Bearer $API_KEY"
+```
+**Response:**
+```json
+{
+  "job_id": "3f1c9a52-8b0e-4d2a-9c7e-5a1b2c3d4e5f",
+  "status": "COMPLETED",
+  "operation_type": "clean",
+  "error_message": null,
+  "created_at": "2026-09-24T10:00:00Z",
+  "started_at": "2026-09-24T10:00:02Z",
+  "completed_at": "2026-09-24T10:00:15Z"
+}
+```
+`status` is `PENDING` | `PROCESSING` | `COMPLETED` | `FAILED`. Unknown id → `404`; malformed id → `422`.
 
-### 6.7 GET /api/v1/jobs/{job_id}/result — *stub*
-Returns `404` for unknown jobs, `400` for jobs not `COMPLETED`, otherwise
-`{"job_id": "...", "download_url": "<presigned MinIO URL>"}`. Same limitation as 6.6.
+### 6.7 GET /api/v1/jobs/{job_id}/result
+```bash
+curl "http://localhost:8000/api/v1/jobs/3f1c9a52-8b0e-4d2a-9c7e-5a1b2c3d4e5f/result" \
+  -H "Authorization: Bearer $API_KEY"
+```
+**Response:**
+```json
+{
+  "job_id": "3f1c9a52-8b0e-4d2a-9c7e-5a1b2c3d4e5f",
+  "download_url": "http://minio:9000/data-cleaning-api/results/cleaned_3f1c9a52-....csv?X-Amz-Signature=...",
+  "expires_in": 3600
+}
+```
+Unknown job → `404`; job not `COMPLETED` → `400`. Results are always CSV.
 
-### 6.8 POST /api/v1/schemas — *in memory*
+### 6.8 POST /api/v1/schemas
+`fields` maps column → type, one of `int`, `float`, `str`, `bool`, `datetime`
+(anything else → `422`). A duplicate `name` → `409`.
 ```bash
 curl -X POST "http://localhost:8000/api/v1/schemas" \
   -H "Authorization: Bearer $API_KEY" \
@@ -246,19 +278,19 @@ curl -X POST "http://localhost:8000/api/v1/schemas" \
 ```
 **Response:**
 ```json
-{"status": "success", "schema_id": "sch_a75301b1",
- "data": {"id": "sch_a75301b1", "name": "customers", "fields": {"id": "int", "email": "str"}}}
+{"status": "success", "schema_id": "9b2e4c1a-7d3f-4e8a-b5c6-0d1e2f3a4b5c",
+ "data": {"id": "9b2e4c1a-7d3f-4e8a-b5c6-0d1e2f3a4b5c", "name": "customers",
+          "fields": {"id": "int", "email": "str"}}}
 ```
-Stored schemas are lost on restart and cannot yet be used by `/validate` (DC-R07).
 
-### 6.9 GET /api/v1/schemas — *in memory*
+### 6.9 GET /api/v1/schemas
 ```bash
 curl "http://localhost:8000/api/v1/schemas" -H "Authorization: Bearer $API_KEY"
 ```
 **Response:**
 ```json
-{"status": "success", "schemas": [{"id": "sch_a75301b1", "name": "customers",
-                                   "fields": {"id": "int", "email": "str"}}]}
+{"status": "success", "schemas": [{"id": "9b2e4c1a-7d3f-4e8a-b5c6-0d1e2f3a4b5c",
+                                   "name": "customers", "fields": {"id": "int", "email": "str"}}]}
 ```
 
 ## 7. Docker Services
@@ -279,13 +311,17 @@ Defined in `docker-compose.yml`. All services read `.env` (copy `.env.example`).
 │   ├── api/routes/        clean, validate, transform, enrich, upload, jobs, schemas
 │   ├── core/              config.py (typed settings), database.py, security.py (API key), worker.py (Celery)
 │   ├── models/            db.py (ORM), domain.py
-│   ├── services/          cleaner, transformer, enricher, storage (MinIO), tasks (Celery tasks)
+│   ├── services/          cleaner, transformer, enricher, storage (MinIO), tasks (Celery tasks), jobs_repo, schemas_repo, readers
 │   └── main.py            app, router registration, /health
 ├── tests/
 │   ├── conftest.py        inert settings for tests
 │   ├── test_api.py        tests against the real app.main:app
 │   ├── test_cleaner.py
-│   └── test_config.py     .env.example ↔ Settings contract
+│   ├── test_config.py     .env.example ↔ Settings contract
+│   ├── test_models.py
+│   ├── test_tasks.py
+│   ├── test_transformations.py
+│   └── integration/       real Postgres via testcontainers (pytest -m integration)
 ├── docs/                  RISK-ANALYSIS.md, TRACEABILITY-MATRIX.md
 ├── .env.example
 ├── docker-compose.yml

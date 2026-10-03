@@ -200,3 +200,49 @@ prueba una respuesta real de Companies House o INSEE.
 - README: los `curl` usan `Bearer $API_KEY` como en 01.
 - Tras los cambios: pytest 62 passed (6 deseleccionados), integración/E2E 5 passed contra el
   stack reconstruido, ruff y mypy limpios.
+
+## Seguimiento (dos ajustes menores post-revisión)
+
+1. **Warning de `AsyncLimiter` reutilizado entre loops.** Cada test corre su propio event loop
+   (`asyncio.run`), pero `companies_house._limiter` e `insee._limiter` se crean una sola vez al
+   importar el módulo, así que se reutilizaban entre loops y `aiolimiter` emitía
+   `RuntimeWarning: This AsyncLimiter instance is being re-used across loops` (11 veces en la
+   corrida por defecto). Arreglado solo en tests: `tests/conftest.py` ahora tiene un fixture
+   `autouse` (`_fresh_registry_limiters`) que reemplaza `_limiter` en ambos módulos por una
+   instancia nueva (mismo rate: 600/300s y 30/60s) antes de cada test con `monkeypatch`. El
+   código de producción no se tocó: sigue usando un único limiter por módulo, compartido entre
+   requests del mismo proceso, como exige DECISIONES-02 E5.
+2. **Un error de caché/BD en un ítem no debe tumbar todo el lote (DECISIONES-02 E8).**
+   `app/enrichment.py::enrich` ahora envuelve `cache.read_cache` y `cache.upsert_cache` en
+   `try/except Exception`, registra el fallo con `logging.exception` y relanza como la nueva
+   excepción `CacheError`. En `POST /api/v1/enrich` (`app/main.py::_enrich_for_batch`) un
+   `CacheError` se convierte en `CompanyResult(status="error", error="Cache temporarily
+   unavailable")` para ese ítem, igual que ya pasaba con `UpstreamError`; el resto del lote
+   sigue su curso. En `GET /api/v1/enrich/{country}/{identifier}` un `CacheError` ahora da
+   `HTTPException(503, "Cache temporarily unavailable")` en vez de un 500 sin manejar.
+   Tests nuevos: `tests/test_enrichment.py::test_enrich_cache_read_failure_raises_cache_error`,
+   `test_enrich_cache_upsert_failure_raises_cache_error`;
+   `tests/test_enrich_api.py::test_batch_enrich_one_item_with_cache_error_does_not_abort_batch`,
+   `test_single_enrich_cache_failure_returns_503`.
+
+### Gates tras el seguimiento
+
+```
+python -m ruff check app tests
+All checks passed!
+
+python -m ruff format --check app tests
+30 files already formatted
+
+python -m mypy app
+Success: no issues found in 15 source files
+
+python -m pytest -q
+..................................................................       [100%]
+66 passed, 6 deselected, 1 warning in 0.97s
+```
+
+El único warning restante es `StarletteDeprecationWarning` (uso de `httpx` con
+`starlette.testclient`, preexistente y sin relación con este seguimiento); los 11 warnings de
+`AsyncLimiter` desaparecieron. Pasó de 62 a 66 tests (los 4 nuevos de este seguimiento); no se
+modificó ni se saltó ningún test existente.

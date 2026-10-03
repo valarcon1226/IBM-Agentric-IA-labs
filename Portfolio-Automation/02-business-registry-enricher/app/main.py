@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import ValidationError
 
 from app.database import check_dependencies
-from app.enrichment import NotFoundError, UpstreamError, enrich
+from app.enrichment import CacheError, NotFoundError, UpstreamError, enrich
 from app.models import (
     CompanyRequest,
     CompanyResult,
@@ -45,6 +45,13 @@ async def _enrich_for_batch(company: CompanyRequest) -> CompanyResult:
             status="error",
             error="Registry temporarily unavailable",
         )
+    except CacheError:
+        return CompanyResult(
+            country=company.country,
+            identifier=company.identifier,
+            status="error",
+            error="Cache temporarily unavailable",
+        )
     return CompanyResult(
         country=company.country,
         identifier=company.identifier,
@@ -82,6 +89,8 @@ async def enrich_single(
         raise HTTPException(status_code=404, detail="Company not found") from exc
     except UpstreamError as exc:
         raise HTTPException(status_code=502, detail="Registry temporarily unavailable") from exc
+    except CacheError as exc:
+        raise HTTPException(status_code=503, detail="Cache temporarily unavailable") from exc
 
     return SingleEnrichResponse(
         country=company.country,
