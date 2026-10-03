@@ -129,3 +129,33 @@ def test_enrich_registry_error_is_never_cached(monkeypatch):
         asyncio.run(enrichment.enrich("GB", "00000006"))
 
     assert upserts == []
+
+
+def test_enrich_cache_read_failure_raises_cache_error(monkeypatch):
+    # DECISIONES-02 E8: a DB error on cache read must surface as CacheError, not bubble up
+    # as an unhandled exception.
+    async def fake_read_cache(country, identifier):
+        raise RuntimeError("connection refused")
+
+    monkeypatch.setattr(cache, "read_cache", fake_read_cache)
+
+    with pytest.raises(enrichment.CacheError):
+        asyncio.run(enrichment.enrich("GB", "00000006"))
+
+
+def test_enrich_cache_upsert_failure_raises_cache_error(monkeypatch):
+    async def fake_read_cache(country, identifier):
+        return None
+
+    async def fake_upsert(country, identifier, data):
+        raise RuntimeError("connection refused")
+
+    async def fake_lookup(identifier):
+        return _success_data()
+
+    monkeypatch.setattr(cache, "read_cache", fake_read_cache)
+    monkeypatch.setattr(cache, "upsert_cache", fake_upsert)
+    monkeypatch.setattr(companies_house, "lookup", fake_lookup)
+
+    with pytest.raises(enrichment.CacheError):
+        asyncio.run(enrichment.enrich("GB", "00000006"))

@@ -1,7 +1,7 @@
 # Traceability Matrix — Data Cleaning & Transformation API
 
 **Analysis date:** 2026-09-24 (updated after auth, error-handling and config fixes)
-**Status:** 24 of 33 scenarios automated by 27 passing tests. The other 9 are `Not Implemented` and have no test path listed.
+**Status:** 32 of 33 scenarios automated by 53 unit/API tests and 3 integration tests. The other 1 are `Not Implemented` and have no test path listed.
 
 | Area       | Risk   | Scenario ID | Scenario                                                   | Priority | Decision       | Status          | Automated test                                                  |
 | ---------- | ------ | ----------- | ---------------------------------------------------------- | -------- | -------------- | --------------- | --------------------------------------------------------------- |
@@ -20,31 +20,30 @@
 | Cleaning   | DC-R02 | DC-CLEAN-002 | Numeric nulls interpolated                                | High     | Automate       | Implemented     | `tests/test_cleaner.py::test_fill_na_interpolate`               |
 | Cleaning   | DC-R02 | DC-CLEAN-003 | Surrounding whitespace trimmed                            | Medium   | Automate       | Implemented     | `tests/test_cleaner.py::test_trim_whitespace`                   |
 | Cleaning   | DC-R02 | DC-CLEAN-004 | Fully empty rows dropped                                  | Medium   | Automate       | Implemented     | `tests/test_cleaner.py::test_remove_empty_rows`                 |
-| Cleaning   | DC-R02 | DC-CLEAN-005 | `handle_nulls=drop` / `fill_value` behave as documented   | High     | Automate       | Not Implemented |                                                                 |
+| Cleaning   | DC-R02 | DC-CLEAN-005 | `handle_nulls=drop` / `fill_value` behave as documented   | High     | Automate       | Implemented     | `tests/test_transformations.py::test_handle_nulls_drop_removes_incomplete_rows`, `tests/test_transformations.py::test_handle_nulls_fill_value_uses_given_value` |
 | Cleaning   | DC-R05 | DC-CLEAN-006 | Malformed options JSON returns 400                        | High     | Automate       | Implemented     | `tests/test_api.py::test_clean_rejects_malformed_options_json`  |
 | Cleaning | DC-R05 | DC-CLEAN-007 | Unparseable CSV returns a 4xx with a usable message | High | Automate | Implemented | `tests/test_api.py::test_clean_rejects_empty_file`, `tests/test_api.py::test_clean_rejects_non_utf8_file` |
 | Cleaning   | DC-R06 | DC-CLEAN-008 | File above threshold is queued, not processed inline      | High     | Automate       | Implemented     | `tests/test_api.py::test_clean_large_file_is_queued_not_processed_inline` |
-| Cleaning   | DC-R09 | DC-CLEAN-009 | Excel and JSON uploads accepted                           | High     | Automate       | Not Implemented |                                                                 |
+| Cleaning   | DC-R09 | DC-CLEAN-009 | Excel and JSON uploads accepted                           | High     | Automate       | Implemented     | `tests/test_api.py::test_clean_accepts_xlsx`, `tests/test_api.py::test_clean_accepts_json_records`, `tests/test_api.py::test_clean_rejects_unsupported_extension` |
 | Validation | DC-R07 | DC-VAL-001  | Valid rows reported as `valid`                             | High     | Automate       | Implemented     | `tests/test_api.py::test_validate_valid_data`                   |
 | Validation | DC-R07 | DC-VAL-002  | Invalid rows reported with failure cases                   | High     | Automate       | Implemented     | `tests/test_api.py::test_validate_invalid_data`                 |
 | Validation | DC-R07 | DC-VAL-003  | Unknown schema returns 404                                 | Medium   | Automate       | Implemented     | `tests/test_api.py::test_validate_unknown_schema_returns_404`   |
-| Validation | DC-R07 | DC-VAL-004  | Schema created via `/schemas` is usable in `/validate`     | High     | Automate       | Not Implemented |                                                                 |
+| Validation | DC-R07 | DC-VAL-004  | Schema created via `/schemas` is usable in `/validate`     | High     | Automate       | Implemented     | `tests/test_api.py::test_created_schema_is_usable_in_validate` |
 | Schemas    | DC-R07 | DC-SCH-001  | Schema can be created                                      | Medium   | Automate       | Implemented     | `tests/test_api.py::test_create_schema`                         |
 | Schemas    | DC-R07 | DC-SCH-002  | Schemas can be listed                                      | Low      | Automate       | Implemented     | `tests/test_api.py::test_list_schemas`                          |
-| Schemas    | DC-R07 | DC-SCH-003  | Schemas survive a restart (persisted in Postgres)          | High     | Automate       | Not Implemented |                                                                 |
-| Jobs       | DC-R04 | DC-JOB-001  | Unknown job result returns 404                             | Medium   | Automate       | Implemented     | `tests/test_api.py::test_unknown_job_result_returns_404`        |
-| Jobs       | DC-R04 | DC-JOB-002  | Job moves PROCESSING → COMPLETED / FAILED                  | Critical | Automate       | Not Implemented |                                                                 |
-| Jobs       | DC-R04 | DC-JOB-003  | Completed job returns a working download URL               | High     | Automate       | Not Implemented |                                                                 |
+| Schemas    | DC-R07 | DC-SCH-003  | Schemas survive a restart (persisted in Postgres)          | High     | Automate       | Implemented     | `tests/integration/test_schemas_repo.py::test_schema_persists_and_duplicate_is_rejected` |
+| Jobs       | DC-R04 | DC-JOB-001  | Unknown job returns 404; malformed id returns 422          | Medium   | Automate       | Implemented     | `tests/test_api.py::test_unknown_job_returns_404`, `tests/test_api.py::test_invalid_job_id_returns_422` |
+| Jobs       | DC-R04 | DC-JOB-002  | Job moves PROCESSING → COMPLETED / FAILED                  | Critical | Automate       | Implemented     | `tests/test_tasks.py::test_clean_task_marks_completed_with_output_path`, `tests/test_tasks.py::test_clean_task_marks_failed_on_error`, `tests/integration/test_jobs_repo.py::test_job_lifecycle_is_persisted` |
+| Jobs       | DC-R04 | DC-JOB-003  | Completed job returns a working download URL               | High     | Automate       | Implemented     | `tests/test_api.py::test_job_result_returns_presigned_url`, `tests/test_api.py::test_job_result_not_completed_returns_400` |
 | Jobs       | DC-R04 | DC-JOB-004  | Full stack: upload → async clean → poll → download         | Critical | Manual         | Not Implemented |                                                                 |
-| Transform  | DC-R11 | DC-TRF-001  | pivot / melt / merge / split / aggregate produce expected shapes | Medium | Automate    | Not Implemented |                                                                 |
-| Enrich     | DC-R11 | DC-ENR-001  | Email validation and phone normalization flag bad values   | Medium   | Automate       | Not Implemented |                                                                 |
+| Transform  | DC-R11 | DC-TRF-001  | pivot / melt / merge / split / aggregate produce expected shapes | Medium | Automate    | Implemented     | `tests/test_transformations.py` (5 tests: pivot, melt, merge, split, aggregate) |
+| Enrich     | DC-R11 | DC-ENR-001  | Email validation and phone normalization flag bad values   | Medium   | Automate       | Implemented     | `tests/test_transformations.py::test_validate_emails_flags_invalid_and_missing`, `tests/test_transformations.py::test_normalize_phones_formats_valid_and_flags_invalid` |
 
 ## Coverage interpretation
 
-Every scenario maps to at least one risk in [`RISK-ANALYSIS.md`](RISK-ANALYSIS.md). Two Critical risks (DC-R02 partially, DC-R04)
-still have open scenarios, so this service is **not production-ready**. It is
-a working synchronous cleaning/validation API with a documented roadmap for auth, job persistence,
-and multi-format input.
+Every scenario maps to at least one risk in [`RISK-ANALYSIS.md`](RISK-ANALYSIS.md). No Critical
+risk has an open automated scenario. The remaining gap is DC-JOB-004 (manual full-stack run with
+Docker Compose), which must pass before calling the service production-ready.
 
-Line coverage from `pytest --cov` is 58%. That number reflects executed lines, not verified
+Line coverage from `pytest --cov` is 84%. That number reflects executed lines, not verified
 behaviour; this matrix is the source of truth for the second.
