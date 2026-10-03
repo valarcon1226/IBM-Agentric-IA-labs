@@ -5,6 +5,7 @@ para (re)generar los 3 templates, y tailor_agent.py para cómo se usan.
 """
 import json
 import os
+import re
 
 ARCHETYPES = ["ai_engineer", "forward_deployed_engineer", "qa_automation"]
 
@@ -71,13 +72,16 @@ def classify_archetype(job_title: str) -> str:
     explícita de QA/Testing van a QA; todo lo demás (AI Engineer, Full Stack AI, Data Engineer,
     Software Engineer genérico, AI Native Builder...) cae en el catch-all 'ai_engineer', que es
     el perfil primario del candidato."""
-    t = (job_title or "").lower()
+    t = (job_title or "").lower().replace("-", " ")
 
     if "forward deployed" in t:
         return "forward_deployed_engineer"
 
-    qa_signals = ["qa automation", "test automation", "test engineer", "automation tester", "software test"]
-    if any(sig in t for sig in qa_signals):
+    # 2026-10-02: "SDET", "QA Engineer", "Automatizador de Pruebas"... caían en ai_engineer
+    qa_signals = ["qa automation", "test automation", "test engineer", "automation tester", "software test",
+                  "sdet", "engineer in test", "quality engineer", "quality assurance", "tester", "pruebas",
+                  "automatizador"]
+    if any(sig in t for sig in qa_signals) or re.search(r"\bqa\b|\bqe\b", t):
         return "qa_automation"
 
     if "automation engineer" in t and "ai" not in t:
@@ -110,16 +114,17 @@ def save_template(archetype: str, profile_dict: dict):
         json.dump(profile_dict, f, ensure_ascii=False, indent=2)
 
 
-def needs_adjustment(template: dict, gap_analysis: str) -> bool:
-    """True si el gap_analysis de esta vacante puntual trae al menos una keyword que el
-    template todavía no menciona en ningún lado (summary o achievements) — en ese caso vale la
-    pena un ajuste liviano. Si todas las keywords ya están cubiertas (o no hay gap_analysis),
-    el template sirve tal cual, sin gastar ni una llamada al LLM."""
+def needs_adjustment(template: dict, gap_analysis: str, master_json_str: str) -> bool:
+    """True solo si el gap_analysis trae una keyword que ella SÍ tiene (aparece en el master
+    profile) pero el template no menciona — ahí un ajuste liviano suma. El gap_analysis lista
+    skills que le FALTAN: esas no se pueden meter sin mentir (el revisor las rechaza y se
+    terminaba mandando el template igual, tras gastar 2-5 llamadas), así que no disparan ajuste."""
     if not gap_analysis or not gap_analysis.strip():
         return False
     haystack = (
         template.get("professional_summary", "") + " " +
         " ".join(ach for exp in template.get("experience", []) for ach in exp.get("achievements", []))
     ).lower()
+    master = master_json_str.lower()
     keywords = [g.strip().lower() for g in gap_analysis.split(",") if g.strip()]
-    return any(kw and kw not in haystack for kw in keywords)
+    return any(kw in master and kw not in haystack for kw in keywords)

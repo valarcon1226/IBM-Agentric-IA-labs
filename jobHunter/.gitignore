@@ -7,3 +7,5 @@
 !/docker-compose.yml
 !/requirements.txt
 !/PROGRESS.md
+!/skill_estimates_curated.json
+!/APPLICATOR_PLAN.md

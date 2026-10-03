@@ -1,0 +1,17 @@
+# Standalone compose file — run this project on its own with `docker compose up -d --build`.
+#
+# To fold it into your existing homelab stack instead, copy just the
+# `hustles-dashboard` service block below into ~/homelab/docker-compose.yml
+# (same file that already runs Homepage, Portainer, Jellyfin, etc.) and adjust
+# the build context path to wherever you copied this project on the server.
+services:
+  hustles-dashboard:
+    build: .
+    container_name: hustles-dashboard
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - JOBS_DB_PATH=/app/data/jobs.db

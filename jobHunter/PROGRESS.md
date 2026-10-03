@@ -73,6 +73,30 @@ En 24h Ollama hizo ~356 de ~450 llamadas. `qwen3:4b` puntúa ~85% casi todo (75 
 4. Pendientes de Valentina: reservar IP en el router; Tailscale para acceso remoto (opcional); empezar a postular y marcarlo en el dashboard.
 5. Código commiteado en `portfolio-automation` (`6eeb785`, sin push). `jobHunter/.gitignore` es lista blanca: solo `*.py`, Dockerfile, compose, requirements y este archivo — nunca `.env`, `auth_state.json`, `jobs.db`, CVs ni el perfil.
 
+## Cambios 28 sep — cupo de nube solo para lo irremplazable
+
+- Disco del homelab liberado (slskd/soulsync fuera): 18% usado.
+- Scout cada 2h (`SCOUT_INTERVAL_HOURS=2` en `.env`), freelance cada 6h.
+- **Tailor**: `archetypes.needs_adjustment` solo ajusta si el gap pide una skill que ella SÍ tiene (está en el master profile) y el template no la dice. Antes ajustaba por skills que le faltan → 2-5 llamadas perdidas y el revisor igual devolvía el template. Guía de estudio → `invoke_text(local_only=True)` (Ollama).
+- **Trend Spotter rehecho**: busca nichos vendibles (tarea/problema que el mercado paga, ej. "draft legal contracts"), no skills. Cada hora Ollama anota `domain/task/deliverable/automatable` de cada vacante/gig nuevo en `demand_signals` (una vez por URL, máx. `TRENDS_MAX_PER_RUN`=60). Python agrupa (difflib). 1 llamada a la nube cada 20h para el reporte (nicho, agente, cómo venderlo); sin cupo, sale el conteo crudo. Chequeo: `python test_trend_grouping.py`.
+- **Más cupo gratis** en `llm_chain.py` (cupos por modelo): Gemini 3.8/3.7/3.5/3.5-lite flash, Groq qwen3.8-27b y gpt-oss-20b. Gemini con `max_retries=1, timeout=90` (antes un 429/503 colgaba la cadena minutos). Gemma 4 descartado (>50s por respuesta).
+- **Franjas de match 9-5** (scout): 70+ → CV · 40–69 → visible sin CV (`Match Insuficiente`) · <40 o no viable → `No Elegible` (oculta, guardada para no re-evaluar). Plan de estudio solo 50–89% (link en el dashboard); 90+ solo gaps. Dashboard con filtro por % (botones 90+/70–89/50–69/40–49).
+- **Puntaje 100% técnico** (`job_scoring.score`): el rol es REQUISITO (solo `ai_engineer`, `forward_deployed`, `qa_automation`; el resto se descarta) y ya no suma puntos. pct = 80% obligatorias + 20% deseables (solo obligatorias si no hay deseables) − penalización por años. Re-puntuado con `rescore.py` (Ollama, log `rescore_tech.log`, backup `jobs.db.bak_before_tech_score_20260928`).
+- **Local primero (30/09)**: la cadena probaba la nube antes que Ollama, así que el scout (extracción de hechos de cada vacante, 90%+ de las llamadas) agotaba todo el cupo gratis antes de las 10 am. Ahora `scout_agent` (`SCOUT_LOCAL_ONLY`, default 1) y `freelance_hunter_agent.extract_gig_facts` usan solo Ollama. La nube queda para: reporte diario del Trend Spotter, ajustes puntuales del Tailor, queries del scout (1 por iteración) y herramientas manuales.
+- **Búsqueda enfocada del scout**: `SCOUT_QUERIES="a|b"`, `SCOUT_FAMILY=qa_automation`, `SCOUT_YEARS=3-4` → una pasada, lo fuera de foco no se guarda. Corrida QA lanzada el 30/09 (`scout_qa.log`, contenedor `jobhunter-scout-qa`).
+## Cambios 1–3 oct
+- **Ubicación**: scout busca LinkedIn en Colombia / Latin America / United States (sin Indeed/Glassdoor). `job_filters.location_reason`: fuera de Colombia solo pasa si contratan desde LATAM o como contractor internacional sin pedir papeles (`test_location_filter.py`). Columna `jobs.location`; `locate_jobs.py` la completó desde LinkedIn y ocultó ~300 vacantes de otros países.
+- **Aprendizaje** (`learning_plan.py` → `learning_plan.json` → pestaña "Aprender"): gaps por skill + rol (AI/FDE/QA/Freelance), plan generado desde cómo lo piden las vacantes, horas calibradas, práctica web y prompt de entrevista; los gaps se revisan contra el perfil actual. Estimaciones a mano solo para herramientas que ya usa (`skill_estimates_curated.json`).
+- **CVs en Drive**: `sync_cvs_drive.py` (cron del host cada 30 min, rclone con cliente OAuth propio "jobhunter") sube los CVs visibles y guarda `jobs.cv_link` (link público por archivo).
+- **Trend Spotter**: lee también gigs de side hustles (`fetch_hustle_gigs`) y los clasifica en los 10 del video (columna `demand_signals.hustle`, con verificación por palabras clave en `check_hustle`); sección en el reporte.
+- **Freelance**: busca web (WordPress/React/Shopify…) y QA; proyectos grandes ya no se descartan (`FREELANCE_MAX_BUDGET_USD`, `FREELANCE_MAX_DAYS`); guarda `category` y `missing_skills`; bloquea hardware industrial.
+- **Perfil (homelab)**: + React, WordPress, herramientas de IA (Claude Code, Codex, Gemini CLI, Copilot, Antigravity).
+- **Dashboard**: secciones y filtros por rol / tipo de proyecto / side hustle, ubicación, link de CV en Drive, plan de estudio por vacante, orden "Mejor pagados".
+- Docs fuera de git (repo público): `PORTFOLIO_PLAN.md` (10 proyectos freelance), `STUDY_ROUTES.md` (rutas WhatsApp y CrewAI), `Profiles/answers.yaml`.
+
+- **Workana** (29/09) agregada a `freelance_scraper.fetch_workana`: página pública `/jobs` (permitida por robots.txt) con UA de navegador, JSON en `results-initials`, ~114 proyectos IT (es+en) por corrida. Probado desde la laptop; **falta desplegar al homelab** (y confirmar que desde su IP no da 403).
+- Pendiente: cuentas gratis de Cloudflare Workers AI, Mistral y NVIDIA (claves en `.env`) para sumarlas a la cadena.
+
 ## Estado de los servicios (25 sep, 12:50)
 
 Los 4 servicios (`scout`, `tailor`, `freelance`, `trends`) y el dashboard están **arriba**. Las APIs gratuitas están sin cupo hasta el reset diario; scout/tailor siguen con Ollama, freelance espera cupo.

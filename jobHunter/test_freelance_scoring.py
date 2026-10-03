@@ -11,9 +11,11 @@ def fit(category, skills, clear=True, days=4, platform="Freelancer"):
 assert fit("web_scraping", ["Python", "Selenium"]).is_good_fit
 assert fit("automation_integration", ["n8n", "OpenAI", "Google Sheets", "Email"]).is_good_fit
 assert fit("automation_integration", ["Linux", "VPS", "Python"]).is_good_fit
-assert not fit("full_product", ["React"]).is_good_fit
+assert fit("full_product", ["React"]).is_good_fit  # 2026-10-02: los proyectos grandes también interesan
 assert not fit("non_technical", []).is_good_fit
-assert not fit("ai_agent", ["Python"], days=30).is_good_fit
+assert fit("ai_agent", ["Python"], days=30).is_good_fit
+assert not fit("ai_agent", ["Python"], days=120).is_good_fit  # más de FREELANCE_MAX_DAYS (90)
+assert fit("website", ["Python", "Rust"]).missing_skills == ["Rust"]
 assert not fit("dashboard_webapp", ["Laravel", "PHP", "Vue"], clear=False).is_good_fit
 assert "sin skills declaradas" in fit("web_scraping", []).reasoning
 print("ok")

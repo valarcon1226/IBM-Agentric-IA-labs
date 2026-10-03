@@ -62,11 +62,38 @@ EXAMPLE OUTPUT FOR A ROLE THAT IS TOO SENIOR:
 
 _EVALUATOR_HUMAN_TEMPLATE = "JOB TITLE: {title}\n\nJOB DESCRIPTION:\n{job_desc}\n\nCANDIDATE MASTER PROFILE (JSON):\n{candidate_exp}"
 
+# Búsqueda enfocada (corrida puntual, no el loop 24/7): p. ej. solo QA Automation mid-level
+#   SCOUT_QUERIES="QA Automation Engineer|SDET"  -> estas búsquedas fijas, una sola pasada
+#   SCOUT_FAMILY=qa_automation                   -> solo esa familia de rol
+#   SCOUT_YEARS=3-4                              -> años pedidos en ese rango (o sin años y seniority mid)
+# Lo que queda fuera del foco NO se guarda, para que el scout normal lo evalúe después.
+FOCUS_QUERIES = [q.strip() for q in os.environ.get("SCOUT_QUERIES", "").split("|") if q.strip()]
+FOCUS_FAMILY = os.environ.get("SCOUT_FAMILY", "").strip()
+FOCUS_YEARS = tuple(int(x) for x in os.environ.get("SCOUT_YEARS", "").split("-")) if os.environ.get("SCOUT_YEARS") else None
+
+
+def in_focus(facts) -> bool:
+    if FOCUS_FAMILY and facts.role_family != FOCUS_FAMILY:
+        return False
+    if FOCUS_YEARS:
+        lo, hi = FOCUS_YEARS
+        years_ok = lo <= facts.required_years <= hi
+        unstated_mid = facts.required_years == 0 and facts.seniority_level == "mid"
+        if not (years_ok or unstated_mid):
+            return False
+    return True
+
+
 def evaluate_viability_and_gaps(job_title: str, clean_job_desc: str, candidate_context: str, seniority_context: str) -> ViabilityReport:
     """Evalúa en dos pasos (job_scoring.py): el LLM solo extrae hechos de la JD y Python calcula el match
     contra master_profile.json. El match holístico del LLM (_EVALUATOR_SYSTEM_PROMPT) daba 85% a casi todo.
     Si todos los proveedores fallan por cuota, AllProvidersExhausted sube hasta run_scout_agent()."""
-    facts = job_scoring.extract_facts(job_title, clean_job_desc)
+    # Solo modelo local por defecto: es el 90%+ de las llamadas del proyecto y agotaba la nube antes del mediodía.
+    # SCOUT_LOCAL_ONLY=0 vuelve a probar la nube primero.
+    facts = job_scoring.extract_facts(job_title, clean_job_desc,
+                                      local_only=os.environ.get("SCOUT_LOCAL_ONLY", "1") == "1")
+    if not in_focus(facts):
+        return None
     viable, pct, missing, reasoning = job_scoring.score(facts)
     return ViabilityReport(is_viable=viable, match_percentage=pct,
                            missing_skills_to_study=missing, reasoning=reasoning)
@@ -133,7 +160,7 @@ def run_scout_agent():
 
     starting_count = len(database.get_approved_jobs()) # Revisar cuántos tenemos ya
     total_viables = starting_count
-    new_jobs_goal = int(os.environ.get("SCOUT_NEW_JOBS_GOAL", "40"))
+    new_jobs_goal = int(os.environ.get("SCOUT_NEW_JOBS_GOAL", "100"))  # solo cuentan las nuevas de 70%+
     target_count = starting_count + new_jobs_goal
     max_runtime_hours = float(os.environ.get("SCOUT_MAX_RUNTIME_HOURS", "3"))
 
@@ -152,7 +179,7 @@ def run_scout_agent():
 
         print(f"\n--- [ITERACIÓN {iteration}] Generando nueva estrategia de búsqueda ---")
         try:
-            smart_queries = generate_smart_search_queries(profile)
+            smart_queries = FOCUS_QUERIES or generate_smart_search_queries(profile)
         except llm_chain.AllProvidersExhausted:
             print("\n[CUOTA AGOTADA] Los 4 proveedores (Gemini/Groq/Cerebras/OpenRouter) se quedaron sin cupo. "
                   "Deteniendo el Scout de forma segura.")
@@ -188,24 +215,37 @@ def run_scout_agent():
                     print("\n[CUOTA AGOTADA] Los 4 proveedores (Gemini/Groq/Cerebras/OpenRouter) se quedaron sin cupo. "
                           "Deteniendo el Scout de forma segura para no seguir descartando vacantes por error.")
                     return
+                if report is None:
+                    print("   [FOCO] Fuera del foco de esta búsqueda (rol/años). No se guarda.")
+                    continue
 
-                # Relajamos el threshold a 50% para permitir que encuentre los 10
-                if report.is_viable and report.match_percentage >= 50:
-                    gaps_str = ", ".join(report.missing_skills_to_study) if report.missing_skills_to_study else ""
-
-                    is_new = database.save_job(
-                        url=job['url'], title=job['title'], company=job['company'],
-                        status="Aprobado", scraped_content=job['description'],
+                # 70+ -> Aprobado (el tailor le hace CV) · 40-69 -> se muestra sin CV · <40 o no viable ->
+                # No Elegible (el dashboard la oculta; se guarda igual para no re-evaluarla en cada corrida)
+                gaps_str = ", ".join(report.missing_skills_to_study) if report.missing_skills_to_study else ""
+                if not report.is_viable or report.match_percentage < 40:
+                    database.save_job(
+                        url=job['url'], title=job['title'], company=job['company'], status="No Elegible",
                         match_percentage=report.match_percentage, gap_analysis=gaps_str
                     )
-                    if is_new:
+                    database.set_job_location(job['url'], job.get('location', ''))
+                    print(f"   [X] [DESCARTADO] ({report.match_percentage}%). Razón: {report.reasoning}")
+                else:
+                    status = "Aprobado" if report.match_percentage >= 70 else "Match Insuficiente"
+                    is_new = database.save_job(
+                        url=job['url'], title=job['title'], company=job['company'],
+                        status=status, scraped_content=job['description'],
+                        match_percentage=report.match_percentage, gap_analysis=gaps_str
+                    )
+                    database.set_job_location(job['url'], job.get('location', ''))
+                    if is_new and status == "Aprobado":
                         total_viables += 1
                         print(f"   [V] [MATCH VIABLE NUEVO] ({report.match_percentage}%). Guardando. (Progreso: {total_viables}/{target_count})")
                     else:
                         print(f"   [V] [MATCH VIABLE] ({report.match_percentage}%) pero ya estaba en la base de datos. Actualizado, no cuenta como nuevo.")
-                else:
-                    print(f"   [X] [DESCARTADO] ({report.match_percentage}%). Razón: {report.reasoning}")
 
+        if FOCUS_QUERIES:
+            print("\n[FOCO] Búsquedas fijas recorridas una vez. Fin de la corrida enfocada.")
+            return
         if total_viables < target_count:
             print("\n[PAUSA] Agoté estas palabras clave. Esperando 10 segundos antes de generar nuevas ideas...")
             time.sleep(10)
