@@ -25,11 +25,12 @@ from freelance_scraper import fetch_all_gigs
 # ==========================================
 
 MIN_BUDGET_USD = int(os.environ.get("FREELANCE_MIN_BUDGET_USD", "50"))
-MAX_BUDGET_USD = int(os.environ.get("FREELANCE_MAX_BUDGET_USD", "1500"))  # "pequeño" = no un producto entero
+# 2026-10-02: también le interesan proyectos grandes (productos enteros, varias semanas): tope alto
+MAX_BUDGET_USD = int(os.environ.get("FREELANCE_MAX_BUDGET_USD", "50000"))
 MIN_HOURLY_USD = int(os.environ.get("FREELANCE_MIN_HOURLY_USD", "15"))
 MAX_COMPETITION = int(os.environ.get("FREELANCE_MAX_BIDS", "60"))
 MIN_PORTFOLIO_VALUE = int(os.environ.get("FREELANCE_MIN_PORTFOLIO_VALUE", "5"))
-MAX_EVALS_PER_RUN = int(os.environ.get("FREELANCE_MAX_EVALS", "40"))  # tope de llamadas al LLM por corrida
+MAX_EVALS_PER_RUN = int(os.environ.get("FREELANCE_MAX_EVALS", "80"))  # tope de llamadas al modelo local por corrida
 
 _BLOCKLIST = re.compile(
     r"\b(crypto|blockchain|web3|nft|casino|gambling|betting|binary options?|quotex|pocket option|adult|onlyfans|commission|"
@@ -38,7 +39,8 @@ _BLOCKLIST = re.compile(
     r"data entry|transcri\w*|copy[ -]?paste|leads list|ad views|auto[ -]?clicker|fake (reviews?|followers|views)|"
     r"(pdf|word|excel)[ -]to[ -](pdf|word|excel)|email campaign|newsletter|"
     # automatización industrial/hardware: la skill "Automation" de Freelancer trae mucho de esto
-    r"plcs?|pcb|scada|siemens|tia portal|mechatronics?|arduino|circuit breaker|hmi)\b",
+    r"plcs?|pcb|scada|siemens|tia portal|mechatronics?|arduino|circuit breaker|hmi|"
+    r"cnc|fanuc|haas|g-?code|crestron|robotics?|robot arm|kuka)\b",
     re.IGNORECASE,
 )
 
@@ -48,7 +50,10 @@ _TECH_SIGNALS = re.compile(
     r"python|automat|scrap|crawler|\bapi\b|\bbots?\b|\bai\b|\bllm|gpt|openai|claude|gemini|agent|"
     r"n8n|zapier|make\.com|playwright|selenium|cypress|\bqa\b|\btest(ing|s)?\b|dashboard|react|"
     r"fastapi|django|flask|\bsql\b|postgres|mongodb|\bscripts?\b|integrat|pipeline|\brag\b|langchain|"
-    r"chatbot|webhook|\betl\b|excel (macro|automation)|google sheets",
+    r"chatbot|webhook|\betl\b|excel (macro|automation)|google sheets|"
+    # páginas web
+    r"website|web ?site|web ?page|landing|wordpress|webflow|shopify|wix|elementor|html|css|javascript|"
+    r"next\.?js|frontend|front-end|full ?stack|p[aá]gina web|sitio web|tienda (online|virtual)",
     re.IGNORECASE,
 )
 
@@ -89,12 +94,12 @@ def prefilter_reason(gig: Dict) -> Optional[str]:
 # Extraer hechos lo hace bien el modelo local, así que ahora la corrida nunca se frena por cupo.
 
 GigCategory = Literal["ai_agent", "chatbot_rag", "automation_integration", "web_scraping", "qa_testing",
-                      "data_pipeline", "dashboard_webapp", "full_product", "bug_fix_maintenance",
+                      "data_pipeline", "dashboard_webapp", "website", "full_product", "bug_fix_maintenance",
                       "non_technical", "other"]
 
 
 class GigFacts(BaseModel):
-    category: GigCategory = Field(description="What the client actually wants built. full_product = a whole SaaS/marketplace/app from scratch. bug_fix_maintenance = fixing or tweaking an existing system. non_technical = sales, marketing, design, writing, admin, even if it mentions AI.")
+    category: GigCategory = Field(description="What the client actually wants built. website = a website, landing page or small online store (WordPress, Webflow, Shopify, React/Next.js), including redesigns. full_product = a whole SaaS/marketplace/app from scratch. bug_fix_maintenance = fixing or tweaking an existing system. non_technical = sales, marketing, design, writing, admin, even if it mentions AI.")
     required_skills: List[str] = Field(description="Frameworks, platforms or services the gig explicitly needs (e.g. Python, n8n, React, OpenAI, HubSpot). Short names, max 8. Do NOT list human languages, file formats (CSV, PDF), operating systems, standard-library modules or generic words like 'automation' or 'report'.")
     scope_is_clear: bool = Field(description="True if the post says concretely what must be delivered. False for vague, one-line or spammy posts.")
     estimated_days: int = Field(description="Realistic working days for one developer to deliver it.")
@@ -102,6 +107,8 @@ class GigFacts(BaseModel):
 
 
 class GigFitReport(BaseModel):
+    category: str = ""
+    missing_skills: List[str] = []
     is_good_fit: bool
     match_percentage: int
     portfolio_value: int
@@ -117,9 +124,9 @@ _EXTRACT_HUMAN = "PLATFORM: {platform}\nTITLE: {title}\nDESCRIPTION:\n{descripti
 
 # 0-10: qué tan mostrable queda como pieza de portafolio
 PORTFOLIO_VALUE = {"ai_agent": 9, "chatbot_rag": 9, "automation_integration": 8, "web_scraping": 7,
-                   "qa_testing": 7, "data_pipeline": 7, "dashboard_webapp": 7, "other": 4,
-                   "bug_fix_maintenance": 3, "full_product": 0, "non_technical": 0}
-MAX_GIG_DAYS = 15  # más que eso ya no es un proyecto "pequeño"
+                   "qa_testing": 7, "data_pipeline": 7, "dashboard_webapp": 7, "website": 8, "other": 4,
+                   "bug_fix_maintenance": 3, "full_product": 7, "non_technical": 0}
+MAX_GIG_DAYS = int(os.environ.get("FREELANCE_MAX_DAYS", "90"))
 
 
 def _budget_str(gig: Dict) -> str:
@@ -131,13 +138,15 @@ def _budget_str(gig: Dict) -> str:
 
 
 def extract_gig_facts(gig: Dict) -> GigFacts:
-    """Prueba la cadena de llm_chain.py (con Ollama al final). AllProvidersExhausted sube hasta main()."""
+    """Solo modelo local: extraer hechos de cientos de gigs es volumen, y la nube se agotaba en horas.
+    AllProvidersExhausted (Ollama caído) sube hasta main()."""
     return llm_chain.invoke_structured(
         system_prompt=_EXTRACT_SYSTEM,
         human_template=_EXTRACT_HUMAN,
         variables={"platform": gig["platform"], "title": gig["title"], "description": gig["description"][:1500]},
         pydantic_model=GigFacts,
         temperature=0.0,
+        local_only=True,
     )
 
 
@@ -148,13 +157,11 @@ def score_gig(gig: Dict, facts: GigFacts) -> GigFitReport:
         pv = min(10, pv + 3)  # un PR mergeado en un repo público es portafolio verificable
 
     def report(ok: bool, pct: int, why: str) -> GigFitReport:
-        return GigFitReport(is_good_fit=ok, match_percentage=pct, portfolio_value=pv,
+        return GigFitReport(category=facts.category, is_good_fit=ok, match_percentage=pct, portfolio_value=pv,
                             estimated_days=facts.estimated_days, deliverable=facts.deliverable, reasoning=why)
 
     if facts.category == "non_technical":
         return report(False, 5, "No es un proyecto técnico.")
-    if facts.category == "full_product":
-        return report(False, 10, "Es un producto entero, no un proyecto pequeño.")
     if facts.estimated_days > MAX_GIG_DAYS:
         return report(False, 15, f"Demasiado grande (~{facts.estimated_days} días).")
 
@@ -167,7 +174,9 @@ def score_gig(gig: Dict, facts: GigFacts) -> GigFitReport:
     why = (f"{facts.category}; " + (f"skills cubiertas {cov:.0%} de {len(skills)}" if skills else "sin skills declaradas")
            + (f" (falta: {', '.join(missing)})" if missing else "")
            + ("" if facts.scope_is_clear else "; alcance poco claro"))
-    return report(pct >= 50, pct, why)
+    r = report(pct >= 50, pct, why)
+    r.missing_skills = missing
+    return r
 
 
 def evaluate_gig_fit(gig: Dict) -> GigFitReport:
@@ -239,7 +248,8 @@ def main():
         database.save_gig(
             url=gig["url"], platform=gig["platform"], title=gig["title"],
             description=gig["description"], status=status,
-            match_percentage=fit.match_percentage, reasoning=summary,
+            match_percentage=fit.match_percentage, reasoning=summary, category=fit.category,
+            missing_skills=", ".join(fit.missing_skills),
         )
         mark = "[V] APLICABLE" if applicable else "[X] Descartado"
         print(f"   {mark} ({fit.match_percentage}%, portafolio {fit.portfolio_value}/10): {fit.deliverable}")

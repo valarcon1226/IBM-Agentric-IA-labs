@@ -29,6 +29,8 @@ def init_db():
     existing_cols = {row[1] for row in cursor.fetchall()}
     if "tailored_json" not in existing_cols:
         cursor.execute("ALTER TABLE jobs ADD COLUMN tailored_json TEXT")
+    if "location" not in existing_cols:  # ubicación de la oferta según LinkedIn (para el filtro de país)
+        cursor.execute("ALTER TABLE jobs ADD COLUMN location TEXT")
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS freelance_gigs (
@@ -43,6 +45,11 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    if "category" not in {r[1] for r in cursor.execute("PRAGMA table_info(freelance_gigs)")}:
+        # tipo de proyecto (website, automation_integration, ai_agent...) para filtrar en el dashboard
+        cursor.execute("ALTER TABLE freelance_gigs ADD COLUMN category TEXT")
+    if "missing_skills" not in {r[1] for r in cursor.execute("PRAGMA table_info(freelance_gigs)")}:
+        cursor.execute("ALTER TABLE freelance_gigs ADD COLUMN missing_skills TEXT")  # skills que le faltan (plan de aprendizaje)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS market_trends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,8 +61,57 @@ def init_db():
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # Qué problema/tarea pide cada vacante o gig (lo extrae el modelo local, una sola vez por URL).
+    # Es la materia prima del Trend Spotter: se agrupa por (domain, task) para ver qué nichos se repiten.
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS demand_signals (
+            source_url TEXT PRIMARY KEY,
+            source TEXT,
+            domain TEXT,
+            task TEXT,
+            deliverable TEXT,
+            automatable TEXT,
+            extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    if "hustle" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
+        cursor.execute("ALTER TABLE demand_signals ADD COLUMN hustle TEXT")  # side hustle del video (trend spotter)
     conn.commit()
     conn.close()
+
+def get_signal_urls() -> set:
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    urls = {r[0] for r in conn.execute('SELECT source_url FROM demand_signals')}
+    conn.close()
+    return urls
+
+def save_signal(source_url: str, source: str, domain: str, task: str, deliverable: str, automatable: str, hustle: str = None):
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    conn.execute('INSERT OR IGNORE INTO demand_signals (source_url, source, domain, task, deliverable, automatable, hustle) '
+                 'VALUES (?, ?, ?, ?, ?, ?, ?)', (source_url, source, domain, task, deliverable, automatable, hustle))
+    conn.commit()
+    conn.close()
+
+def get_signals(days: int) -> list:
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM demand_signals WHERE extracted_at > datetime('now', ?)", (f'-{days} days',)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_market_items() -> list:
+    """Vacantes y gigs guardados como {url, source, title, description} — la demanda ya vista."""
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    rows = conn.execute("SELECT url, 'job', title, scraped_content FROM jobs WHERE url IS NOT NULL "
+                        "UNION ALL SELECT url, 'gig', title, description FROM freelance_gigs WHERE url IS NOT NULL").fetchall()
+    conn.close()
+    return [{"url": r[0], "source": r[1], "title": r[2] or "", "description": r[3] or ""} for r in rows]
+
+def hours_since_last_trend() -> float:
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    row = conn.execute("SELECT (julianday('now') - julianday(MAX(detected_at))) * 24 FROM market_trends").fetchone()
+    conn.close()
+    return row[0] if row and row[0] is not None else float("inf")
 
 def save_trend(trend_name: str, demand_mentions: int, estimated_automation_score: str, agent_idea: str, gigs_analyzed: int):
     """Guarda una tendencia detectada. No hace dedup (cada corrida es una observación con su propia fecha)."""
@@ -80,7 +136,7 @@ def get_recent_trends(limit: int = 50) -> list:
     conn.close()
     return [dict(row) for row in rows]
 
-def save_gig(url: str, platform: str, title: str, description: str, status: str, match_percentage: int = 0, reasoning: str = "") -> bool:
+def save_gig(url: str, platform: str, title: str, description: str, status: str, match_percentage: int = 0, reasoning: str = "", category: str = None, missing_skills: str = None) -> bool:
     """Guarda o actualiza un gig freelance. Devuelve True si era nuevo (INSERT), False si ya existia (UPDATE)."""
     db_path = profile_paths.resolve('jobs.db')
     conn = sqlite3.connect(db_path)
@@ -88,17 +144,18 @@ def save_gig(url: str, platform: str, title: str, description: str, status: str,
     is_new = True
     try:
         cursor.execute('''
-            INSERT INTO freelance_gigs (url, platform, title, description, status, match_percentage, reasoning)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (url, platform, title, description, status, match_percentage, reasoning))
+            INSERT INTO freelance_gigs (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills))
         conn.commit()
     except sqlite3.IntegrityError:
         is_new = False
         cursor.execute('''
             UPDATE freelance_gigs
-            SET status = ?, match_percentage = ?, reasoning = ?
+            SET status = ?, match_percentage = ?, reasoning = ?, category = COALESCE(?, category),
+                missing_skills = COALESCE(?, missing_skills)
             WHERE url = ?
-        ''', (status, match_percentage, reasoning, url))
+        ''', (status, match_percentage, reasoning, category, missing_skills, url))
         conn.commit()
     finally:
         conn.close()
@@ -124,6 +181,14 @@ def get_applicable_gigs() -> list:
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+def set_job_location(url: str, location: str):
+    if not location:
+        return
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    conn.execute("UPDATE jobs SET location = ? WHERE url = ?", (location, url))
+    conn.commit()
+    conn.close()
 
 def save_job(url: str, title: str, company: str, status: str = "Encontrado", cover_letter: str = None, scraped_content: str = None, match_percentage: int = 0, gap_analysis: str = "", cv_path: str = None) -> bool:
     """Guarda o actualiza una vacante en la base de datos. Devuelve True si era una vacante nueva (INSERT), False si ya existia (UPDATE)."""
@@ -170,6 +235,15 @@ def get_approved_jobs() -> list:
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+def get_low_match_jobs(min_match: int, max_match: int) -> list:
+    """Vacantes visibles sin CV (Match Insuficiente) con match en [min_match, max_match)."""
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM jobs WHERE status = 'Match Insuficiente' AND match_percentage >= ? "
+                        "AND match_percentage < ? ORDER BY match_percentage DESC", (min_match, max_match)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 def update_job_status(url: str, new_status: str, cv_path: str = None, tailored_json: str = None):
     """Actualiza el estado, ruta del CV, y opcionalmente el JSON tailored (summary+experience) de un job."""

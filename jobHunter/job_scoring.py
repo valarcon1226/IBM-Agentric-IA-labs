@@ -39,7 +39,7 @@ Only report what the posting actually says; if something is not stated, use 0, f
 _EXTRACT_HUMAN = "JOB TITLE: {title}\n\nJOB DESCRIPTION:\n{job_desc}"
 
 
-def extract_facts(title: str, clean_desc: str, allow_local: bool = True) -> JobFacts:
+def extract_facts(title: str, clean_desc: str, allow_local: bool = True, local_only: bool = False) -> JobFacts:
     return llm_chain.invoke_structured(
         system_prompt=_EXTRACT_SYSTEM,
         human_template=_EXTRACT_HUMAN,
@@ -47,6 +47,7 @@ def extract_facts(title: str, clean_desc: str, allow_local: bool = True) -> JobF
         pydantic_model=JobFacts,
         temperature=0.0,
         allow_local=allow_local,
+        local_only=local_only,
     )
 
 
@@ -70,6 +71,16 @@ _ALIASES = {
     "javascript": "javascript", "js": "javascript", "typescript": "javascript", "ts": "javascript",
     "node": "node", "node.js": "node", "nodejs": "node", "html": "html", "css": "html",
     "react": "react", "react.js": "react", "reactjs": "react", "next.js": "nextjs", "nextjs": "nextjs",
+    "wordpress": "wordpress", "elementor": "wordpress", "woocommerce": "wordpress",
+    # herramientas de desarrollo asistido por IA (las vacantes las piden por nombre)
+    "claude code": "claude code", "codex": "codex", "openai codex": "codex", "gemini cli": "gemini cli",
+    "copilot": "copilot", "github copilot": "copilot", "antigravity": "antigravity", "cursor": "cursor",
+    "ai-assisted development tools": "ai dev tools", "ai coding assistants": "ai dev tools",
+    "ai coding tools": "ai dev tools", "ai-assisted development": "ai dev tools",
+    # nombres genéricos que los gigs usan para lo que ya hace (agentes, n8n, automatizaciones)
+    "chatbot": "agents", "chatbots": "agents", "ai chatbot": "agents", "chatbot development": "agents",
+    "ai chatbot development": "agents", "automation": "n8n", "workflow automation": "n8n",
+    "process automation": "n8n", "business automation": "n8n",
     "django": "django", "fastapi": "fastapi", "flask": "fastapi", "rest": "api", "rest api": "api",
     "rest apis": "api", "api": "api", "apis": "api", "webhooks": "api", "postman": "api",
     "docker": "docker", "git": "git", "github": "git", "elasticsearch": "elasticsearch",
@@ -93,14 +104,18 @@ _ADJACENT = {
     "aws": {"azure"}, "gcp": {"azure"}, "cypress": {"playwright", "selenium"},
     "vue": {"react"}, "angular": {"react"}, "java": {"python"}, "go": {"python"},
     "kubernetes": {"docker"}, "pytorch": {"ml"}, "tensorflow": {"ml"}, "mongodb": {"sql"},
+    "webflow": {"wordpress"}, "wix": {"wordpress"}, "shopify": {"wordpress"},
+    "nlp": {"llm"}, "natural language processing": {"llm"},
+    "cursor": {"claude code", "copilot"},  # mismo tipo de herramienta que ya usa
 }
 
 # años aproximados por disciplina, según el seniority_context del perfil
 CANDIDATE_YEARS = {"qa_automation": 3, "default": 2}
 
-TARGET_FAMILIES = {"ai_engineer": 1.0, "forward_deployed": 1.0, "fullstack": 0.8, "backend": 0.7,
-                   "qa_automation": 0.8, "data": 0.5, "frontend": 0.5, "devops": 0.3,
-                   "other_technical": 0.3, "non_technical": 0.0}
+# El tipo de rol es un REQUISITO, no suma puntos: fuera de estas familias la vacante se descarta.
+# (Las variantes — ML/LLM/AI full-stack engineer, solutions/deployment engineer, SDET — el
+# extractor ya las clasifica dentro de estas familias.)
+TARGET_FAMILIES = {"ai_engineer", "forward_deployed", "qa_automation"}
 
 _SPOKEN_OK = {"english", "ingles", "inglés", "spanish", "español", "espanol"}
 
@@ -141,6 +156,8 @@ def score(facts: JobFacts) -> Tuple[bool, int, List[str], str]:
     """(is_viable, match_percentage, missing_skills, reasoning) — determinístico."""
     if not facts.is_technical_engineering_role or facts.role_family == "non_technical":
         return False, 5, [], "No es un rol técnico de ingeniería."
+    if facts.role_family not in TARGET_FAMILIES:
+        return False, 5, [], f"Rol {facts.role_family}: no es AI Engineer, Forward Deployed ni QA Automation."
     if facts.country_restricted:
         return False, 10, [], "Restringido a ciudadanos/residentes de otro país (o pide clearance)."
     if facts.onsite_or_hybrid_required:
@@ -166,9 +183,16 @@ def score(facts: JobFacts) -> Tuple[bool, int, List[str], str]:
         return False, 20, missing, f"Pide {facts.required_years} años; el perfil tiene ~{cand_years} en esta disciplina."
     seniority_penalty = 12 * gap_years + (10 if facts.seniority_level == "senior" else 0)
 
-    family_fit = TARGET_FAMILIES.get(facts.role_family, 0.3)
-    pct = round(100 * (0.55 * must_cov + 0.15 * nice_cov + 0.30 * family_fit)) - seniority_penalty
+    # 100% técnico: requisitos de la vacante vs lo que ella sabe. Sin deseables, cuentan solo las obligatorias.
+    # Sin skills extraídas no hay con qué medir: 50 = visible sin CV (antes quedaba en 70 y generaba CV a ciegas).
+    if must and nice:
+        tech = 0.8 * must_cov + 0.2 * nice_cov
+    elif must or nice:
+        tech = must_cov if must else nice_cov
+    else:
+        tech = 0.5
+    pct = round(100 * tech) - seniority_penalty
     pct = max(0, min(100, pct))
     reasoning = (f"{facts.role_family}; obligatorias cubiertas {must_cov:.0%} de {len(must)}, "
                  f"deseables {nice_cov:.0%}; pide {facts.required_years} años ({facts.seniority_level}).")
-    return pct >= 50, pct, missing, reasoning
+    return True, pct, missing, reasoning  # qué hacer según el % lo decide el scout (70+ CV, 40-69 visible, <40 oculta)

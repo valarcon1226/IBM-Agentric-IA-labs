@@ -32,6 +32,6 @@ services:
 
   trends:
     <<: *common
-    # tendencias de demanda en el mercado freelance, una vez al día (arranca 1h tarde para no
-    # competir por la GPU con freelance, que corre al levantar el stack)
-    command: sh -c 'sleep 3600; while true; do python -u trend_spotter_agent.py; sleep $$(( ${TRENDS_INTERVAL_HOURS:-24} * 3600 )); done'
+    # cada hora anota con Ollama qué tarea pide cada vacante/gig nuevo; el reporte de nichos sale 1 vez al día
+    # (arranca 10 min tarde para no competir por la GPU con freelance, que corre al levantar el stack)
+    command: sh -c 'sleep 600; while true; do python -u trend_spotter_agent.py; sleep $$(( ${TRENDS_INTERVAL_HOURS:-1} * 3600 )); done'

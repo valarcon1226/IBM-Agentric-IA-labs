@@ -4,6 +4,7 @@ en cosas que igual se van a descartar:
   - duplicados: misma empresa + mismo título ya guardados (aunque la URL sea distinta)
   - pasantías / trainee
   - vacantes escritas en un idioma que no está en SCOUT_ALLOWED_LANGS (default "en,es")
+  - vacantes ubicadas fuera de Colombia que no dicen contratar desde LATAM
 Cada filtro devuelve un motivo (str) si hay que descartar, o None si la vacante pasa.
 """
 import os
@@ -82,10 +83,57 @@ def is_duplicate(title: str, company: str, url: str) -> bool:
     return any((_norm(t), _norm(c)) == key for t, c in rows)
 
 
+# Solo puede trabajar desde Colombia (sin permiso en EE.UU. ni la UE). Una vacante ubicada en otro país pasa
+# únicamente si la descripción dice que contratan en LATAM / Colombia / desde cualquier lugar.
+HOME_COUNTRIES = {"colombia"}
+# Solo frases sobre A QUIÉN contratan: "worldwide"/"anywhere" sueltos salían en el texto corporativo
+# ("customers worldwide", "work from anywhere in India") y dejaban pasar vacantes de India o Reino Unido.
+_LATAM = r"(latam|latin america|latinoam[eé]rica|south america|colombia|the americas)"
+_HIRING = r"(remote|hire|hiring|candidates?|based|located|residing|reside|live|talent|contractors?|time ?zones?)"
+OPEN_TO_LATAM = re.compile(
+    rf"{_HIRING}[^.\n]{{0,60}}\b{_LATAM}|{_LATAM}[^.\n]{{0,40}}\b{_HIRING}|"
+    r"anywhere in the world|from any country|any country in the world|cualquier pa[ií]s|"
+    r"(remote|work from)[^.\n]{0,15}(worldwide|globally|anywhere)\b(?![^.\n]{0,15}\bin\b)",
+    re.IGNORECASE,
+)
+
+
+# Contractor internacional: la empresa paga por servicios, sin visa ni permiso de trabajo (le sirve desde Colombia).
+CONTRACTOR_INTL = re.compile(
+    r"\b(deel|oyster|remote\.com|employer of record|eor)\b|nearshore|international contractors?|"
+    r"hire (globally|internationally)|contractors?[^.\n]{0,60}(international|global|worldwide|anywhere|outside|countries|time ?zones?)|"
+    r"(international|global|worldwide|outside)[^.\n]{0,60}contractors?",
+    re.IGNORECASE,
+)
+# Pide papeles del país: con esto no le sirve aunque diga contractor.
+NEEDS_WORK_PAPERS = re.compile(
+    r"(authori[sz]ed|eligible|legally (able|permitted)) to work in|work authori[sz]ation|right to work in|"
+    r"\b(us|u\.s\.) citizen|citizenship|green card|security clearance|\bw-?2\b|\b1099\b|"
+    r"must (be )?(reside|located|live|based) in|(reside|located|live|based) in the (us|u\.s\.|united states|uk)\b",
+    re.IGNORECASE,
+)
+
+
+def location_reason(location: str, clean_desc: str) -> str | None:
+    """Motivo si la vacante está en un país donde no la pueden contratar; None si sirve."""
+    country = _norm((location or "").split(",")[-1])
+    if not country or country in HOME_COUNTRIES or country in ("remote", "latin america", "latam"):
+        return None
+    desc = clean_desc or ""
+    if NEEDS_WORK_PAPERS.search(desc):
+        return f"ubicada en {location} y pide permiso de trabajo/residencia allá"
+    if OPEN_TO_LATAM.search(desc) or CONTRACTOR_INTL.search(desc):
+        return None
+    return f"ubicada en {location} y no dice que contraten desde LATAM ni como contractor internacional"
+
+
 def rejection_reason(job: dict, clean_desc: str) -> str | None:
     title, company = job.get("title", ""), job.get("company", "")
     if os.environ.get("SCOUT_EXCLUDE_INTERNS", "1") == "1" and INTERN_PATTERN.search(title):
         return "pasantía/trainee"
+    loc = location_reason(job.get("location", ""), clean_desc)
+    if loc:
+        return loc
     allowed = allowed_langs()
     for lang, pattern in _TITLE_HINTS.items():
         if lang not in allowed and pattern.search(title):
