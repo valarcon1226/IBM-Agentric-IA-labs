@@ -1,8 +1,11 @@
+import logging
 from typing import Any
 
 from app import cache
 from app.registries import companies_house, insee, vies
 from app.registries.exceptions import RegistryError, RegistryNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class NotFoundError(Exception):
@@ -11,6 +14,10 @@ class NotFoundError(Exception):
 
 class UpstreamError(Exception):
     """The registry call failed after exhausting retries."""
+
+
+class CacheError(Exception):
+    """The cache read/upsert failed (e.g. database unavailable)."""
 
 
 async def _call_registry(country: str, identifier: str) -> dict[str, Any]:
@@ -26,12 +33,18 @@ async def enrich(country: str, identifier: str, *, force_refresh: bool = False) 
     """Cache-first lookup for one (country, identifier) pair (DECISIONES-02 E7/E8).
 
     Returns a dict with company_name/status/incorporation_date/raw_data/cached. Raises
-    `NotFoundError` if the registry confirms the identifier doesn't exist, or `UpstreamError`
-    if the registry fails after retries. `force_refresh=True` skips the cache read but still
-    updates the cache on a successful lookup.
+    `NotFoundError` if the registry confirms the identifier doesn't exist, `UpstreamError`
+    if the registry fails after retries, or `CacheError` if the database read/upsert fails
+    (DECISIONES-02 E8: a cache/DB error for one item must not abort the whole batch).
+    `force_refresh=True` skips the cache read but still updates the cache on a successful
+    lookup.
     """
     if not force_refresh:
-        cached = await cache.read_cache(country, identifier)
+        try:
+            cached = await cache.read_cache(country, identifier)
+        except Exception as exc:
+            logger.exception("Cache read failed for %s/%s", country, identifier)
+            raise CacheError(str(exc)) from exc
         if cached is not None:
             return {**cached, "cached": True}
 
@@ -42,5 +55,9 @@ async def enrich(country: str, identifier: str, *, force_refresh: bool = False) 
     except RegistryError as exc:
         raise UpstreamError(str(exc)) from exc
 
-    await cache.upsert_cache(country, identifier, data)
+    try:
+        await cache.upsert_cache(country, identifier, data)
+    except Exception as exc:
+        logger.exception("Cache upsert failed for %s/%s", country, identifier)
+        raise CacheError(str(exc)) from exc
     return {**data, "cached": False}

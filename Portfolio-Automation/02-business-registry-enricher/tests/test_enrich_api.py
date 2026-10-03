@@ -100,6 +100,17 @@ def test_single_enrich_registry_failure_returns_502(monkeypatch):
     assert response.status_code == 502
 
 
+def test_single_enrich_cache_failure_returns_503(monkeypatch):
+    async def fake_read_cache(country, identifier):
+        raise RuntimeError("connection refused")
+
+    monkeypatch.setattr(cache, "read_cache", fake_read_cache)
+
+    response = client.get("/api/v1/enrich/GB/00000010", headers=AUTH)
+
+    assert response.status_code == 503
+
+
 def test_batch_enrich_one_failing_item(monkeypatch):
     async def fake_read_cache(country, identifier):
         return None
@@ -136,6 +147,42 @@ def test_batch_enrich_one_failing_item(monkeypatch):
     assert results["552081317"]["status"] == "not_found"
     assert results["552081317"]["company_name"] is None
     assert results["552081317"]["error"] == "Company not found"
+
+
+def test_batch_enrich_one_item_with_cache_error_does_not_abort_batch(monkeypatch):
+    # DECISIONES-02 E8: a cache/DB failure for one item must become that item's error result,
+    # not a 500 for the whole batch.
+    async def fake_read_cache(country, identifier):
+        if identifier == "00000006":
+            return None
+        raise RuntimeError("connection refused")
+
+    async def fake_upsert(country, identifier, data):
+        return None
+
+    async def fake_ch_lookup(identifier):
+        return _gb_data()
+
+    monkeypatch.setattr(cache, "read_cache", fake_read_cache)
+    monkeypatch.setattr(cache, "upsert_cache", fake_upsert)
+    monkeypatch.setattr(companies_house, "lookup", fake_ch_lookup)
+
+    response = client.post(
+        "/api/v1/enrich",
+        headers=AUTH,
+        json={
+            "companies": [
+                {"country": "GB", "identifier": "00000006"},
+                {"country": "GB", "identifier": "00000007"},
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    results = {r["identifier"]: r for r in response.json()["results"]}
+    assert results["00000006"]["company_name"] == "DEFAULT LIMITED"
+    assert results["00000007"]["status"] == "error"
+    assert results["00000007"]["error"] == "Cache temporarily unavailable"
 
 
 def test_batch_enrich_requires_bearer_token():
