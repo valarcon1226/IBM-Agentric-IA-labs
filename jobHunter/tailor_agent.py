@@ -58,8 +58,9 @@ STUDY_MIN, STUDY_MAX = 50, 90
 def generate_study_guide(job_title: str, company: str, gap_analysis: str, job_id):
     if not gap_analysis or gap_analysis.strip() == "":
         return
-    os.makedirs("study_guides", exist_ok=True)
-    tutor_filename = f"study_guides/STUDY_GUIDE_{_safe_filename(company)}_{job_id}.txt"
+    guides_dir = profile_paths.resolve("study_guides")  # por persona; sin perfil, la raíz (homelab)
+    os.makedirs(guides_dir, exist_ok=True)
+    tutor_filename = os.path.join(guides_dir, f"STUDY_GUIDE_{_safe_filename(company)}_{job_id}.txt")
     if os.path.exists(tutor_filename):
         return
     print(f"[Tutor] Generando Crash Course para {company}...")
@@ -169,13 +170,23 @@ async def render_pdf(profile_data: dict, tailored_data: TailoredProfile, company
         exp_html += "</ul></div>"
 
     html = html.replace("{{EXPERIENCE_HTML}}", exp_html)
-    
-    temp_html_path = f"CV_TEMPLATE/temp_{_safe_filename(company)}_{job_id}.html"
-    with open(temp_html_path, "w", encoding="utf-8") as f:
-        f.write(html)
 
+    # CV en español (amigos: cv_language "auto" con vacante en español): títulos de sección en español
+    text = f" {tailored_data.professional_summary.lower()} "
+    es_words = sum(text.count(w) for w in (" de ", " y ", " en ", " la ", " el ", " para ", " con "))
+    en_words = sum(text.count(w) for w in (" the ", " and ", " of ", " in ", " with ", " for "))
+    if es_words > en_words:
+        for en, es in {"Professional Summary": "Perfil Profesional", "Experience": "Experiencia",
+                       "Portfolio Projects": "Proyectos", "Technical Skills": "Habilidades", "Certifications": "Certificaciones",
+                       "Education": "Educación", "Additional Skills": "Habilidades Adicionales"}.items():
+            html = html.replace(f"<h3>{en}</h3>", f"<h3>{es}</h3>")
+    
     cvs_dir = profile_paths.resolve("CVs_Listos")
     os.makedirs(cvs_dir, exist_ok=True)
+    # temporal dentro de CVs_Listos de la persona (no en CV_TEMPLATE/, que es compartido); se borra al terminar
+    temp_html_path = os.path.join(cvs_dir, f"temp_{_safe_filename(company)}_{job_id}.html")
+    with open(temp_html_path, "w", encoding="utf-8") as f:
+        f.write(html)
     first_name = profile_data.get("personal_info", {}).get("full_name", "Candidato").split()[0]
     # job_id garantiza nombre único: dos vacantes de la misma empresa ya no se pisan el CV entre sí.
     pdf_path = os.path.abspath(os.path.join(cvs_dir, f"CV_{first_name}_{_safe_filename(company)}_{job_id}.pdf"))
@@ -216,6 +227,9 @@ async def run_tailor_agent():
 
     # 2. Obtener trabajos aprobados
     jobs = get_approved_jobs()
+    cap = int(os.environ.get("TAILOR_MAX_JOBS", "0"))  # main.py lo limita para no gastar todo el cupo de una vez
+    if cap:
+        jobs = jobs[:cap]
     if not jobs:
         print("[INFO] No hay trabajos con estado 'Aprobado' en jobs.db.")
         return
@@ -261,8 +275,7 @@ async def run_tailor_agent():
                     master_json_str=master_json_str,
                 )
             else:
-                print(f"   [SIN TEMPLATE] {label} — no existe template todavía (corré "
-                      f"generate_archetype_templates.py). Generando CV completo por esta vez.")
+                print("   [CV A LA MEDIDA] Generando el CV completo para esta vacante...")
                 tailored_result, _ = await cv_tailoring.generate_full(
                     job_title=job['title'],
                     job_company=job['company'],

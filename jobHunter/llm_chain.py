@@ -222,11 +222,15 @@ def print_budget_status():
 
 
 def _gemini(model="gemini-3.6-flash"):
+    if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip():
+        return None  # sin llave (p. ej. un amigo que solo sacó la de Groq): se salta en silencio
     # sin esto, langchain reintenta un 429 con backoff por minutos y deja colgada la cadena
     return ChatGoogleGenerativeAI(model=model, temperature=0.1, max_retries=1, timeout=90)
 
 
 def _groq(model="openai/gpt-oss-120b"):
+    if not os.environ.get("GROQ_API_KEY", "").strip():
+        return None
     return ChatGroq(model=model, temperature=0.1)
 
 
@@ -320,6 +324,8 @@ def invoke_structured(system_prompt: str, human_template: str, variables: dict,
     Cerebras -> OpenRouter en orden hasta que uno funcione. Levanta AllProvidersExhausted si
     los 4 fallan."""
     parser = PydanticOutputParser(pydantic_object=pydantic_model)
+    if local_only and not _local_llm_enabled():
+        local_only = False  # PC sin Ollama: mejor gastar cupo que no poder correr
     last_error: Optional[Exception] = None
     tokens_estimate = _estimate_tokens(system_prompt, human_template, str(variables))
 
@@ -393,6 +399,8 @@ def invoke_text(system_prompt: str, human_template: str, variables: dict, temper
                 local_only: bool = False) -> str:
     """Igual que invoke_structured pero para texto plano (sin schema). Devuelve el string de la respuesta.
     local_only=True usa solo Ollama: para tareas de volumen que no deben gastar cupo de la nube."""
+    if local_only and not _local_llm_enabled():
+        local_only = False  # PC sin Ollama: mejor gastar cupo que no poder correr
     last_error: Optional[Exception] = None
     tokens_estimate = _estimate_tokens(system_prompt, human_template, str(variables))
 
