@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 import time
 
+import user_settings
+
 # JobSpy's Country enum is missing several real countries (e.g. "cambodia") that show up
 # in LinkedIn location metadata. Country.from_string() raises ValueError on any unknown
 # name, which aborts the ENTIRE multi-site scrape_jobs() call (LinkedIn+Indeed+Glassdoor)
@@ -214,7 +216,7 @@ def search_jobbers(target_role: str) -> List[Dict]:
 # ORQUESTADOR DE BÚSQUEDA
 # ==========================================
 
-SEARCH_LOCATIONS = ["Colombia", "Latin America", "United States"]  # EE.UU.: solo pasan las de contractor sin papeles (job_filters)
+# ubicaciones de LinkedIn por persona (user_settings); EE.UU.: solo pasan las de contractor sin papeles (job_filters)
 
 
 def autonomous_job_search(target_role: str) -> List[Dict]:
@@ -226,7 +228,7 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
     # Indeed/Glassdoor salen: con country_indeed='USA' solo traían EE.UU. y Glassdoor daba 403.
     import re
     negative_pattern = r'\b(senior|sr|sr\.|lead|principal|staff|vp|vice\s?president|director|manager|head|chief|architect)\b'
-    for location in SEARCH_LOCATIONS:
+    for location in user_settings.get("search_locations"):
         try:
             from jobspy import scrape_jobs
             jobs_df = scrape_jobs(
@@ -234,7 +236,7 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
                 search_term=target_role,
                 location=location,
                 results_wanted=20,
-                is_remote=True,
+                is_remote=user_settings.get("remote_only"),  # False: también híbrido/presencial en su ciudad
                 # sin esto LinkedIn devuelve description=NaN y el scout evaluaba solo por el título
                 linkedin_fetch_description=True
             )

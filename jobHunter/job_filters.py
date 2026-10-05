@@ -13,6 +13,7 @@ import sqlite3
 import unicodedata
 
 import profile_paths
+import user_settings
 
 INTERN_PATTERN = re.compile(
     r"\b(intern|internship|interns|trainee|pasant[ií]a|pr[aá]cticas|becari[oa]|est[aá]gio|"
@@ -57,7 +58,8 @@ def _norm(s: str) -> str:
 
 
 def allowed_langs() -> set:
-    return {l.strip() for l in os.environ.get("SCOUT_ALLOWED_LANGS", "en,es").split(",") if l.strip()}
+    langs = os.environ.get("SCOUT_ALLOWED_LANGS") or user_settings.get("allowed_langs")
+    return {l.strip() for l in langs.split(",") if l.strip()}
 
 
 def detect_language(text: str) -> str:
@@ -85,7 +87,6 @@ def is_duplicate(title: str, company: str, url: str) -> bool:
 
 # Solo puede trabajar desde Colombia (sin permiso en EE.UU. ni la UE). Una vacante ubicada en otro país pasa
 # únicamente si la descripción dice que contratan en LATAM / Colombia / desde cualquier lugar.
-HOME_COUNTRIES = {"colombia"}
 # Solo frases sobre A QUIÉN contratan: "worldwide"/"anywhere" sueltos salían en el texto corporativo
 # ("customers worldwide", "work from anywhere in India") y dejaban pasar vacantes de India o Reino Unido.
 _LATAM = r"(latam|latin america|latinoam[eé]rica|south america|colombia|the americas)"
@@ -117,12 +118,12 @@ NEEDS_WORK_PAPERS = re.compile(
 def location_reason(location: str, clean_desc: str) -> str | None:
     """Motivo si la vacante está en un país donde no la pueden contratar; None si sirve."""
     country = _norm((location or "").split(",")[-1])
-    if not country or country in HOME_COUNTRIES or country in ("remote", "latin america", "latam"):
+    if not country or country == _norm(user_settings.get("home_country")) or country in ("remote", "latin america", "latam"):
         return None
     desc = clean_desc or ""
     if NEEDS_WORK_PAPERS.search(desc):
         return f"ubicada en {location} y pide permiso de trabajo/residencia allá"
-    if OPEN_TO_LATAM.search(desc) or CONTRACTOR_INTL.search(desc):
+    if OPEN_TO_LATAM.search(desc) or (user_settings.get("accept_international_contractor") and CONTRACTOR_INTL.search(desc)):
         return None
     return f"ubicada en {location} y no dice que contraten desde LATAM ni como contractor internacional"
 
