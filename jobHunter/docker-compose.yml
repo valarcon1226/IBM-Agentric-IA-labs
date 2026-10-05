@@ -10,6 +10,8 @@ x-common: &common
   environment:
     OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
     HOME: /tmp
+    # datos en Profiles/<nombre>/ como cualquier persona (jobs.db, CVs, perfil, planes); en la raíz solo hay código
+    JOBHUNTER_PROFILE: ${JOBHUNTER_PROFILE:-Valentina Alarcon}
   volumes:
     - ./:/app
   working_dir: /app

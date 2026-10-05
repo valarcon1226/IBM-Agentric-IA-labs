@@ -1,5 +1,18 @@
-"""Chequeo mínimo de score_gig (sin LLM): python test_freelance_scoring.py"""
-from freelance_hunter_agent import GigFacts, score_gig
+"""Chequeo mínimo de score_gig (sin LLM): python test_freelance_scoring.py
+Usa un perfil de prueba propio (no el de nadie), así corre en cualquier PC."""
+import json
+import os
+import tempfile
+
+import profile_paths
+
+_tmp = tempfile.mkdtemp()
+with open(os.path.join(_tmp, "master_profile.json"), "w", encoding="utf-8") as f:
+    json.dump({"technical_stacks": [{"ability": "Dev", "ability_description":
+               "Python, Selenium, n8n, OpenAI, React, Linux, VPS, Google Sheets, email automation"}]}, f)
+profile_paths.resolve = lambda name: os.path.join(_tmp, name)
+
+from freelance_hunter_agent import GigFacts, score_gig  # noqa: E402
 
 
 def fit(category, skills, clear=True, days=4, platform="Freelancer"):

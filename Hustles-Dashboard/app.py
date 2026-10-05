@@ -16,9 +16,9 @@ CVS_DIR = Path(os.environ.get(
 )).resolve()
 # Planes de estudio del tailor: jobHunter/study_guides/STUDY_GUIDE_<empresa>_<id>.txt
 STUDY_DIR = CVS_DIR.parent / "study_guides"
-# Mismo clasificador de rol que usa jobHunter (carpeta montada al lado de CVs_Listos)
+# Mismo clasificador de rol que usa jobHunter: su código (no la carpeta del perfil, donde están los datos)
 import sys
-sys.path.insert(0, str(CVS_DIR.parent))
+sys.path.insert(0, os.environ.get("JOBHUNTER_CODE_DIR", str(CVS_DIR.parent)))
 from archetypes import ARCHETYPE_LABELS, classify_archetype  # noqa: E402
 STUDY_MIN_MATCH, STUDY_MAX_MATCH = 50, 90  # plan solo de 50 a 89%; de 90 para arriba basta con los gaps
 

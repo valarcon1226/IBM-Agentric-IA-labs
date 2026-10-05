@@ -1,16 +1,18 @@
 """Sube a Google Drive los CVs de las vacantes visibles y guarda un link público POR ARCHIVO (cualquiera con el link
 puede ver ese CV, nada más) en jobs.cv_link, que el dashboard muestra para pegarlo en "link to your CV".
 Corre en el HOST del homelab (no en Docker) con rclone y el remote "gdrive" (root_folder_id = carpeta de CVs).
-Cron: */30 * * * * cd ~/homelab/jobhunter && python3 sync_cvs_drive.py >> sync_cvs_drive.log 2>&1"""
+Cron: */30 * * * * cd ~/homelab/jobhunter && JOBHUNTER_PROFILE="Valentina Alarcon" python3 sync_cvs_drive.py >> sync_cvs_drive.log 2>&1"""
 import datetime
 import os
 import sqlite3
 import subprocess
 import tempfile
 
+import profile_paths
+
 RCLONE = os.path.expanduser("~/.local/bin/rclone")
 REMOTE = "gdrive:"
-CVS_DIR = "CVs_Listos"
+CVS_DIR = profile_paths.resolve("CVs_Listos")  # del perfil activo (JOBHUNTER_PROFILE)
 
 
 def rclone(*args) -> str:
@@ -18,7 +20,7 @@ def rclone(*args) -> str:
 
 
 def main():
-    conn = sqlite3.connect("jobs.db")
+    conn = sqlite3.connect(profile_paths.resolve("jobs.db"))
     if "cv_link" not in {r[1] for r in conn.execute("PRAGMA table_info(jobs)")}:
         conn.execute("ALTER TABLE jobs ADD COLUMN cv_link TEXT")
     rows = conn.execute("SELECT id, cv_path FROM jobs WHERE cv_path IS NOT NULL AND cv_link IS NULL "

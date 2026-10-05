@@ -1,17 +1,17 @@
-# Standalone compose file — run this project on its own with `docker compose up -d --build`.
-#
-# To fold it into your existing homelab stack instead, copy just the
-# `hustles-dashboard` service block below into ~/homelab/docker-compose.yml
-# (same file that already runs Homepage, Portainer, Jellyfin, etc.) and adjust
-# the build context path to wherever you copied this project on the server.
+# Dashboard del jobHunter: lee EN VIVO la jobs.db y los CVs que escriben scout/tailor en ../jobhunter
+# (carpeta hermana en el homelab), así que no hace falta sincronizar nada.
+# Los datos están en Profiles/<nombre>/; para ver otro perfil cambia PROFILE_DIR.
 services:
   hustles-dashboard:
     build: .
     container_name: hustles-dashboard
     restart: unless-stopped
+    user: "1000:1000"
     ports:
       - "8100:8100"
     volumes:
-      - ./data:/app/data
+      - ../jobhunter:/jobhunter
     environment:
-      - JOBS_DB_PATH=/app/data/jobs.db
+      - JOBS_DB_PATH=/jobhunter/Profiles/Valentina Alarcon/jobs.db
+      - CVS_DIR=/jobhunter/Profiles/Valentina Alarcon/CVs_Listos
+      - JOBHUNTER_CODE_DIR=/jobhunter
