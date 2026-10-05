@@ -23,7 +23,7 @@ from job_scraper import clean_job_description
 TOP_PER_ROLE = 12
 CLOUD_TOP = 15        # los grupos más pedidos se generan con el modelo grande; el resto con el local
 SNIPPETS_PER_GROUP = 8
-OUTPUT = "learning_plan.json"
+OUTPUT = profile_paths.resolve("learning_plan.json")  # en la carpeta del perfil (el dashboard lo lee ahí)
 # Freelance cuenta como un "rol" más: skills que faltan en gigs, ordenadas por demanda x pago promedio
 ROLE_LABELS = {**ARCHETYPE_LABELS, "freelance": "Freelance"}
 _BUDGET = re.compile(r"\$(\d+)(?:-(\d+))? USD")

@@ -84,6 +84,15 @@ En 24h Ollama hizo ~356 de ~450 llamadas. `qwen3:4b` puntúa ~85% casi todo (75 
 - **Puntaje 100% técnico** (`job_scoring.score`): el rol es REQUISITO (solo `ai_engineer`, `forward_deployed`, `qa_automation`; el resto se descarta) y ya no suma puntos. pct = 80% obligatorias + 20% deseables (solo obligatorias si no hay deseables) − penalización por años. Re-puntuado con `rescore.py` (Ollama, log `rescore_tech.log`, backup `jobs.db.bak_before_tech_score_20260928`).
 - **Local primero (30/09)**: la cadena probaba la nube antes que Ollama, así que el scout (extracción de hechos de cada vacante, 90%+ de las llamadas) agotaba todo el cupo gratis antes de las 10 am. Ahora `scout_agent` (`SCOUT_LOCAL_ONLY`, default 1) y `freelance_hunter_agent.extract_gig_facts` usan solo Ollama. La nube queda para: reporte diario del Trend Spotter, ajustes puntuales del Tailor, queries del scout (1 por iteración) y herramientas manuales.
 - **Búsqueda enfocada del scout**: `SCOUT_QUERIES="a|b"`, `SCOUT_FAMILY=qa_automation`, `SCOUT_YEARS=3-4` → una pasada, lo fuera de foco no se guarda. Corrida QA lanzada el 30/09 (`scout_qa.log`, contenedor `jobhunter-scout-qa`).
+## ⚠️ 5 oct: los datos de Valentina viven en `Profiles/Valentina Alarcon/` (homelab y laptop)
+- Igual que cualquier persona: `jobs.db`, `master_profile.json`, `CVs_Listos/`, `study_guides/`, `archetype_templates/`,
+  `trend_reports/`, `learning_plan.json`, `backups/`, `logs/`. En la raíz de `jobhunter/` solo queda código.
+- Homelab: `docker-compose.yml` fija `JOBHUNTER_PROFILE=Valentina Alarcon`; el dashboard lee
+  `/jobhunter/Profiles/Valentina Alarcon/...`; el cron de Drive corre con `JOBHUNTER_PROFILE="Valentina Alarcon"`.
+- Scripts sueltos a mano (rescore, locate_jobs, validate...): anteponer `JOBHUNTER_PROFILE="Valentina Alarcon"`.
+- Respaldo previo a la migración: `~/homelab/backup_antes_de_perfil_20261005.tar.gz`.
+- Amigos: `py main.py "Nombre"` (ver `COMO_USARLO.md`).
+
 ## Cambios 1–3 oct
 - **Ubicación**: scout busca LinkedIn en Colombia / Latin America / United States (sin Indeed/Glassdoor). `job_filters.location_reason`: fuera de Colombia solo pasa si contratan desde LATAM o como contractor internacional sin pedir papeles (`test_location_filter.py`). Columna `jobs.location`; `locate_jobs.py` la completó desde LinkedIn y ocultó ~300 vacantes de otros países.
 - **Aprendizaje** (`learning_plan.py` → `learning_plan.json` → pestaña "Aprender"): gaps por skill + rol (AI/FDE/QA/Freelance), plan generado desde cómo lo piden las vacantes, horas calibradas, práctica web y prompt de entrevista; los gaps se revisan contra el perfil actual. Estimaciones a mano solo para herramientas que ya usa (`skill_estimates_curated.json`).
