@@ -16,18 +16,24 @@ from pydantic import BaseModel, Field
 
 import llm_chain
 import profile_paths
+import user_settings
 
+# Técnicas y de negocio: jobHunter sirve para cualquier profesión; cada persona elige las suyas (user_settings).
 RoleFamily = Literal["ai_engineer", "forward_deployed", "fullstack", "backend", "frontend",
-                     "qa_automation", "data", "devops", "other_technical", "non_technical"]
+                     "qa_automation", "data", "devops", "other_technical",
+                     "sales_business_development", "account_management", "marketing", "operations", "finance",
+                     "product", "consulting", "customer_success", "human_resources", "non_technical"]
 
 
 class JobFacts(BaseModel):
     is_technical_engineering_role: bool = Field(description="True only for hands-on engineering work (software, AI/ML, QA automation, data, DevOps). False for sales, marketing, operations, analyst/admin, support, recruiting, content, consulting-only roles, even if they mention AI or tools.")
-    role_family: RoleFamily = Field(description="Closest role family. Use non_technical when is_technical_engineering_role is false.")
+    role_family: RoleFamily = Field(description="Closest role family for the job. data = data/BI analysts, data engineers and scientists. "
+                                    "sales_business_development = sales, business development, partnerships, commercial roles. "
+                                    "account_management = key account / account managers. non_technical = any other non-technical role.")
     required_years: int = Field(description="Minimum years of experience explicitly required. 0 if not stated.")
     seniority_level: Literal["intern", "junior", "mid", "senior", "lead_or_above", "unspecified"] = Field(description="Seniority stated in the title or description.")
-    must_have_skills: List[str] = Field(description="Technologies/tools explicitly REQUIRED (e.g. Python, AWS, React, LangChain). Short names only, max 12.")
-    nice_to_have_skills: List[str] = Field(description="Technologies/tools listed as preferred, a plus, or bonus. Short names only, max 8.")
+    must_have_skills: List[str] = Field(description="Hard skills, tools, platforms or certifications explicitly REQUIRED (e.g. Python, AWS, React, Salesforce, SAP, Power BI, Excel, B2B sales, negotiation). Short plain names as a person would write them (e.g. 'Power BI', 'consultative selling'), never snake_case. Max 12. ALWAYS in English: translate them if the posting is in Spanish (the candidate profile is in English).")
+    nice_to_have_skills: List[str] = Field(description="Hard skills, tools or certifications listed as preferred, a plus, or bonus. Short names only, max 8. ALWAYS in English.")
     country_restricted: bool = Field(description="True if it requires citizenship, a security clearance, work authorization or residency in a specific country (e.g. US-only, EU-only), so a remote candidate in Colombia could not be hired. False if the job is located in Colombia or open to LATAM, even if it asks for work authorization in the country of the posting.")
     onsite_or_hybrid_required: bool = Field(description="True if the job requires working on-site or hybrid at an office.")
     required_human_languages: List[str] = Field(description="Human languages (other than English and Spanish) the candidate must speak. Empty if none.")
@@ -110,12 +116,10 @@ _ADJACENT = {
 }
 
 # años aproximados por disciplina, según el seniority_context del perfil
-CANDIDATE_YEARS = {"qa_automation": 3, "default": 2}
 
 # El tipo de rol es un REQUISITO, no suma puntos: fuera de estas familias la vacante se descarta.
 # (Las variantes — ML/LLM/AI full-stack engineer, solutions/deployment engineer, SDET — el
 # extractor ya las clasifica dentro de estas familias.)
-TARGET_FAMILIES = {"ai_engineer", "forward_deployed", "qa_automation"}
 
 _SPOKEN_OK = {"english", "ingles", "inglés", "spanish", "español", "espanol"}
 
@@ -143,10 +147,35 @@ def candidate_skills() -> set:
     return _candidate_cache
 
 
+_profile_text_cache: Optional[str] = None
+
+
+def _profile_text() -> str:
+    global _profile_text_cache
+    if _profile_text_cache is None:
+        with open(profile_paths.resolve("master_profile.json"), "r", encoding="utf-8") as f:
+            _profile_text_cache = json.dumps(json.load(f), ensure_ascii=False).lower()
+    return _profile_text_cache
+
+
 def _skill_credit(skill: str, have: set) -> float:
     s = _norm_skill(skill)
     if s in have:
         return 1.0
+    # fuera del vocabulario (Salesforce, SAP, negociación...): vale si aparece tal cual en el perfil
+    raw = re.sub(r"\(.*?\)", "", (skill or "").lower()).replace("_", " ").strip(" .-")  # "power_bi" -> "power bi"
+    if len(raw) >= 3 and re.search(rf"(?<![a-z]){re.escape(raw)}(?![a-z])", _profile_text()):
+        return 1.0
+    # habilidades de negocio cambian de forma (negotiate/negotiation, selling/sales): por raíz de cada palabra
+    # ponytail: raíz = primeras 5 letras; cambiar por un stemmer real si da falsos positivos
+    # solo palabras largas: con cortas la raíz da falsos positivos ("java" dentro de "javascript")
+    words = [w for w in re.findall(r"[a-z0-9+#]+", raw) if len(w) >= 6]
+    if words:
+        hits = sum(1 for w in words if re.search(rf"(?<![a-z]){re.escape(w[:5])}", _profile_text()))
+        if hits == len(words):
+            return 1.0
+        if hits * 2 >= len(words):
+            return 0.5
     if any(n in have for n in _ADJACENT.get(s, ())):
         return 0.5
     return 0.0
@@ -154,13 +183,11 @@ def _skill_credit(skill: str, have: set) -> float:
 
 def score(facts: JobFacts) -> Tuple[bool, int, List[str], str]:
     """(is_viable, match_percentage, missing_skills, reasoning) — determinístico."""
-    if not facts.is_technical_engineering_role or facts.role_family == "non_technical":
-        return False, 5, [], "No es un rol técnico de ingeniería."
-    if facts.role_family not in TARGET_FAMILIES:
-        return False, 5, [], f"Rol {facts.role_family}: no es AI Engineer, Forward Deployed ni QA Automation."
+    if facts.role_family not in user_settings.get("role_families"):
+        return False, 5, [], f"Rol {facts.role_family}: no es de los tipos de rol que buscas."
     if facts.country_restricted:
         return False, 10, [], "Restringido a ciudadanos/residentes de otro país (o pide clearance)."
-    if facts.onsite_or_hybrid_required:
+    if facts.onsite_or_hybrid_required and user_settings.get("remote_only"):
         return False, 10, [], "Requiere presencialidad/híbrido y el perfil es solo remoto."
     langs = [l for l in facts.required_human_languages if l.strip().lower() not in _SPOKEN_OK]
     if langs:
@@ -177,7 +204,8 @@ def score(facts: JobFacts) -> Tuple[bool, int, List[str], str]:
     nice_cov = (sum(_skill_credit(s, have) for s in nice) / len(nice)) if nice else 0.5
     missing = [s for s in must + nice if _skill_credit(s, have) < 1.0]
 
-    cand_years = CANDIDATE_YEARS.get(facts.role_family, CANDIDATE_YEARS["default"])
+    years = user_settings.get("years_by_family")  # años reales por disciplina (search_settings.json de la persona)
+    cand_years = years.get(facts.role_family, years.get("default", 2))
     gap_years = max(0, facts.required_years - cand_years)
     if gap_years >= 3:
         return False, 20, missing, f"Pide {facts.required_years} años; el perfil tiene ~{cand_years} en esta disciplina."

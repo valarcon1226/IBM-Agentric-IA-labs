@@ -44,13 +44,25 @@ REGLAS DE ORO (HARVARD FORMAT):
 2. MTODO STAR Y VERBOS DE ACCIN: Cada bullet point debe empezar con un verbo fuerte (Ej: Lider, Dise, Automatic). Si el logro original YA tiene una mtrica, consrvala tal cual (mismo nmero). Si NO la tiene, NO inventes una — usa lenguaje cualitativo de impacto (ej. "mejorando la confiabilidad", "reduciendo el tiempo de mantenimiento") en vez de un porcentaje inventado.
 3. INYECCIN DE KEYWORDS: Usa las palabras clave del GAP ANALYSIS sutilmente dentro del resumen y la experiencia, PERO SOLO SI TIENEN SENTIDO CON SU HISTORIAL.
 4. BREVEDAD: Los bullet points deben tener mximo 2 lneas.
-5. NARRATIVA HBRIDA (EL PITCH MID-LEVEL): Usa el campo 'seniority_context' del perfil original (su nivel real de QA vs. AI/Dev, tal como est escrito ah, SIN inventar aos ni cifras nuevas) como VENTAJA TCTICA. En el mundo de la Inteligencia Artificial, el desarrollo y el QA se estn fusionando. Vndela como una ingeniera capaz de construir sistemas y, al mismo tiempo, aplicarles revisin humana, validacin rigurosa y pruebas (su superpoder de QA) — usando SOLO la descripcin de seniority que ya est en el perfil, nunca aos o nmeros que no estn ah.
+5. NARRATIVA (EL PITCH): Usa el campo 'seniority_context' del perfil original (su nivel real por disciplina, tal como está escrito ahí, SIN inventar años ni cifras nuevas) como VENTAJA. Conecta su trayectoria real con lo que pide la vacante: muestra cómo lo que ya hizo (en su propia área, sea técnica, comercial, financiera u otra) le sirve para este puesto. Nunca le atribuyas una profesión o especialidad que no aparece en el perfil.
 6. IDIOMA: Todo el texto que generes (professional_summary, target_role_title y cada achievement) debe estar en INGLÉS, sin importar en qué idioma esté la descripción de la vacante. El perfil original ya está en inglés, mantén esa consistencia.
 7. TÍTULO OBJETIVO (target_role_title): DEBE reflejar el título REAL de la vacante ({job_title}), no un título genérico fijo. Si la vacante es de QA/Automation, el título dice QA/Automation (ej. "QA Automation Engineer"). Si es Forward Deployed Engineer, dice "Forward Deployed Engineer". Si es AI Engineer, dice "AI Engineer". Puedes ajustarlo levemente para que suene natural, pero SIEMPRE debe coincidir con la disciplina real de la vacante — nunca un título fijo que no cambia entre vacantes. Esto es un título ASPIRACIONAL/OBJETIVO (el puesto al que aplica), NO una afirmación de que ya tuvo ese cargo antes — no es mentira, es la convención estándar de un CV.
 
 Responde ÚNICAMENTE con un JSON con esta forma exacta, sin texto adicional ni el schema:
 {{"target_role_title": "...", "professional_summary": "...", "experience": [{{"company_name": "...", "current_role": "...", "time_period_worked": "...", "achievements": ["...", "..."]}}]}}
 Incluye TODAS las experiencias del perfil original, en el mismo orden, cada una con su lista de achievements reescrita."""
+
+# Amigos (main.py): el CV sale en el idioma de la vacante; Valentina (default "en"): siempre en inglés
+RULE6_EN = "6. IDIOMA: Todo el texto que generes (professional_summary, target_role_title y cada achievement) debe estar en INGLÉS, sin importar en qué idioma esté la descripción de la vacante. El perfil original ya está en inglés, mantén esa consistencia."
+RULE6_AUTO = ("6. IDIOMA: Escribe todo el texto (professional_summary, target_role_title y cada achievement) en el MISMO "
+              "idioma de la descripción de la vacante: si la vacante está en español, tradúcelo todo al español; si está "
+              "en inglés, en inglés. Traducir NO es inventar: conserva exactamente los mismos hechos y cifras.")
+
+
+def _generator_prompt() -> str:
+    import user_settings
+    return GENERATOR_SYSTEM_PROMPT if user_settings.get("cv_language") == "en" else GENERATOR_SYSTEM_PROMPT.replace(RULE6_EN, RULE6_AUTO)
+
 
 GENERATOR_HUMAN_TEMPLATE = """VACANTE: {job_title} en {job_company}
 DESCRIPCIN DE LA VACANTE: {job_desc}
@@ -65,6 +77,7 @@ Reescribe target_role_title, professional_summary y experience. (Devuelve JSON e
 REVIEWER_SYSTEM_PROMPT = """Eres un Polica Anti-Alucinaciones de RRHH. Tu nico trabajo es comparar el Perfil Original con el Perfil Generado por la IA y detectar MENTIRAS REALES, no cambios de redaccin.
 
 ESTO NO ES UNA MENTIRA (apruébalo, is_approved=true):
+- Que el CV generado esté traducido a otro idioma (p. ej. al español) con los mismos hechos y cifras.
 - Empezar un bullet con un verbo de accin ms fuerte (ej. "Migr" -> "Lider la migracin de").
 - Reordenar, combinar o acortar frases sin cambiar el significado ni los hechos.
 - Agregar una mtrica o palabra clave del Gap Analysis SIEMPRE que sea consistente con lo que ya hizo (ej. mencionar una tecnologa que s aparece en el perfil original, aunque en otras palabras).
@@ -151,7 +164,7 @@ async def generate_full(job_title: str, job_company: str, job_desc: str, gap_ana
         print(f"   [Intento {attempt}/{max_retries}] Generando CV completo...")
         try:
             tailored_result = llm_chain.invoke_structured(
-                system_prompt=GENERATOR_SYSTEM_PROMPT,
+                system_prompt=_generator_prompt(),
                 human_template=GENERATOR_HUMAN_TEMPLATE,
                 variables={
                     "job_title": job_title,

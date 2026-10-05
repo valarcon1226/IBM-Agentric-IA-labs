@@ -149,7 +149,7 @@ def export_final_candidate_json(completed_profile: MasterProfile):
     with open(profile_paths.resolve("master_profile.json"), "w", encoding="utf-8") as f:
         f.write(final_json_str)
         
-    test_dir = "perfiles_de_prueba"
+    test_dir = profile_paths.resolve("perfiles_de_prueba")  # copias dentro de la carpeta de cada persona
     os.makedirs(test_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_path = os.path.join(test_dir, f"master_profile_{timestamp}.json")
@@ -178,6 +178,8 @@ def analyze_and_draft_node(state: InterviewerState) -> InterviewerState:
 
     # 1. Parsea el perfil (Gemini -> Groq -> Cerebras -> OpenRouter, llm_chain.py)
     parse_system_prompt = """You are an expert data extraction assistant. Map the provided resume and chat history to the strict JSON schema in ENGLISH.
+TRANSLATE EVERY TEXT FIELD TO ENGLISH even if the resume is in Spanish or another language: professional_summary, target_roles,
+current_role, achievements, abilities, degrees, seniority_context, everything. Keep proper names (people, companies, products) as they are.
 CRITICAL INSTRUCTION: You MUST extract ALL sections of the resume, particularly 'PROFESSIONAL EXPERIENCE'. DO NOT LEAVE ARRAYS EMPTY IF DATA EXISTS.
 Pay special attention to the 'Candidate Initial Context' in the chat history to adapt the professional_summary if needed."""
     try:
@@ -219,8 +221,9 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
     print("Generando borrador de preguntas...")
     try:
         draft_questions = llm_chain.invoke_text(
-            system_prompt=("Eres un reclutador tech. Basado en estos gaps, genera una serie de preguntas para el candidato. "
-                            "Pide frameworks, ejemplos numéricos o tiempos reducidos si faltan. "
+            system_prompt=("Eres un reclutador experto en el área del candidato (sea técnica, comercial, financiera u otra). "
+                            "Basado en estos gaps, genera una serie de preguntas para el candidato. "
+                            "Pide herramientas, ejemplos numéricos, resultados o tiempos reducidos si faltan. "
                             "No te preocupes por el tono aún, solo lista las preguntas necesarias."),
             human_template="Gaps:\n{missing_gaps}",
             variables={"missing_gaps": missing_gaps},
@@ -240,7 +243,7 @@ def review_node(state: InterviewerState) -> InterviewerState:
     print("Revisando coherencia y cruzando contra CV para evitar redundancias...")
     
     is_first = (state["iteration_count"] == 0)
-    greeting_instruction = ("Dado que es la PRIMERA interacción, preséntate brevemente como Arquitecto Tech." 
+    greeting_instruction = ("Dado que es la PRIMERA interacción, preséntate brevemente como reclutador experto en su área." 
                             if is_first else 
                             "NO saludes. Empieza directamente con la pregunta de transición.")
 

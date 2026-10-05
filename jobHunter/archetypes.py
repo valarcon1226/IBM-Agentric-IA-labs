@@ -91,7 +91,9 @@ def classify_archetype(job_title: str) -> str:
 
 
 def _templates_dir() -> str:
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "archetype_templates")
+    # con perfil activo (main.py <nombre>) cada persona tiene los suyos; los de la raíz son de Valentina
+    import profile_paths
+    return profile_paths.resolve("archetype_templates")
 
 
 def template_path(archetype: str) -> str:
