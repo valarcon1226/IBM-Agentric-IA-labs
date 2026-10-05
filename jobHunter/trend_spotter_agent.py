@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import database
+import profile_paths
 import learning_plan
 import llm_chain
 from freelance_scraper import fetch_all_gigs, fetch_hustle_gigs
@@ -218,8 +219,9 @@ def hustle_demand(signals: List[Dict], recent_since: str) -> List[Dict]:
 
 def generate_markdown_report(opps: List[Opportunity], total_signals: int, hustles: List[Dict] = ()) -> str:
     now = datetime.datetime.now()
-    os.makedirs("trend_reports", exist_ok=True)
-    filename = f"trend_reports/market_trends_{now:%Y%m%d_%H%M%S}.md"
+    reports_dir = profile_paths.resolve("trend_reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    filename = os.path.join(reports_dir, f"market_trends_{now:%Y%m%d_%H%M%S}.md")
     md = "# Reporte de Tendencias de Mercado (Trend Spotter)\n\n"
     md += f"**Fecha:** {now:%Y-%m-%d %H:%M}\n"
     md += f"**Vacantes y gigs analizados (30 días):** {total_signals}\n\n"

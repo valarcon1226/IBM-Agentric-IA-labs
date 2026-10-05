@@ -3,12 +3,14 @@
 AI/FDE/QA -> No Elegible (oculta). Las ya marcadas como aplicadas no se ocultan.
 Uso: python rescore.py > rescore.log   ·   solo algunas: python rescore.py 49 51"""
 import sqlite3
+
+import profile_paths
 import sys
 import job_scoring
 import llm_chain
 from job_scraper import clean_job_description
 
-c = sqlite3.connect("jobs.db")
+c = sqlite3.connect(profile_paths.resolve("jobs.db"))
 rows = c.execute("SELECT id, title, company, match_percentage, scraped_content, status, cv_path, applied_at FROM jobs "
                  "WHERE status IN ('Aprobado', 'CV Generado', 'Match Insuficiente')").fetchall()
 ids = {int(a) for a in sys.argv[1:]}

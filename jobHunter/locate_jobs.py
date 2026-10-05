@@ -5,6 +5,8 @@ Uso: python locate_jobs.py > locate_jobs.log"""
 import html
 import re
 import sqlite3
+
+import profile_paths
 import time
 import urllib.request
 
@@ -26,7 +28,7 @@ def linkedin_location(url: str) -> str:
 
 
 database.init_db()  # crea la columna location si todavía no existe
-c = sqlite3.connect("jobs.db")
+c = sqlite3.connect(profile_paths.resolve("jobs.db"))
 rows = c.execute("SELECT id, title, company, url, scraped_content FROM jobs WHERE location IS NULL AND applied_at IS NULL "
                  "AND status IN ('CV Generado', 'Aprobado', 'Match Insuficiente') AND url LIKE '%linkedin.com/jobs/view/%'").fetchall()
 print(f"{len(rows)} vacantes de LinkedIn sin ubicación", flush=True)
