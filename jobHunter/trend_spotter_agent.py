@@ -61,6 +61,13 @@ HUSTLES = {
     "otro": "Cualquier otra cosa: producción de video nuevo (promos, animaciones, demos), diseño gráfico, traducción, desarrollo de software, data entry, etc.",
 }
 PICKED = ["growth_operator", "youtube_agency", "content_distribution", "seo_aeo"]
+# Nombres cortos para el dashboard/reporte (HUSTLES tiene la definición larga que usa el modelo para clasificar)
+HUSTLE_SHORT = {
+    "meta_ads": "Anuncios en Meta", "ghostwriting": "Ghostwriting / copywriting", "ai_creator": "Creador de contenido IA",
+    "growth_operator": "Growth operator", "youtube_agency": "Agencia de YouTube", "content_distribution": "Clipping de videos",
+    "seo_aeo": "SEO / AEO", "lead_generation": "Lead generation", "dm_setting": "Appointment setting",
+    "email_marketing": "Email marketing", "otro": "Otro",
+}
 # El modelo local mete casi cualquier cosa en alguna categoría (p. ej. un sitio web común en growth_operator):
 # cada side hustle exige su señal en el texto o pasa a "otro".
 _HUSTLE_REQUIRES = {
@@ -283,13 +290,15 @@ def main():
     opps = build_report(top)
     for o in opps:
         database.save_trend(trend_name=o.niche, demand_mentions=o.demand, estimated_automation_score=o.automation,
-                            agent_idea=f"{o.agent_idea}\nCómo venderlo: {o.how_to_sell}\nRevisión: {o.review_effort}",
+                            agent_idea=f"{o.agent_idea}\nCómo venderlo: {o.how_to_sell}\nRevisión: {o.review_effort}"
+                                       + (f"\nCompetencia: {o.competition}" if o.competition else ""),
                             gigs_analyzed=len(month))
     hustles = hustle_demand(month, week_ago)
     for h in hustles:
-        database.save_trend(trend_name=f"[Side hustle] {'⭐ ' if h['picked'] else ''}{h['name']}", demand_mentions=h["count"],
+        database.save_trend(trend_name=f"[Side hustle] {'⭐ ' if h['picked'] else ''}{HUSTLE_SHORT[h['key']]}", demand_mentions=h["count"],
                             estimated_automation_score={"high": "Alta", "medium": "Media", "low": "Baja"}[h["automatable"]],
-                            agent_idea="Tareas típicas: " + "; ".join(h["top_tasks"]) + f"\nÚltimos 7 días: {h['count_7d']}",
+                            agent_idea="Tareas típicas: " + "; ".join(h["top_tasks"]) + f"\nÚltimos 7 días: {h['count_7d']}"
+                                       + (f"\nPropuestas promedio: {h['avg_bids']}" if h.get("avg_bids") is not None else ""),
                             gigs_analyzed=len(month))
     generate_markdown_report(opps, len(month), hustles)
 
