@@ -98,6 +98,9 @@
   .match span { background: var(--surface); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .match.low { --ring: var(--ink-faint); }
   .match.warn { --ring: var(--amber); }
+  .lead { width: 64px; flex-shrink: 0; text-align: center; line-height: 1.1; }
+  .lead b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .lead small { color: var(--ink-soft); font-size: 11px; }
 
   .titles { min-width: 0; }
   .titles .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -350,6 +353,7 @@
         const unlocked = new Set(top.flatMap(x=>x.jobs.map(j=>j.id))).size;
         return [ {n:data.length,l:'Grupos skill + rol'}, {n:hours+' h',l:'Top 5 al mínimo'}, {n:unlocked,l:'Vacantes del top 5'}, {n:data.reduce((s,x)=>s+x.near_cv,0),l:'Cerca de CV'} ];
       },
+      lead: s => `<span class="lead"><b>${s.jobs.length}</b><small>${s.role === 'freelance' ? 'gigs' : 'vacantes'}<br>la piden</small></span>`,
       matchValue: s => Math.min(100, s.jobs.length * 5),
       matchLabel: s => s.jobs.length + ' vac.',
       matchRing: s => s.jobs.length >= 10 ? 'done' : (s.jobs.length >= 4 ? 'warn' : 'low'),
@@ -491,7 +495,7 @@
       li.className = 'card'; li.setAttribute('data-open', String(isOpen));
       li.innerHTML = `
         <button class="row" aria-expanded="${isOpen}">
-          <span class="match ${ring==='done'?'':ring==='warn'?'warn':'low'}" style="--m:${Math.max(0,Math.min(100,cfg.matchValue(it)))}"><span>${esc(cfg.matchLabel(it))}</span></span>
+          ${cfg.lead ? cfg.lead(it) : `<span class="match ${ring==='done'?'':ring==='warn'?'warn':'low'}" style="--m:${Math.max(0,Math.min(100,cfg.matchValue(it)))}"><span>${esc(cfg.matchLabel(it))}</span></span>`}
           <span class="titles"><div class="t">${esc(cfg.title(it))}</div><div class="c">${esc(cfg.subtitle(it))}</div></span>
           <span class="pill ${pill.cls}">${esc(pill.label)}</span>
           ${appliedBadge}
