@@ -103,11 +103,11 @@ EXTRACT_HUMAN_TEMPLATE = "TÍTULO: {title}\nDESCRIPCIÓN: {description}"
 
 def extract_new_signals() -> int:
     """Anota con el modelo local las vacantes/gigs que todavía no tienen señal. Nunca usa la nube."""
-    fresh = [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"]}
-             for g in market_gigs(fetch_all_gigs())]
+    fresh = [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"],
+              "competition": g.get("competition")} for g in market_gigs(fetch_all_gigs())]
     # side hustles (marketing, video, SEO...): sin el blocklist del agente de Freelance, que descarta justo eso
-    fresh += [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"]}
-              for g in fetch_hustle_gigs()]
+    fresh += [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"],
+               "competition": g.get("competition")} for g in fetch_hustle_gigs()]
     stored = [i for i in database.get_market_items()
               if i["source"] == "job" or not _BLOCKLIST.search(f"{i['title']} {i['description']}")]
     known = database.get_signal_urls()
@@ -132,8 +132,12 @@ def extract_new_signals() -> int:
             continue
         database.save_signal(item["url"], item["source"], s.domain.strip().lower(),
                              s.task.strip().lower(), s.deliverable.strip(), s.automatable,
-                             check_hustle(s.hustle, f"{item['title']} {item['description']} {s.task}"))
+                             check_hustle(s.hustle, f"{item['title']} {item['description']} {s.task}"),
+                             item.get("competition"))
         done += 1
+    purged = database.purge_discarded_gigs()
+    if purged:
+        print(f"[i] {purged} gigs descartados borrados (su señal y su URL quedan guardadas).")
     return done
 
 
@@ -147,14 +151,19 @@ def group_signals(signals: List[Dict], recent_since: str = "") -> List[Dict]:
         match = next((g for g in domain_groups
                       if SequenceMatcher(None, g["task"], s["task"]).ratio() >= SIMILAR), None)
         if match is None:
-            match = {"domain": s["domain"], "task": s["task"], "count": 0, "count_7d": 0, "deliverables": set(), "automatable": defaultdict(int)}
+            match = {"domain": s["domain"], "task": s["task"], "count": 0, "count_7d": 0, "deliverables": set(),
+                     "automatable": defaultdict(int), "bids": []}
             domain_groups.append(match)
         match["count"] += 1
         match["count_7d"] += (s.get("extracted_at") or "") >= recent_since
         match["deliverables"].add(s["deliverable"])
         match["automatable"][s["automatable"]] += 1
+        if s.get("competition") is not None:
+            match["bids"].append(s["competition"])
     flat = [g for gs in groups.values() for g in gs]
     for g in flat:
+        g["avg_bids"] = round(sum(g["bids"]) / len(g["bids"])) if g["bids"] else None  # competencia promedio
+        del g["bids"]
         g["automatable"] = max(g["automatable"], key=g["automatable"].get)
         g["deliverables"] = sorted(g["deliverables"])[:3]
     return sorted(flat, key=lambda g: g["count"], reverse=True)
@@ -167,6 +176,7 @@ class Opportunity(BaseModel):
     agent_idea: str = Field(description="Qué hace el agente y con qué stack")
     how_to_sell: str = Field(description="Quién lo compra, cómo empaquetarlo y una idea de precio")
     review_effort: str = Field(description="Cuánta revisión humana necesita cada entrega")
+    competition: str = Field(default="", description="Competencia según avg_bids: 'Baja', 'Media', 'Alta (saturado)' o 'Sin datos'")
 
 class OpportunityReport(BaseModel):
     opportunities: List[Opportunity]
@@ -175,13 +185,16 @@ REPORT_SYSTEM_PROMPT = """Eres analista de negocio. Te paso grupos de tareas que
 pide repetidamente, con cuántas veces aparecieron en 7 y 30 días. Fusiona los grupos que sean el mismo nicho (sumando demanda)
 y devuelve las 10 MEJORES OPORTUNIDADES para que UNA persona construya un agente de IA que haga ese trabajo, ella revise
 la salida y la entregue/venda con casi cero esfuerzo. Prioriza demanda alta, creciente y automatizable. No inventes nichos
-que no estén en los datos. Escribe en español."""
+que no estén en los datos. Escribe en español.
+avg_bids = propuestas promedio que reciben esos proyectos freelance (competencia): menos de 20 es baja, 20-60 media,
+más de 60 alta. Prefiere demanda alta con competencia baja o media; un nicho saturado solo vale si hay un ángulo claro
+para diferenciarse (p. ej. especializarse en una industria), y dilo en how_to_sell."""
 REPORT_HUMAN_TEMPLATE = "GRUPOS ({count}):\n{payload}"
 
 
 def build_report(top: List[Dict]) -> List[Opportunity]:
     payload = json.dumps([{"domain": g["domain"], "task": g["task"], "count_30d": g["count"],
-                           "count_7d": g["count_7d"],
+                           "count_7d": g["count_7d"], "avg_bids": g.get("avg_bids"),
                            "deliverables": g["deliverables"], "automatable": g["automatable"]} for g in top],
                          ensure_ascii=False)
     try:
@@ -210,7 +223,9 @@ def hustle_demand(signals: List[Dict], recent_since: str) -> List[Dict]:
         for s in items:
             auto[s["automatable"]] += 1
             tasks[s["task"]] += 1
+        bids = [s["competition"] for s in items if s.get("competition") is not None]
         rows.append({"key": key, "name": HUSTLES[key], "picked": key in PICKED, "count": len(items),
+                     "avg_bids": round(sum(bids) / len(bids)) if bids else None,
                      "count_7d": sum(1 for s in items if (s.get("extracted_at") or "") >= recent_since),
                      "automatable": max(auto, key=auto.get),
                      "top_tasks": [t for t, _ in sorted(tasks.items(), key=lambda kv: -kv[1])[:3]]})
@@ -227,14 +242,14 @@ def generate_markdown_report(opps: List[Opportunity], total_signals: int, hustle
     md += f"**Vacantes y gigs analizados (30 días):** {total_signals}\n\n"
     if hustles:
         md += "## Demanda de los side hustles del video (⭐ = los que elegiste)\n\n"
-        md += "| Side hustle | Menciones 30 d | Últimos 7 d | Automatización | Tareas típicas |\n|---|---|---|---|---|\n"
+        md += "| Side hustle | Menciones 30 d | Últimos 7 d | Propuestas promedio (competencia) | Automatización | Tareas típicas |\n|---|---|---|---|---|---|\n"
         for h in hustles:
-            md += (f"| {'⭐ ' if h['picked'] else ''}{h['name']} | {h['count']} | {h['count_7d']} | {h['automatable']} | "
+            md += (f"| {'⭐ ' if h['picked'] else ''}{h['name']} | {h['count']} | {h['count_7d']} | {h['avg_bids'] if h['avg_bids'] is not None else 's/d'} | {h['automatable']} | "
                    f"{'; '.join(h['top_tasks'])} |\n")
         md += "\n"
     md += "## Nichos para automatizar y vender\n\n"
     for i, o in enumerate(opps, 1):
-        md += (f"### {i}. {o.niche}\n- **Demanda:** {o.demand} menciones\n- **Automatización:** {o.automation}\n"
+        md += (f"### {i}. {o.niche}\n- **Demanda:** {o.demand} menciones\n- **Competencia:** {o.competition or 'sin datos'}\n- **Automatización:** {o.automation}\n"
                f"- **Agente:** {o.agent_idea}\n- **Cómo venderlo:** {o.how_to_sell}\n- **Revisión humana:** {o.review_effort}\n\n")
     if not opps:
         md += "_Todavía no hay suficientes datos._\n"
