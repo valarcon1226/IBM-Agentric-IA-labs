@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import os
 import profile_paths
@@ -76,6 +77,10 @@ def init_db():
     ''')
     if "hustle" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
         cursor.execute("ALTER TABLE demand_signals ADD COLUMN hustle TEXT")  # side hustle del video (trend spotter)
+    if "competition" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
+        cursor.execute("ALTER TABLE demand_signals ADD COLUMN competition INTEGER")  # propuestas que tenía el gig
+    # URLs de gigs ya evaluados y borrados (purge_discarded_gigs): solo para no volver a evaluarlos
+    cursor.execute("CREATE TABLE IF NOT EXISTS seen_gig_urls (url TEXT PRIMARY KEY)")
     conn.commit()
     conn.close()
 
@@ -85,10 +90,11 @@ def get_signal_urls() -> set:
     conn.close()
     return urls
 
-def save_signal(source_url: str, source: str, domain: str, task: str, deliverable: str, automatable: str, hustle: str = None):
+def save_signal(source_url: str, source: str, domain: str, task: str, deliverable: str, automatable: str,
+                hustle: str = None, competition: int = None):
     conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
-    conn.execute('INSERT OR IGNORE INTO demand_signals (source_url, source, domain, task, deliverable, automatable, hustle) '
-                 'VALUES (?, ?, ?, ?, ?, ?, ?)', (source_url, source, domain, task, deliverable, automatable, hustle))
+    conn.execute('INSERT OR IGNORE INTO demand_signals (source_url, source, domain, task, deliverable, automatable, hustle, competition) '
+                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (source_url, source, domain, task, deliverable, automatable, hustle, competition))
     conn.commit()
     conn.close()
 
@@ -166,10 +172,34 @@ def get_known_gig_urls() -> set:
     db_path = profile_paths.resolve('jobs.db')
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('SELECT url FROM freelance_gigs')
+    cursor.execute('SELECT url FROM freelance_gigs UNION SELECT url FROM seen_gig_urls')
     urls = {row[0] for row in cursor.fetchall()}
     conn.close()
     return urls
+
+
+def purge_discarded_gigs() -> int:
+    """Borra los gigs descartados que ya no aportan nada: los que el Trend Spotter ya leyó (su señal queda en
+    demand_signals) y los fuera de rubro / otro idioma. Antes guarda su URL (para no re-evaluarlos) y pasa la
+    cantidad de propuestas a la señal (dato de competencia del Trend Spotter). Los aplicados nunca se borran."""
+    conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(freelance_gigs)")}
+    not_applied = "AND applied_at IS NULL" if "applied_at" in cols else ""
+    where = (f"status = 'Descartado' {not_applied} AND (url IN (SELECT source_url FROM demand_signals) "
+             "OR reasoning LIKE '[Filtro] fuera de rubro%' OR reasoning LIKE '[Filtro] idioma%')")
+    bids = re.compile(r"(\d+) propuestas|demasiada competencia \((\d+)\)")
+    for url, reasoning in conn.execute(f"SELECT url, reasoning FROM freelance_gigs WHERE {where}").fetchall():
+        m = bids.search(reasoning or "")
+        if m:
+            conn.execute("UPDATE demand_signals SET competition = COALESCE(competition, ?) WHERE source_url = ?",
+                         (int(m.group(1) or m.group(2)), url))
+    conn.execute(f"INSERT OR IGNORE INTO seen_gig_urls (url) SELECT url FROM freelance_gigs WHERE {where}")
+    n = conn.execute(f"DELETE FROM freelance_gigs WHERE {where}").rowcount
+    conn.commit()
+    if n:
+        conn.execute("VACUUM")  # devuelve el espacio al disco
+    conn.close()
+    return n
 
 def get_applicable_gigs() -> list:
     """Recupera los gigs freelance marcados como aplicables para ti."""
