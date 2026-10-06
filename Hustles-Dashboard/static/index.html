@@ -98,6 +98,33 @@
   .match span { background: var(--surface); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .match.low { --ring: var(--ink-faint); }
   .match.warn { --ring: var(--amber); }
+  [hidden] { display: none !important; }
+  .t-sec { margin: 26px 0 8px; }
+  .t-sec h2 { font-size: 19px; margin: 0 0 4px; }
+  .t-help { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 14px; max-width: 70ch; }
+  .t-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .t-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .t-head { display: flex; gap: 10px; align-items: flex-start; }
+  .t-head h3 { margin: 0; font-size: 15.5px; line-height: 1.35; text-wrap: balance; }
+  .t-rank { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .t-note { font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+  .t-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .t-chip { font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .t-card dl { margin: 0; display: grid; gap: 4px; font-size: 13.5px; }
+  .t-card dt { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin-top: 6px; }
+  .t-card dd { margin: 0; line-height: 1.5; }
+  .t-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .t-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .t-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .t-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .t-table tr:last-child td { border-bottom: none; }
+  .t-table tr.picked td { background: var(--accent-soft); }
+  .t-name { font-weight: 600; white-space: nowrap; }
+  .t-table .num { font-variant-numeric: tabular-nums; text-align: center; }
+  .t-demand { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+  .t-bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .t-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .t-tasks { color: var(--ink-soft); font-size: 12.5px; min-width: 220px; }
   .lead { width: 64px; flex-shrink: 0; text-align: center; line-height: 1.1; }
   .lead b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-variant-numeric: tabular-nums; }
   .lead small { color: var(--ink-soft); font-size: 11px; }
@@ -150,7 +177,7 @@
 
   <div class="error-banner" id="errorBanner" hidden></div>
 
-  <div class="toolbar">
+  <div class="toolbar" id="toolbar">
     <div class="search">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="searchInput" type="text" placeholder="Buscar&hellip;" aria-label="Buscar">
@@ -161,6 +188,7 @@
 
   <div class="count-line" id="countLine"></div>
   <ul class="list" id="list"></ul>
+  <div id="customView" hidden></div>
   <div class="empty" id="emptyState" hidden>No hay resultados que coincidan con la b&uacute;squeda.</div>
 </div>
 
@@ -210,6 +238,38 @@
   // Trend Spotter: los side hustles del reporte se guardan como "[Side hustle] ..." (⭐ = elegidos)
   const trendType = t => !String(t.trend_name).startsWith('[Side hustle]') ? ['niche', 'Nichos para automatizar']
                        : String(t.trend_name).includes('⭐') ? ['picked', '⭐ Tus side hustles'] : ['hustle', 'Otros side hustles del video'];
+
+  // ---- Trend Spotter: solo el último reporte (cada reporte guarda sus filas con la misma hora)
+  const isHustle = t => String(t.trend_name).startsWith('[Side hustle]');
+  const HUSTLE_NAMES = [[/recortar videos|clips cortos/i, 'Clipping de videos'], [/canal de youtube/i, 'Agencia de YouTube'],
+    [/back-end de un creador|funnels/i, 'Growth operator'], [/seo|buscadores/i, 'SEO / AEO'], [/prospectos|lead generation/i, 'Lead generation'],
+    [/email marketing/i, 'Email marketing'], [/anuncios/i, 'Anuncios en Meta'], [/voz de una persona|ghostwriting/i, 'Ghostwriting / copywriting'],
+    [/contenido propio sobre ia|creador de contenido/i, 'Creador de contenido IA'], [/mensajes directos|appointment/i, 'Appointment setting']];
+  const shortHustle = name => { const n = String(name).replace('[Side hustle]', '').replace('⭐', '').trim();
+    const hit = HUSTLE_NAMES.find(([re]) => re.test(n)); return hit ? hit[1] : n.split(':')[0]; };
+  const ts = t => new Date(String(t.detected_at).replace(' ', 'T')).getTime();
+  const reportBatches = data => {  // filas de cada reporte diario (se guardan en la misma corrida), del más nuevo al más viejo
+    const sorted = data.slice().sort((a,b) => ts(b) - ts(a)), batches = [];
+    sorted.forEach(t => { const b = batches[batches.length - 1];
+      if (b && ts(b[0]) - ts(t) < 15 * 60 * 1000) b.push(t); else batches.push([t]); });
+    return batches;
+  };
+  const analyzed = batch => batch.some(t => !isHustle(t) && !String(t.agent_idea).includes('pendiente de análisis'));
+  const latestTrends = data => reportBatches(data)[0] || [];
+  const latestAnalyzed = data => reportBatches(data).find(analyzed) || [];
+  const trendFields = txt => {  // "idea\nCómo venderlo: ...\nRevisión: ..." -> {build, 'Cómo venderlo', ...}
+    const o = {};
+    String(txt || '').split('\n').forEach(l => {
+      const m = l.match(/^(Cómo venderlo|Revisión|Competencia|Tareas típicas|Últimos 7 días|Propuestas promedio):\s*(.*)$/);
+      if (m) o[m[1]] = m[2]; else if (l.trim()) o.build = (o.build ? o.build + ' ' : '') + l.trim();
+    });
+    return o;
+  };
+  // verde = bueno para ti (competencia baja / automatización alta)
+  const levelCls = (v, highIsGood) => { const x = String(v || '').toLowerCase();
+    if (x.startsWith('baja')) return highIsGood ? 'discarded' : 'done';
+    if (x.startsWith('alta')) return highIsGood ? 'done' : 'discarded';
+    if (x.startsWith('media')) return 'pending'; return ''; };
 
   const TABS = {
     jobs: {
@@ -302,36 +362,69 @@
     },
     trends: {
       label: 'Trend Spotter', data: TRENDS,
+      count: data => latestTrends(data).length,
       h1: 'Trend Spotter',
-      sub: 'Señales de demanda detectadas cruzando los gigs freelance — qué se repite, qué tan automatizable es, y una idea de agente lista para construir.',
-      searchPlaceholder: 'Buscar por tendencia…',
-      group: t => trendType(t), groupOrder: ['picked', 'hustle', 'niche'],
-      filters: [ {key:'all', label:'Todas'}, {key:'picked', label:'⭐ Tus side hustles'}, {key:'hustle', label:'Side hustles del video'}, {key:'niche', label:'Nichos para automatizar'},
-                 {key:'Alta', label:'Automatización alta'}, {key:'Media', label:'Media'}, {key:'Baja', label:'Baja'} ],
-      filterFn: (t,k) => k==='all' || (['picked','hustle','niche'].includes(k) ? trendType(t)[0] === k || (k==='hustle' && trendType(t)[0]==='picked') : t.estimated_automation_score === k),
-      searchText: t => t.trend_name,
-      sorts: [
-        {value:'mentions_desc', label:'Más mencionada', cmp:(a,b)=>b.demand_mentions-a.demand_mentions},
-        {value:'gigs_desc', label:'Más gigs analizados', cmp:(a,b)=>b.gigs_analyzed-a.gigs_analyzed},
-        {value:'recent', label:'Más recientes', cmp:(a,b)=>String(b.detected_at).localeCompare(String(a.detected_at))},
-        {value:'name', label:'Tendencia (A-Z)', cmp:(a,b)=>String(a.trend_name).localeCompare(String(b.trend_name))},
-      ],
+      sub: 'Qué está pagando el mercado (vacantes + gigs freelance) y qué se puede automatizar con un agente para venderlo. Muestra el último reporte diario.',
+      searchPlaceholder: '', filters: [], filterFn: () => true, searchText: () => '',
+      sorts: [ {value:'none', label:'', cmp:() => 0} ],
       stats: (data) => {
-        const total = data.length;
-        const alta = data.filter(t=>t.estimated_automation_score==='Alta').length;
-        const avgGigs = total ? Math.round(data.reduce((s,t)=>s+t.gigs_analyzed,0)/total) : 0;
-        const last = data.reduce((m,t)=> t.detected_at > m ? t.detected_at : m, '');
-        return [ {n:total,l:'Tendencias'}, {n:alta,l:'Alta automatiz.'}, {n:avgGigs,l:'Gigs prom.'}, {n:fmtDate(last),l:'Último scan'} ];
+        const rows = latestTrends(data);
+        const hustles = rows.filter(isHustle);
+        const picked = hustles.filter(t => String(t.trend_name).includes('⭐')).sort((a,b) => b.demand_mentions - a.demand_mentions)[0];
+        const last = rows.reduce((m,t) => t.detected_at > m ? t.detected_at : m, '');
+        return [ {n: rows.length - hustles.length, l:'Nichos detectados'},
+                 {n: picked ? shortHustle(picked.trend_name) : '—', l:'Tu side hustle con más demanda'},
+                 {n: rows[0] ? rows[0].gigs_analyzed : 0, l:'Vacantes y gigs analizados'},
+                 {n: fmtDate(last), l:'Último reporte'} ];
       },
-      matchValue: t => scoreRank[t.estimated_automation_score] || 0,
-      matchLabel: t => String(t.demand_mentions) + 'x',
-      matchRing: t => scoreRing[t.estimated_automation_score] || 'low',
-      title: t => t.trend_name, subtitle: t => `${t.gigs_analyzed} gigs analizados`,
-      pill: t => ({ cls: t.estimated_automation_score === 'Alta' ? 'done' : (t.estimated_automation_score === 'Media' ? 'pending' : 'discarded'), label: t.estimated_automation_score || '—' }),
-      detail: t => `
-          <div><h4>Idea de Agente</h4><div class="desc">${esc(t.agent_idea) || 'Sin idea registrada.'}</div></div>
-          <div class="meta-row"><span><b>Menciones</b> ${t.demand_mentions}</span><span><b>Gigs analizados</b> ${t.gigs_analyzed}</span><span><b>Detectado</b> ${fmtDate(t.detected_at)}</span></div>
-        `,
+      custom: (data) => {
+        const rows = latestTrends(data);
+        if (!rows.length) return '<p class="t-help">Todavía no hay reportes. El Trend Spotter genera uno al día.</p>';
+        const nicheRows = analyzed(rows) ? rows : latestAnalyzed(data);
+        const niches = nicheRows.filter(t => !isHustle(t)).sort((a,b) => b.demand_mentions - a.demand_mentions);
+        const nicheNote = nicheRows !== rows && nicheRows.length
+          ? `<p class="t-note">El reporte de hoy no alcanzó a analizarse (la IA estaba saturada). Estos nichos son del reporte del ${esc(fmtDate(nicheRows[0].detected_at))}.</p>` : '';
+        const hustles = rows.filter(isHustle).sort((a,b) => (String(b.trend_name).includes('⭐') - String(a.trend_name).includes('⭐')) || (b.demand_mentions - a.demand_mentions));
+        const maxH = Math.max(1, ...hustles.map(h => h.demand_mentions));
+        const cards = niches.map((t, i) => {
+          const f = trendFields(t.agent_idea);
+          const comp = f['Competencia'] || 'Sin datos';
+          return `<article class="t-card">
+            <div class="t-head"><span class="t-rank">${i + 1}</span><h3>${esc(t.trend_name)}</h3></div>
+            <div class="t-chips"><span class="t-chip"><b>${t.demand_mentions}</b> menciones</span>
+              <span class="pill ${levelCls(comp)}">Competencia: ${esc(comp)}</span>
+              <span class="pill ${levelCls(t.estimated_automation_score, true)}">Automatización: ${esc(t.estimated_automation_score || '—')}</span></div>
+            <dl>${f.build ? `<dt>Qué construir</dt><dd>${esc(f.build)}</dd>` : ''}
+                ${f['Cómo venderlo'] ? `<dt>Cómo venderlo</dt><dd>${esc(f['Cómo venderlo'])}</dd>` : ''}
+                ${f['Revisión'] ? `<dt>Revisión humana</dt><dd>${esc(f['Revisión'])}</dd>` : ''}</dl>
+          </article>`;
+        }).join('');
+        const table = hustles.map(h => {
+          const f = trendFields(h.agent_idea);
+          const bids = f['Propuestas promedio'];
+          const comp = bids === undefined ? 'Sin datos' : (+bids < 20 ? 'Baja' : +bids <= 60 ? 'Media' : 'Alta');
+          return `<tr class="${String(h.trend_name).includes('⭐') ? 'picked' : ''}">
+            <td class="t-name">${String(h.trend_name).includes('⭐') ? '⭐ ' : ''}${esc(shortHustle(h.trend_name))}</td>
+            <td><div class="t-demand"><div class="t-bar"><span style="width:${Math.round(100 * h.demand_mentions / maxH)}%"></span></div><b>${h.demand_mentions}</b></div></td>
+            <td class="num">${esc(f['Últimos 7 días'] || '—')}</td>
+            <td><span class="pill ${levelCls(comp)}">${comp}${bids !== undefined ? ` · ${esc(bids)} prop.` : ''}</span></td>
+            <td><span class="pill ${levelCls(h.estimated_automation_score, true)}">${esc(h.estimated_automation_score || '—')}</span></td>
+            <td class="t-tasks">${esc(f['Tareas típicas'] || '')}</td></tr>`;
+        }).join('');
+        return `
+          <section class="t-sec">
+            <h2>Dónde está la oportunidad</h2>
+            <p class="t-help">Nichos que el mercado paga y que un agente de IA puede resolver. Lo ideal: muchas menciones, competencia baja y automatización alta.</p>
+            ${nicheNote}<div class="t-cards">${cards || '<p class="t-help">Sin nichos analizados todavía.</p>'}</div>
+          </section>
+          <section class="t-sec">
+            <h2>Side hustles del video</h2>
+            <p class="t-help">⭐ = los que elegiste. Demanda = gigs de los últimos 30 días que piden ese servicio. Competencia = propuestas promedio que recibe cada gig.</p>
+            <div class="t-table-wrap"><table class="t-table">
+              <thead><tr><th>Servicio</th><th>Demanda</th><th>Últimos 7 días</th><th>Competencia</th><th>Automatizable</th><th>Qué piden (ejemplos)</th></tr></thead>
+              <tbody>${table}</tbody></table></div>
+          </section>`;
+      },
     },
     learn: {
       label: 'Aprender', data: LEARN,
@@ -385,6 +478,8 @@
     countLine: document.getElementById('countLine'),
     list: document.getElementById('list'),
     empty: document.getElementById('emptyState'),
+    toolbar: document.getElementById('toolbar'),
+    custom: document.getElementById('customView'),
   };
 
   function buildTabs(){
@@ -394,7 +489,7 @@
       const btn = document.createElement('button');
       btn.type = 'button'; btn.role = 'tab';
       btn.setAttribute('aria-selected', String(state.tab === key));
-      btn.innerHTML = `${cfg.label} <span class="cnt">${cfg.data.length}</span>`;
+      btn.innerHTML = `${cfg.label} <span class="cnt">${cfg.count ? cfg.count(cfg.data) : cfg.data.length}</span>`;
       btn.addEventListener('click', () => { switchTab(key); });
       els.tabs.appendChild(btn);
     });
@@ -461,6 +556,9 @@
   function render(){
     const cfg = TABS[state.tab];
     renderStats();
+    const custom = !!cfg.custom;
+    els.toolbar.hidden = custom; els.countLine.hidden = custom; els.custom.hidden = !custom;
+    if (custom) { els.list.innerHTML = ''; els.empty.hidden = true; els.custom.innerHTML = cfg.custom(cfg.data); return; }
     let items = cfg.data.filter(it => cfg.filterFn(it, state.filter));
     if(state.query.trim()){
       const q = state.query.trim().toLowerCase();
