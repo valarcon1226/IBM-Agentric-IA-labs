@@ -214,10 +214,13 @@ def get_signals():
         return []
     conn = get_conn()
     cols = {r[1] for r in conn.execute("PRAGMA table_info(demand_signals)")}
-    budget = "budget" if "budget" in cols else "NULL AS budget"
+    opt = {c: f"s.{c}" if c in cols else "NULL" for c in ("budget", "hustle", "title")}
     rows = conn.execute(
-        f"""SELECT source_url, source, domain, task, deliverable, automatable, competition, {budget}, extracted_at
-            FROM demand_signals WHERE extracted_at > datetime('now', '-30 days')"""
+        f"""SELECT s.source_url, s.source, s.domain, s.task, s.deliverable, s.automatable, s.competition,
+                   {opt['budget']} AS budget, {opt['hustle']} AS hustle, s.extracted_at,
+                   COALESCE({opt['title']}, (SELECT title FROM freelance_gigs WHERE url = s.source_url LIMIT 1),
+                            (SELECT title FROM jobs WHERE url = s.source_url LIMIT 1)) AS title
+            FROM demand_signals s WHERE s.extracted_at > datetime('now', '-30 days')"""
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
