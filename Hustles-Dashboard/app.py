@@ -207,6 +207,22 @@ def get_learning():
     return [{"id": i, **s} for i, s in enumerate(skills)]
 
 
+@app.get("/api/signals")
+def get_signals():
+    """Todo lo que pidió el mercado en 30 días (una fila por vacante/gig analizado), para explorar y filtrar."""
+    if not db_available():
+        return []
+    conn = get_conn()
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(demand_signals)")}
+    budget = "budget" if "budget" in cols else "NULL AS budget"
+    rows = conn.execute(
+        f"""SELECT source_url, source, domain, task, deliverable, automatable, competition, {budget}, extracted_at
+            FROM demand_signals WHERE extracted_at > datetime('now', '-30 days')"""
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 @app.get("/api/trends")
 def get_trends():
     if not db_available():

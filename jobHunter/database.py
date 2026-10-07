@@ -81,6 +81,8 @@ def init_db():
     ''')
     if "hustle" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
         cursor.execute("ALTER TABLE demand_signals ADD COLUMN hustle TEXT")  # side hustle del video (trend spotter)
+    if "budget" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
+        cursor.execute("ALTER TABLE demand_signals ADD COLUMN budget INTEGER")  # USD máx. que paga el gig (dashboard)
     if "competition" not in {r[1] for r in cursor.execute("PRAGMA table_info(demand_signals)")}:
         cursor.execute("ALTER TABLE demand_signals ADD COLUMN competition INTEGER")  # propuestas que tenía el gig
     # URLs de gigs ya evaluados y borrados (purge_discarded_gigs): solo para no volver a evaluarlos
@@ -95,10 +97,10 @@ def get_signal_urls() -> set:
     return urls
 
 def save_signal(source_url: str, source: str, domain: str, task: str, deliverable: str, automatable: str,
-                hustle: str = None, competition: int = None):
+                hustle: str = None, competition: int = None, budget: int = None):
     conn = sqlite3.connect(profile_paths.resolve('jobs.db'))
-    conn.execute('INSERT OR IGNORE INTO demand_signals (source_url, source, domain, task, deliverable, automatable, hustle, competition) '
-                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (source_url, source, domain, task, deliverable, automatable, hustle, competition))
+    conn.execute('INSERT OR IGNORE INTO demand_signals (source_url, source, domain, task, deliverable, automatable, hustle, competition, budget) '
+                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (source_url, source, domain, task, deliverable, automatable, hustle, competition, budget))
     conn.commit()
     conn.close()
 

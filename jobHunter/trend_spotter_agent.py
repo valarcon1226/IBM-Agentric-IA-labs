@@ -111,10 +111,10 @@ EXTRACT_HUMAN_TEMPLATE = "TÍTULO: {title}\nDESCRIPCIÓN: {description}"
 def extract_new_signals() -> int:
     """Anota con el modelo local las vacantes/gigs que todavía no tienen señal. Nunca usa la nube."""
     fresh = [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"],
-              "competition": g.get("competition")} for g in market_gigs(fetch_all_gigs())]
+              "competition": g.get("competition"), "budget": g.get("budget_max_usd") or None} for g in market_gigs(fetch_all_gigs())]
     # side hustles (marketing, video, SEO...): sin el blocklist del agente de Freelance, que descarta justo eso
     fresh += [{"url": g["url"], "source": "gig", "title": g["title"], "description": g["description"],
-               "competition": g.get("competition")} for g in fetch_hustle_gigs()]
+               "competition": g.get("competition"), "budget": g.get("budget_max_usd") or None} for g in fetch_hustle_gigs()]
     stored = [i for i in database.get_market_items()
               if i["source"] == "job" or not _BLOCKLIST.search(f"{i['title']} {i['description']}")]
     known = database.get_signal_urls()
@@ -140,7 +140,7 @@ def extract_new_signals() -> int:
         database.save_signal(item["url"], item["source"], s.domain.strip().lower(),
                              s.task.strip().lower(), s.deliverable.strip(), s.automatable,
                              check_hustle(s.hustle, f"{item['title']} {item['description']} {s.task}"),
-                             item.get("competition"))
+                             item.get("competition"), item.get("budget"))
         done += 1
     purged = database.purge_discarded_gigs()
     if purged:
