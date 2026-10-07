@@ -1,0 +1,25 @@
+[project]
+name = "qa-showcase"
+version = "0.1.0"
+description = "QA Showcase Project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest==9.1.1",
+    "playwright==1.63.0",
+    "pytest-playwright==0.9.0",
+    "pytest-html==4.2.0",
+    "httpx==0.28.1",
+    "ruff==0.16.10"
+]
+
+[tool.pytest.ini_options]
+addopts = "--html=reports/report.html --self-contained-html --tracing=retain-on-failure --screenshot=only-on-failure"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
