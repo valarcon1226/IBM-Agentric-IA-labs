@@ -261,12 +261,15 @@
   const utc = s => s ? new Date(String(s).replace(' ', 'T') + 'Z') : null;
   const shortDate = d => d ? d.toLocaleDateString('es-CO', {day: 'numeric', month: 'short'}) : '';
   const daysLeft = g => g.closes_at ? Math.ceil((utc(g.closes_at) - Date.now()) / 86400000) : null;
-  const isClosed = g => g.closes_at && utc(g.closes_at) < Date.now();
+  // cerrado = ya pasó su fecha de cierre, o Freelancer dice que está cerrado o borrado (LINK, verificado al cargar)
+  const isClosed = g => ['closed', 'removed'].includes(LINK[g.url]) || (g.closes_at && utc(g.closes_at) < Date.now());
   const postedDays = g => g.posted_at ? (Date.now() - utc(g.posted_at)) / 86400000 : 999;
   const gigDates = g => {
     const posted = g.posted_at ? `Publicado ${shortDate(utc(g.posted_at))}` : '';
     let close, cls = '';
-    if (isClosed(g)) { close = `Cerró ${shortDate(utc(g.closes_at))}`; cls = 'closed'; }
+    if (LINK[g.url] === 'removed') { close = 'Ya no existe (lo borraron)'; cls = 'closed'; }
+    else if (LINK[g.url] === 'closed' && !(g.closes_at && utc(g.closes_at) < Date.now())) { close = 'Ya no recibe propuestas'; cls = 'closed'; }
+    else if (isClosed(g)) { close = `Cerró ${shortDate(utc(g.closes_at))}`; cls = 'closed'; }
     else if (g.closes_at) { const d = daysLeft(g); close = d <= 3 ? `Cierra en ${d} día${d === 1 ? '' : 's'}` : `Cierra ${shortDate(utc(g.closes_at))}`; if (d <= 3) cls = 'soon'; }
     else close = g.platform === 'Workana' ? 'Cierre no publicado' : (g.platform === 'GitHub Bounty' ? 'Abierto hasta resolverse' : 'Cierre no informado');
     return `<span class="corner ${cls}">${[posted, close].filter(Boolean).map(esc).join(' · ')}</span>`;
@@ -393,15 +396,17 @@
   const LINK = {};  // url -> open | closed | removed | unknown (el backend lo verifica solo en Freelancer)
   const LINK_LABEL = {open: ['Abierto', 'done'], closed: ['Cerrado', 'pending'], removed: ['Ya no existe', 'discarded'], unknown: ['Sin verificar', '']};
   const linkRank = s => ({open: 0, unknown: 1, closed: 2, removed: 3}[LINK[s.source_url]] ?? 1);
-  const checkLinks = async items => {
-    const urls = items.map(s => s.source_url).filter(u => u && !(u in LINK));
+  const checkLinks = async (urls, done = mktRender) => {
+    urls = [...new Set(urls)].filter(u => u && !(u in LINK));
     if (!urls.length) return;
-    try {
-      const res = await fetch('/api/link-status', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls})});
-      if (res.ok) Object.assign(LINK, await res.json());
-    } catch { /* sin red: se muestran sin estado */ }
+    for (let i = 0; i < urls.length; i += 100) {  // el backend acepta hasta 100 por llamada
+      try {
+        const res = await fetch('/api/link-status', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: urls.slice(i, i + 100)})});
+        if (res.ok) Object.assign(LINK, await res.json());
+      } catch { /* sin red: se muestran sin estado */ }
+    }
     urls.forEach(u => { if (!(u in LINK)) LINK[u] = 'unknown'; });
-    mktRender();
+    done();
   };
   const listingHtml = s => {
     const url = /^https?:\/\//.test(s.source_url) ? s.source_url : '';
@@ -425,7 +430,7 @@
     const rows = mktList.map((g, i) => {
       const comp = compLevel(g.avgBids), open = mkt.open === g.task;
       const items = open ? g.items.slice().sort((a, b) => linkRank(a) - linkRank(b) || b.extracted_at.localeCompare(a.extracted_at)) : [];
-      if (open) checkLinks(items);
+      if (open) checkLinks(items.map(s => s.source_url));
       return `<tr class="t-click" data-i="${i}" tabindex="0" aria-expanded="${open}"><td class="t-name">${open ? '▾' : '▸'} ${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
         <td class="num"><b>${g.n}</b>${g.n7 ? `<div class="t-sub">${g.n7} esta semana</div>` : ''}</td>
         <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
@@ -578,7 +583,8 @@
           ${payHtml(g.platform, g.url, g.description)}
           <div><h4>Descripción del gig</h4><div class="desc">${esc(g.description) || 'Sin descripción disponible.'}</div></div>
           <div class="meta-row"><span><b>Plataforma</b> ${esc(g.platform)}</span><span><b>Detectado</b> ${fmtDate(g.created_at)}</span></div>
-          ${g.url ? `<a class="link-out" href="${esc(g.url)}" target="_blank" rel="noopener">Ver gig original ↗</a>` : ''}
+          ${!g.url ? '' : LINK[g.url] === 'removed' ? '<p class="t-sub">Este gig ya no existe en Freelancer: lo borró el cliente o la plataforma.</p>'
+            : `<a class="link-out" href="${esc(g.url)}" target="_blank" rel="noopener">${LINK[g.url] === 'closed' ? 'Ver gig (ya no recibe propuestas) ↗' : 'Ver gig original ↗'}</a>`}
         `,
     },
     trends: {
@@ -729,6 +735,7 @@
     els.h1.textContent = cfg.h1; els.sub.textContent = cfg.sub;
     els.search.value = ''; els.search.placeholder = cfg.searchPlaceholder;
     buildTabs(); buildFilters(); buildSort(); render();
+    checkLinks(FREELANCE.map(g => g.url).filter(u => String(u).startsWith('https://www.freelancer.com/projects/')), render);
   }
 
   function buildFilters(){
