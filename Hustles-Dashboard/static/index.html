@@ -121,6 +121,14 @@
   .mkt-cats { margin-bottom: 8px; }
   .mkt-cat { cursor: pointer; border: 1px solid var(--line); font: inherit; font-size: 13px; }
   .mkt-cat[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .t-modebar { margin: 18px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+  .t-modebar .t-help { margin: 0; }
+  .t-click { cursor: pointer; }
+  .t-click:hover td, .t-click:focus-visible td { background: var(--surface-2); }
+  .t-click:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .mkt-open td { background: var(--surface-2); }
+  .mkt-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .mkt-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .t-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
   .t-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .t-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -337,61 +345,94 @@
   const MKT_LABEL = Object.fromEntries([...MKT_CATS.map(([k, l]) => [k, l]), ['other', 'Otros']]);
   const AUTO_ES = {high: 'Alta', medium: 'Media', low: 'Baja'};
   const compLevel = b => b == null ? null : (b < 20 ? 'Baja' : b <= 60 ? 'Media' : 'Alta');
-  const mkt = {cat: 'all', auto: 'all', comp: 'all', pay: 'all', src: 'all', q: '', sort: 'count'};
+  const HUSTLE_KEYS = {content_distribution: 'Clipping de videos', youtube_agency: 'Agencia de YouTube', growth_operator: 'Growth operator',
+    seo_aeo: 'SEO / AEO', lead_generation: 'Lead generation', email_marketing: 'Email marketing', meta_ads: 'Anuncios en Meta',
+    ghostwriting: 'Ghostwriting / copywriting', ai_creator: 'Creador de contenido IA', dm_setting: 'Appointment setting'};
+  const PICKED_H = ['growth_operator', 'youtube_agency', 'content_distribution', 'seo_aeo'];
+  // mode: auto = automatizable alta; manual = media/baja (trabajo que haces tú)
+  const mkt = {mode: 'all', cat: 'all', hustle: 'all', comp: 'all', pay: 'all', src: 'all', q: '', sort: 'count', open: null};
+  const inMode = s => mkt.mode === 'all' || (mkt.mode === 'auto' ? s.automatable === 'high' : s.automatable !== 'high');
+  const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null;
+  const median = a => a.length ? a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)] : null;
+  const hustleStats = () => {
+    const weekAgo = Date.now() - 7 * 86400000;
+    const by = Object.fromEntries(Object.entries(HUSTLE_KEYS).map(([k, name]) => [k, {key: k, name, picked: PICKED_H.includes(k), n: 0, n7: 0, bids: [], pays: [], tasks: {}}]));
+    SIGNALS.filter(s => by[s.hustle] && inMode(s)).forEach(s => { const h = by[s.hustle];
+      h.n++; h.n7 += utc(s.extracted_at) >= weekAgo; if (s.competition != null) h.bids.push(s.competition); if (s.budget > 0) h.pays.push(s.budget);
+      h.tasks[s.task] = (h.tasks[s.task] || 0) + 1; });
+    return Object.values(by).map(h => ({...h, avgBids: avg(h.bids), payMed: median(h.pays),
+      top: Object.keys(h.tasks).sort((a, b) => h.tasks[b] - h.tasks[a]).slice(0, 3)})).sort((a, b) => (b.picked - a.picked) || (b.n - a.n));
+  };
+  const siteName = u => { try { const h = new URL(u).hostname.replace(/^www\./, '');
+    return {'freelancer.com': 'Freelancer', 'workana.com': 'Workana', 'github.com': 'GitHub', 'linkedin.com': 'LinkedIn'}[h] || h; } catch { return ''; } };
+  let mktList = [];
   const mktGroups = () => {  // filtra (menos la categoría, para contar por chip) y agrupa por tarea igual
     const weekAgo = Date.now() - 7 * 86400000, q = mkt.q.trim().toLowerCase(), byCat = {};
-    const rows = SIGNALS.filter(s => (mkt.auto === 'all' || s.automatable === mkt.auto)
+    const rows = SIGNALS.filter(s => inMode(s)
+      && (mkt.hustle === 'all' || s.hustle === mkt.hustle)
       && (mkt.src === 'all' || s.source === mkt.src)
       && (mkt.comp === 'all' || compLevel(s.competition) === mkt.comp)
       && (mkt.pay === 'all' || (mkt.pay === 'known' ? s.budget > 0 : (s.budget || 0) >= +mkt.pay))
-      && (!q || `${s.task} ${s.deliverable} ${s.domain}`.toLowerCase().includes(q)));
+      && (!q || `${s.task} ${s.deliverable} ${s.domain} ${s.title || ''}`.toLowerCase().includes(q)));
     const groups = new Map();
     rows.forEach(s => { const cat = mktCat(s); byCat[cat] = (byCat[cat] || 0) + 1;
       if (mkt.cat !== 'all' && cat !== mkt.cat) return;
-      const g = groups.get(s.task) || {task: s.task, cat, n: 0, n7: 0, bids: [], pay: 0, auto: {}, domains: new Set(), urls: [], last: ''};
+      const g = groups.get(s.task) || {task: s.task, cat, n: 0, n7: 0, bids: [], pay: 0, auto: {}, domains: new Set(), items: [], last: ''};
       g.n++; g.n7 += utc(s.extracted_at) >= weekAgo; g.pay = Math.max(g.pay, s.budget || 0);
       if (s.competition != null) g.bids.push(s.competition);
-      g.auto[s.automatable] = (g.auto[s.automatable] || 0) + 1; g.domains.add(s.domain);
-      if (/^https?:\/\//.test(s.source_url)) g.urls.push(s.source_url); if (s.extracted_at > g.last) g.last = s.extracted_at;
+      g.auto[s.automatable] = (g.auto[s.automatable] || 0) + 1; g.domains.add(s.domain); g.items.push(s);
+      if (s.extracted_at > g.last) g.last = s.extracted_at;
       groups.set(s.task, g); });
-    const list = [...groups.values()].map(g => ({...g, avgBids: g.bids.length ? Math.round(g.bids.reduce((a, b) => a + b, 0) / g.bids.length) : null,
+    const list = [...groups.values()].map(g => ({...g, avgBids: avg(g.bids),
       autoTop: Object.keys(g.auto).sort((a, b) => g.auto[b] - g.auto[a])[0]}));
     const cmp = {count: (a, b) => b.n - a.n || b.last.localeCompare(a.last), pay: (a, b) => b.pay - a.pay,
       comp: (a, b) => (a.avgBids ?? 1e9) - (b.avgBids ?? 1e9), recent: (a, b) => b.last.localeCompare(a.last)}[mkt.sort];
     return {list: list.sort(cmp), byCat, total: rows.length};
   };
+  const listingHtml = s => {
+    const url = /^https?:\/\//.test(s.source_url) ? s.source_url : '';
+    const facts = [siteName(url), `visto ${fmtDate(s.extracted_at)}`, s.competition != null ? `${s.competition} propuestas` : '',
+      s.budget ? `hasta $${s.budget.toLocaleString('es-CO')}` : '', `pagan por ${payInfo('', url, '').short}`].filter(Boolean);
+    // avisos viejos sin título guardado: el slug de la URL (freelancer.com/projects/…, workana.com/job/…) es legible
+    const slug = !s.title && /freelancer\.com\/projects\/|workana\.com\/job\//.test(url) ? url.replace(/\/+$/, '').split('/').pop().replace(/-\d+$/, '').replace(/-/g, ' ') : '';
+    return `<li class="mkt-item"><div><b>${esc(s.title || (slug ? slug[0].toUpperCase() + slug.slice(1) : s.task))}</b><div class="t-sub">${esc(facts.join(' · '))}</div></div>
+      ${url ? `<a class="link-out" href="${esc(url)}" target="_blank" rel="noopener">Abrir y aplicar ↗</a>` : ''}</li>`;
+  };
   const MKT_MAX = 150;
   const mktRender = () => {
     const box = document.getElementById('mktResults'); if (!box) return;
     const {list, byCat, total} = mktGroups();
+    mktList = list.slice(0, MKT_MAX);
     const chips = [['all', 'Todos', total], ...[...MKT_CATS.map(([k]) => k), 'other'].filter(k => byCat[k]).map(k => [k, MKT_LABEL[k], byCat[k]])];
-    const rows = list.slice(0, MKT_MAX).map(g => {
-      const comp = compLevel(g.avgBids);
-      return `<tr><td class="t-name">${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
+    const rows = mktList.map((g, i) => {
+      const comp = compLevel(g.avgBids), open = mkt.open === g.task;
+      const items = open ? g.items.slice().sort((a, b) => b.extracted_at.localeCompare(a.extracted_at)) : [];
+      return `<tr class="t-click" data-i="${i}" tabindex="0" aria-expanded="${open}"><td class="t-name">${open ? '▾' : '▸'} ${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
         <td class="num"><b>${g.n}</b>${g.n7 ? `<div class="t-sub">${g.n7} esta semana</div>` : ''}</td>
         <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
         <td class="num">${g.pay ? `$${g.pay.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
         <td><span class="pill ${levelCls(AUTO_ES[g.autoTop], true)}">${AUTO_ES[g.autoTop] || '—'}</span></td>
-        <td class="t-sub">${esc([...new Set(g.urls.map(u => payInfo('', u, '').short))].join(' / ') || 'No lo dice')}</td>
-        <td>${g.urls.length ? `<a href="${esc(g.urls[0])}" target="_blank" rel="noopener">Ver</a>${g.urls.length > 1 ? ` <span class="t-sub">+${g.urls.length - 1}</span>` : ''}` : ''}</td></tr>`;
+        <td class="t-sub">${esc([...new Set(g.items.map(s => payInfo('', s.source_url, '').short))].join(' / ') || 'No lo dice')}</td>
+        <td class="t-sub">${g.items.length} ${g.items.length === 1 ? 'aviso' : 'avisos'}</td></tr>
+        ${open ? `<tr class="mkt-open"><td colspan="7"><p class="t-sub">Los avisos de hace más de 2 semanas probablemente ya cerraron: empieza por los más recientes.</p><ul class="mkt-items">${items.map(listingHtml).join('')}</ul></td></tr>` : ''}`;
     }).join('');
     box.innerHTML = `
       <div class="t-chips mkt-cats" role="group" aria-label="Tipo de servicio">${chips.map(([k, l, n]) =>
         `<button type="button" class="t-chip mkt-cat" data-cat="${k}" aria-pressed="${mkt.cat === k}">${esc(l)} <b>${n}</b></button>`).join('')}</div>
-      <p class="t-sub">${list.length > MKT_MAX ? `Mostrando ${MKT_MAX} de ${list.length} tareas. Filtra o busca para ver el resto.` : `${list.length} tareas.`}</p>
+      <p class="t-sub">${list.length > MKT_MAX ? `Mostrando ${MKT_MAX} de ${list.length} tareas. Filtra o busca para ver el resto.` : `${list.length} tareas.`} Toca una fila para ver sus avisos y aplicar.</p>
       <div class="t-table-wrap"><table class="t-table">
-        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Pagan por</th><th>Aviso</th></tr></thead>
+        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Pagan por</th><th>Avisos</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="7" class="t-sub">Nada con esos filtros.</td></tr>'}</tbody></table></div>`;
   };
   const mktSelect = (key, label, opts) => `<label class="mkt-f">${label}<select data-mkt="${key}">${opts.map(([v, l]) =>
     `<option value="${v}" ${mkt[key] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
   const mktSection = () => `
-    <section class="t-sec">
+    <section class="t-sec" id="mktSec">
       <h2>Todo el mercado</h2>
-      <p class="t-help">Cada vacante y gig que analizó el Trend Spotter en los últimos 30 días, sea automatizable o no (edición de video, diseño, redacción…). Filtra por tipo de servicio, competencia o pago. El pago solo se guarda desde hoy, así que los avisos anteriores salen con —.</p>
+      <p class="t-help">Cada vacante y gig que analizó el Trend Spotter en los últimos 30 días. Filtra por tipo de servicio, side hustle, competencia o pago, y toca una fila para ver los avisos. El pago solo se guarda desde el 6 de oct, así que muchos avisos anteriores salen con —.</p>
       <div class="mkt-bar">
         <input type="search" data-mkt="q" placeholder="Buscar (ej. video, logo, podcast)…" value="${esc(mkt.q)}" aria-label="Buscar tarea">
-        ${mktSelect('auto', 'Automatizable', [['all', 'Todas'], ['high', 'Alta'], ['medium', 'Media'], ['low', 'Baja']])}
+        ${mktSelect('hustle', 'Side hustle', [['all', 'Cualquiera'], ...Object.entries(HUSTLE_KEYS)])}
         ${mktSelect('comp', 'Competencia', [['all', 'Todas'], ['Baja', 'Baja'], ['Media', 'Media'], ['Alta', 'Alta']])}
         ${mktSelect('pay', 'Pago', [['all', 'Todos'], ['known', 'Con pago informado'], ['100', '≥ $100'], ['500', '≥ $500'], ['1000', '≥ $1.000']])}
         ${mktSelect('src', 'Origen', [['all', 'Todo'], ['gig', 'Gigs freelance'], ['job', 'Vacantes 9-5']])}
@@ -400,8 +441,18 @@
       <div id="mktResults"></div>
     </section>`;
   const customView = document.getElementById('customView');
-  customView.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.mkt; if (k) { mkt[k] = e.target.value; mktRender(); } });
-  customView.addEventListener('click', e => { const b = e.target.closest('.mkt-cat'); if (b) { mkt.cat = b.dataset.cat; mktRender(); } });
+  const goHustle = key => { Object.assign(mkt, {hustle: key, cat: 'all', open: null}); render();
+    document.getElementById('mktSec').scrollIntoView({behavior: 'smooth', block: 'start'}); };
+  customView.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.mkt; if (k) { mkt[k] = e.target.value; mkt.open = null; mktRender(); } });
+  customView.addEventListener('click', e => {
+    const mode = e.target.closest('[data-mode]'); if (mode) { mkt.mode = mode.dataset.mode; mkt.open = null; render(); return; }
+    const h = e.target.closest('[data-hustle]'); if (h) { goHustle(h.dataset.hustle); return; }
+    const c = e.target.closest('.mkt-cat'); if (c) { mkt.cat = c.dataset.cat; mkt.open = null; mktRender(); return; }
+    const r = e.target.closest('tr[data-i]');
+    if (r && !e.target.closest('a')) { const t = mktList[+r.dataset.i].task; mkt.open = mkt.open === t ? null : t; mktRender();
+      const again = document.querySelector(`#mktResults tr[data-i="${r.dataset.i}"]`); if (again) again.focus(); }
+  });
+  customView.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.t-click')) { e.preventDefault(); e.target.click(); } });
   const levelCls = (v, highIsGood) => { const x = String(v || '').toLowerCase();
     if (x.startsWith('baja')) return highIsGood ? 'discarded' : 'done';
     if (x.startsWith('alta')) return highIsGood ? 'done' : 'discarded';
@@ -530,13 +581,11 @@
       },
       custom: (data) => {
         const rows = latestTrends(data);
-        if (!rows.length) return '<p class="t-help">Todavía no hay reportes. El Trend Spotter genera uno al día.</p>';
-        const nicheRows = analyzed(rows) ? rows : latestAnalyzed(data);
+        if (!rows.length && !SIGNALS.length) return '<p class="t-help">Todavía no hay reportes. El Trend Spotter genera uno al día.</p>';
+        const nicheRows = rows.length && analyzed(rows) ? rows : latestAnalyzed(data);
         const niches = nicheRows.filter(t => !isHustle(t)).sort((a,b) => b.demand_mentions - a.demand_mentions);
         const nicheNote = nicheRows !== rows && nicheRows.length
           ? `<p class="t-note">El reporte de hoy no alcanzó a analizarse (la IA estaba saturada). Estos nichos son del reporte del ${esc(fmtDate(nicheRows[0].detected_at))}.</p>` : '';
-        const hustles = rows.filter(isHustle).sort((a,b) => (String(b.trend_name).includes('⭐') - String(a.trend_name).includes('⭐')) || (b.demand_mentions - a.demand_mentions));
-        const maxH = Math.max(1, ...hustles.map(h => h.demand_mentions));
         const cards = niches.map((t, i) => {
           const f = trendFields(t.agent_idea);
           const comp = f['Competencia'] || 'Sin datos';
@@ -550,29 +599,36 @@
                 ${f['Revisión'] ? `<dt>Revisión humana</dt><dd>${esc(f['Revisión'])}</dd>` : ''}</dl>
           </article>`;
         }).join('');
-        const table = hustles.map(h => {
-          const f = trendFields(h.agent_idea);
-          const bids = f['Propuestas promedio'];
-          const comp = bids === undefined ? 'Sin datos' : (+bids < 20 ? 'Baja' : +bids <= 60 ? 'Media' : 'Alta');
-          return `<tr class="${String(h.trend_name).includes('⭐') ? 'picked' : ''}">
-            <td class="t-name">${String(h.trend_name).includes('⭐') ? '⭐ ' : ''}${esc(shortHustle(h.trend_name))}</td>
-            <td><div class="t-demand"><div class="t-bar"><span style="width:${Math.round(100 * h.demand_mentions / maxH)}%"></span></div><b>${h.demand_mentions}</b></div></td>
-            <td class="num">${esc(f['Últimos 7 días'] || '—')}</td>
-            <td><span class="pill ${levelCls(comp)}">${comp}${bids !== undefined ? ` · ${esc(bids)} prop.` : ''}</span></td>
-            <td><span class="pill ${levelCls(h.estimated_automation_score, true)}">${esc(h.estimated_automation_score || '—')}</span></td>
-            <td class="t-tasks">${esc(f['Tareas típicas'] || '')}</td></tr>`;
+        const hs = hustleStats(), maxH = Math.max(1, ...hs.map(h => h.n));
+        const table = hs.map(h => {
+          const comp = compLevel(h.avgBids);
+          return `<tr class="t-click ${h.picked ? 'picked' : ''}" data-hustle="${h.key}" tabindex="0" aria-label="Ver avisos de ${esc(h.name)}">
+            <td class="t-name">${h.picked ? '⭐ ' : ''}${esc(h.name)}</td>
+            <td><div class="t-demand"><div class="t-bar"><span style="width:${Math.round(100 * h.n / maxH)}%"></span></div><b>${h.n}</b></div></td>
+            <td class="num">${h.n7}</td>
+            <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${h.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
+            <td class="num">${h.payMed ? `$${h.payMed.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
+            <td class="t-tasks">${esc(h.top.join(', '))}</td>
+            <td><span class="link-out">Ver avisos →</span></td></tr>`;
         }).join('');
+        const MODES = [['auto', 'Automatizables'], ['manual', 'Para hacer tú (no automatizables)'], ['all', 'Todo']];
+        const modeHelp = {auto: 'Lo que un agente de IA puede hacer casi solo: para construir y vender.',
+          manual: 'Trabajo que haces tú (editar videos, manejar canales, diseñar…): no se automatiza pero no es difícil y paga.',
+          all: 'Todo lo que pide el mercado, automatizable o no.'}[mkt.mode];
         return `
-          <section class="t-sec">
-            <h2>Dónde está la oportunidad</h2>
-            <p class="t-help">Nichos que el mercado paga y que un agente de IA puede resolver. Lo ideal: muchas menciones, competencia baja y automatización alta.</p>
+          <div class="t-modebar"><div class="seg" role="group" aria-label="Qué trends ver">${MODES.map(([k, l]) =>
+            `<button type="button" data-mode="${k}" aria-pressed="${mkt.mode === k}">${l}</button>`).join('')}</div>
+            <p class="t-help">${modeHelp}</p></div>
+          ${mkt.mode !== 'manual' ? `<section class="t-sec">
+            <h2>Nichos para automatizar y vender</h2>
+            <p class="t-help">Del último reporte diario: nichos que el mercado paga y que un agente de IA puede resolver. Lo ideal: muchas menciones, competencia baja y automatización alta.</p>
             ${nicheNote}<div class="t-cards">${cards || '<p class="t-help">Sin nichos analizados todavía.</p>'}</div>
-          </section>
+          </section>` : ''}
           <section class="t-sec">
-            <h2>Side hustles del video</h2>
-            <p class="t-help">⭐ = los que elegiste. Demanda = gigs de los últimos 30 días que piden ese servicio. Competencia = propuestas promedio que recibe cada gig.</p>
+            <h2>Side hustles</h2>
+            <p class="t-help">⭐ = los que elegiste. Demanda = avisos de los últimos 30 días${mkt.mode === 'all' ? '' : ' (solo los de esta vista)'}. Competencia = propuestas promedio por aviso. Toca uno para ver sus avisos y aplicar.</p>
             <div class="t-table-wrap"><table class="t-table">
-              <thead><tr><th>Servicio</th><th>Demanda</th><th>Últimos 7 días</th><th>Competencia</th><th>Automatizable</th><th>Qué piden (ejemplos)</th></tr></thead>
+              <thead><tr><th>Servicio</th><th>Demanda</th><th>Últimos 7 días</th><th>Competencia</th><th>Pago típico (USD)</th><th>Qué piden (ejemplos)</th><th></th></tr></thead>
               <tbody>${table}</tbody></table></div>
           </section>
           ${mktSection()}`;

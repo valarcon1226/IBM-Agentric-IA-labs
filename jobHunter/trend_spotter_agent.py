@@ -140,7 +140,7 @@ def extract_new_signals() -> int:
         database.save_signal(item["url"], item["source"], s.domain.strip().lower(),
                              s.task.strip().lower(), s.deliverable.strip(), s.automatable,
                              check_hustle(s.hustle, f"{item['title']} {item['description']} {s.task}"),
-                             item.get("competition"), item.get("budget"))
+                             item.get("competition"), item.get("budget"), (item.get("title") or "")[:200] or None)
         done += 1
     purged = database.purge_discarded_gigs()
     if purged:
