@@ -125,6 +125,11 @@
   .t-bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
   .t-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
   .t-tasks { color: var(--ink-soft); font-size: 12.5px; min-width: 220px; }
+  .card.has-corner { position: relative; }
+  .card.has-corner .row { padding-top: 26px; }
+  .corner { position: absolute; top: 8px; right: 16px; font-size: 11.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; pointer-events: none; }
+  .corner.soon { color: var(--amber); font-weight: 600; }
+  .corner.closed { color: var(--ink-faint); text-decoration: line-through; }
   .lead { width: 64px; flex-shrink: 0; text-align: center; line-height: 1.1; }
   .lead b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-variant-numeric: tabular-nums; }
   .lead small { color: var(--ink-soft); font-size: 11px; }
@@ -234,6 +239,20 @@
   // Pago máximo del gig, leído del resumen "[... · $lo-hi USD (fixed) ...]"; por hora = semana de 40 h para comparar
   const gigPay = g => { const m = String(g.reasoning).match(/\$(\d+)(?:-(\d+))? USD(\/h)?/); if (!m) return 0;
                         const v = +(m[2] || m[1]); return m[3] ? v * 40 : v; };
+  // ---- Fechas de los gigs (UTC en la base) -> fecha local corta, días hasta el cierre
+  const utc = s => s ? new Date(String(s).replace(' ', 'T') + 'Z') : null;
+  const shortDate = d => d ? d.toLocaleDateString('es-CO', {day: 'numeric', month: 'short'}) : '';
+  const daysLeft = g => g.closes_at ? Math.ceil((utc(g.closes_at) - Date.now()) / 86400000) : null;
+  const isClosed = g => g.closes_at && utc(g.closes_at) < Date.now();
+  const postedDays = g => g.posted_at ? (Date.now() - utc(g.posted_at)) / 86400000 : 999;
+  const gigDates = g => {
+    const posted = g.posted_at ? `Publicado ${shortDate(utc(g.posted_at))}` : '';
+    let close, cls = '';
+    if (isClosed(g)) { close = `Cerró ${shortDate(utc(g.closes_at))}`; cls = 'closed'; }
+    else if (g.closes_at) { const d = daysLeft(g); close = d <= 3 ? `Cierra en ${d} día${d === 1 ? '' : 's'}` : `Cierra ${shortDate(utc(g.closes_at))}`; if (d <= 3) cls = 'soon'; }
+    else close = g.platform === 'Workana' ? 'Cierre no publicado' : (g.platform === 'GitHub Bounty' ? 'Abierto hasta resolverse' : 'Cierre no informado');
+    return `<span class="corner ${cls}">${[posted, close].filter(Boolean).map(esc).join(' · ')}</span>`;
+  };
   const gigType = g => !g.category ? 'none' : (GIG_CATEGORY[g.category] || 'other');
   // Trend Spotter: los side hustles del reporte se guardan como "[Side hustle] ..." (⭐ = elegidos)
   const trendType = t => !String(t.trend_name).startsWith('[Side hustle]') ? ['niche', 'Nichos para automatizar']
@@ -329,14 +348,27 @@
       sub: 'Gigs escaneados en plataformas freelance y evaluados contra tu perfil.',
       searchPlaceholder: 'Buscar por título o plataforma…',
       appliedEndpoint: 'freelance',
+      corner: gigDates,
       group: g => [gigType(g), GIG_TYPES[gigType(g)]], groupOrder: Object.keys(GIG_TYPES),
       filters: [ {key:'all', label:'Todos'}, {key:'Aplicable', label:'Aplicables'}, {key:'Descartado', label:'Descartados'}, {key:'Aplicado', label:'Aplicados'},
+                 {key:'date:open', label:'Abiertos'}, {key:'date:soon', label:'Cierran en ≤3 días'}, {key:'date:new', label:'Publicados ≤3 días'}, {key:'date:closed', label:'Cerrados'},
                  ...Object.entries(GIG_TYPES).filter(([k]) => k !== 'none').map(([k,l]) => ({key:'type:'+k, label:l})) ],
-      filterFn: (g,k) => k==='all' || (k.startsWith('type:') ? gigType(g) === k.slice(5) : k==='Aplicado' ? !!g.applied_at : g.status === k),
+      filterFn: (g,k) => {
+        if (k === 'all') return true;
+        if (k.startsWith('type:')) return gigType(g) === k.slice(5);
+        if (k === 'date:open') return !isClosed(g);
+        if (k === 'date:soon') return !isClosed(g) && daysLeft(g) !== null && daysLeft(g) <= 3;
+        if (k === 'date:new') return postedDays(g) <= 3;
+        if (k === 'date:closed') return !!isClosed(g);
+        return k === 'Aplicado' ? !!g.applied_at : g.status === k;
+      },
       searchText: g => `${g.title} ${g.platform}`,
       sorts: [
         {value:'match_desc', label:'Mayor match', cmp:(a,b)=>b.match_percentage-a.match_percentage},
         {value:'pay_desc', label:'Mejor pagados', cmp:(a,b)=>gigPay(b)-gigPay(a)},
+        // abiertos que cierran antes primero; sin fecha de cierre después; los cerrados al final
+        {value:'closes_asc', label:'Cierran primero', cmp:(a,b)=>{ const k = g => isClosed(g) ? 2e15 : (g.closes_at ? +utc(g.closes_at) : 1e15); return k(a) - k(b); }},
+        {value:'posted_desc', label:'Publicados más recientes', cmp:(a,b)=>String(b.posted_at || '').localeCompare(String(a.posted_at || ''))},
         {value:'match_asc', label:'Menor match', cmp:(a,b)=>a.match_percentage-b.match_percentage},
         {value:'recent', label:'Más recientes', cmp:(a,b)=>String(b.created_at).localeCompare(String(a.created_at))},
         {value:'platform', label:'Plataforma (A-Z)', cmp:(a,b)=>String(a.platform).localeCompare(String(b.platform))},
@@ -590,8 +622,9 @@
       const isOpen = state.openId === it.id;
       const appliedBadge = (cfg.appliedEndpoint && it.applied_at) ? `<span class="pill applied">✓ Aplicado</span>` : '';
       const li = document.createElement('li');
-      li.className = 'card'; li.setAttribute('data-open', String(isOpen));
+      li.className = 'card' + (cfg.corner ? ' has-corner' : ''); li.setAttribute('data-open', String(isOpen));
       li.innerHTML = `
+        ${cfg.corner ? cfg.corner(it) : ''}
         <button class="row" aria-expanded="${isOpen}">
           ${cfg.lead ? cfg.lead(it) : `<span class="match ${ring==='done'?'':ring==='warn'?'warn':'low'}" style="--m:${Math.max(0,Math.min(100,cfg.matchValue(it)))}"><span>${esc(cfg.matchLabel(it))}</span></span>`}
           <span class="titles"><div class="t">${esc(cfg.title(it))}</div><div class="c">${esc(cfg.subtitle(it))}</div></span>
