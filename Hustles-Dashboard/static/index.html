@@ -294,6 +294,30 @@
     return o;
   };
   // verde = bueno para ti (competencia baja / automatización alta)
+  // ---- Cómo pagan: método de la plataforma + lo que mencione el aviso (verificado oct-2026 en las ayudas de cada plataforma)
+  const PAY_WORDS = [[/paypal/i, 'PayPal'], [/payoneer/i, 'Payoneer'], [/\bwise\b|transferwise/i, 'Wise'], [/\bdeel\b/i, 'Deel'],
+    [/remote\.com/i, 'Remote.com'], [/\boyster\b/i, 'Oyster'], [/\bontop\b/i, 'Ontop'], [/\bskrill\b/i, 'Skrill'], [/\bzelle\b/i, 'Zelle'],
+    [/\bstripe\b/i, 'Stripe'], [/\busdt\b|\busdc\b|crypto|cripto|bitcoin/i, 'Cripto'], [/wire transfer|bank transfer|transferencia bancaria/i, 'Transferencia bancaria']];
+  const PLATFORM_PAY = {
+    freelancer: ['PayPal · Payoneer · banco', 'Te paga Freelancer.com (el cliente deja el pago en garantía). Retiras por PayPal, Payoneer (USD) o Express Withdrawal a tu cuenta en COP. Mínimo $50; el primer retiro se retiene hasta 15 días.'],
+    workana: ['PayPal · Payoneer', 'Te paga Workana (el cliente deja el pago en garantía). Retiras por PayPal o Payoneer (mínimo $50 en Payoneer); tu perfil debe estar en USD.'],
+    algora: ['Stripe (Algora)', 'Algora paga por Stripe Express (pide verificar identidad); llega 1-3 días hábiles después de que aprueban tu PR.'],
+    github: ['Según el repo', 'Lo define quien publica el bounty: revisa el issue (Algora paga por Stripe; otros por PayPal o cripto).'],
+  };
+  const payInfo = (platform, url, text) => {
+    const where = `${platform} ${url}`.toLowerCase(), t = String(text || '');
+    let k = where.includes('freelancer') ? 'freelancer' : where.includes('workana') ? 'workana' : where.includes('github') ? 'github' : null;
+    if (k === 'github' && /algora/i.test(t)) k = 'algora';
+    const said = PAY_WORDS.filter(([re]) => re.test(t)).map(([, l]) => l);
+    return {k, said, short: k ? PLATFORM_PAY[k][0] : (said.join(' · ') || 'No lo dice'),
+      long: k ? PLATFORM_PAY[k][1] : 'El aviso no dice cómo pagan: pregúntalo antes de aceptar.'};
+  };
+  const payHtml = (platform, url, text) => {
+    const p = payInfo(platform, url, text);
+    const outside = (p.k === 'freelancer' || p.k === 'workana') && p.said.length;  // pagar por fuera rompe las reglas y es típico de estafa
+    return `<div><h4>Cómo te pagan</h4><div class="desc">${esc(p.long)}${p.said.length ? ` <b>El aviso menciona:</b> ${esc(p.said.join(', '))}.` : ''}${outside
+      ? ' <b>Ojo:</b> si el cliente propone pagarte por fuera de la plataforma, no aceptes: va contra sus reglas, pierdes la garantía y es la estafa más común.' : ''}</div></div>`;
+  };
   // ---- "Todo el mercado": cada vacante/gig analizado, con tipo de servicio por palabras clave (el primero que calza)
   const MKT_CATS = [
     ['video', 'Edición de video', /video|\bclips?\b|\breels?\b|tiktok|youtube|shorts|animat|motion graphic|podcast|footage|vfx/],
@@ -348,6 +372,7 @@
         <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
         <td class="num">${g.pay ? `$${g.pay.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
         <td><span class="pill ${levelCls(AUTO_ES[g.autoTop], true)}">${AUTO_ES[g.autoTop] || '—'}</span></td>
+        <td class="t-sub">${esc([...new Set(g.urls.map(u => payInfo('', u, '').short))].join(' / ') || 'No lo dice')}</td>
         <td>${g.urls.length ? `<a href="${esc(g.urls[0])}" target="_blank" rel="noopener">Ver</a>${g.urls.length > 1 ? ` <span class="t-sub">+${g.urls.length - 1}</span>` : ''}` : ''}</td></tr>`;
     }).join('');
     box.innerHTML = `
@@ -355,8 +380,8 @@
         `<button type="button" class="t-chip mkt-cat" data-cat="${k}" aria-pressed="${mkt.cat === k}">${esc(l)} <b>${n}</b></button>`).join('')}</div>
       <p class="t-sub">${list.length > MKT_MAX ? `Mostrando ${MKT_MAX} de ${list.length} tareas. Filtra o busca para ver el resto.` : `${list.length} tareas.`}</p>
       <div class="t-table-wrap"><table class="t-table">
-        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Aviso</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="t-sub">Nada con esos filtros.</td></tr>'}</tbody></table></div>`;
+        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Pagan por</th><th>Aviso</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="t-sub">Nada con esos filtros.</td></tr>'}</tbody></table></div>`;
   };
   const mktSelect = (key, label, opts) => `<label class="mkt-f">${label}<select data-mkt="${key}">${opts.map(([v, l]) =>
     `<option value="${v}" ${mkt[key] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
@@ -426,6 +451,7 @@
         const cvHtml = j.cv_path ? `<div class="apply-block"><a class="link-out" href="/api/cv/${j.id}" target="_blank" rel="noopener">Abrir CV ↗</a>${j.cv_link ? `<a class="link-out" href="${esc(j.cv_link)}" target="_blank" rel="noopener">CV en Drive ↗</a><span class="cvpath">${esc(j.cv_link)}</span>` : '<span class="cvpath">Subiendo a Drive…</span>'}</div>` : '';
         return `
           ${gapsHtml}
+          ${payHtml('', '', j.scraped_content)}
           <div><h4>Descripción</h4><div class="desc">${esc(j.scraped_content) || 'Sin descripción disponible.'}</div></div>
           <div class="meta-row"><span><b>Publicado</b> ${fmtDate(j.created_at)}</span><span><b>Estado</b> ${esc(j.status)}</span></div>
           ${cvHtml}
@@ -479,6 +505,7 @@
       pill: g => g.status === 'Aplicable' ? {cls:'done', label:'Aplicable'} : {cls:'discarded', label:'Descartado'},
       detail: g => `
           ${g.reasoning ? `<div><h4>Por qué ese match</h4><div class="desc">${esc(g.reasoning)}</div></div>` : ''}
+          ${payHtml(g.platform, g.url, g.description)}
           <div><h4>Descripción del gig</h4><div class="desc">${esc(g.description) || 'Sin descripción disponible.'}</div></div>
           <div class="meta-row"><span><b>Plataforma</b> ${esc(g.platform)}</span><span><b>Detectado</b> ${fmtDate(g.created_at)}</span></div>
           ${g.url ? `<a class="link-out" href="${esc(g.url)}" target="_blank" rel="noopener">Ver gig original ↗</a>` : ''}
