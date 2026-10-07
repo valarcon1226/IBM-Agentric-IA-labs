@@ -49,6 +49,10 @@ def init_db():
     if "category" not in {r[1] for r in cursor.execute("PRAGMA table_info(freelance_gigs)")}:
         # tipo de proyecto (website, automation_integration, ai_agent...) para filtrar en el dashboard
         cursor.execute("ALTER TABLE freelance_gigs ADD COLUMN category TEXT")
+    gig_cols = {r[1] for r in cursor.execute("PRAGMA table_info(freelance_gigs)")}
+    for col in ("posted_at", "closes_at"):  # fechas de publicación y de cierre de propuestas (dashboard)
+        if col not in gig_cols:
+            cursor.execute(f"ALTER TABLE freelance_gigs ADD COLUMN {col} TEXT")
     if "missing_skills" not in {r[1] for r in cursor.execute("PRAGMA table_info(freelance_gigs)")}:
         cursor.execute("ALTER TABLE freelance_gigs ADD COLUMN missing_skills TEXT")  # skills que le faltan (plan de aprendizaje)
     cursor.execute('''
@@ -142,7 +146,8 @@ def get_recent_trends(limit: int = 50) -> list:
     conn.close()
     return [dict(row) for row in rows]
 
-def save_gig(url: str, platform: str, title: str, description: str, status: str, match_percentage: int = 0, reasoning: str = "", category: str = None, missing_skills: str = None) -> bool:
+def save_gig(url: str, platform: str, title: str, description: str, status: str, match_percentage: int = 0, reasoning: str = "",
+             category: str = None, missing_skills: str = None, posted_at: str = None, closes_at: str = None) -> bool:
     """Guarda o actualiza un gig freelance. Devuelve True si era nuevo (INSERT), False si ya existia (UPDATE)."""
     db_path = profile_paths.resolve('jobs.db')
     conn = sqlite3.connect(db_path)
@@ -150,18 +155,19 @@ def save_gig(url: str, platform: str, title: str, description: str, status: str,
     is_new = True
     try:
         cursor.execute('''
-            INSERT INTO freelance_gigs (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills))
+            INSERT INTO freelance_gigs (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills,
+                                        posted_at, closes_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (url, platform, title, description, status, match_percentage, reasoning, category, missing_skills, posted_at, closes_at))
         conn.commit()
     except sqlite3.IntegrityError:
         is_new = False
         cursor.execute('''
             UPDATE freelance_gigs
             SET status = ?, match_percentage = ?, reasoning = ?, category = COALESCE(?, category),
-                missing_skills = COALESCE(?, missing_skills)
+                missing_skills = COALESCE(?, missing_skills), posted_at = COALESCE(?, posted_at), closes_at = COALESCE(?, closes_at)
             WHERE url = ?
-        ''', (status, match_percentage, reasoning, category, missing_skills, url))
+        ''', (status, match_percentage, reasoning, category, missing_skills, posted_at, closes_at, url))
         conn.commit()
     finally:
         conn.close()

@@ -1,3 +1,4 @@
+import datetime
 import html
 import json
 import re
@@ -59,6 +60,51 @@ def _get_json(url: str):
         return json.loads(response.read())
 
 
+def _iso(ts) -> str:
+    """Unix -> 'YYYY-MM-DD HH:MM:SS' en UTC (el mismo formato que created_at de SQLite)."""
+    return datetime.datetime.fromtimestamp(int(ts), datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S") if ts else None
+
+
+def _relative_posted(text: str):
+    """'Ayer', 'Hace 2 días', 'Hace casi una hora', '3 hours ago' -> fecha aproximada (Workana no da fecha exacta)."""
+    t = (text or "").lower()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if not t:
+        return None
+    if "ayer" in t or "yesterday" in t:
+        delta = datetime.timedelta(days=1)
+    else:
+        n = re.search(r"\d+", t)
+        n = int(n.group()) if n else 1  # "una hora", "an hour", "casi una hora"
+        unit = next((u for u, keys in (("minutes", ("minut",)), ("hours", ("hora", "hour")), ("days", ("día", "dia", "day")),
+                                       ("weeks", ("semana", "week")), ("days30", ("mes", "month"))) if any(k in t for k in keys)), None)
+        if unit is None:
+            return None
+        delta = datetime.timedelta(days=30 * n) if unit == "days30" else datetime.timedelta(**{unit: n})
+    return (now - delta).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def freelancer_dates(urls) -> dict:
+    """url -> (posted_at, closes_at, abierto?) consultando la API pública de Freelancer por seo_url (para gigs ya guardados)."""
+    out = {}
+    seos = {u.split("freelancer.com/projects/", 1)[1]: u for u in urls if "freelancer.com/projects/" in u}
+    items = list(seos.items())
+    for i in range(0, len(items), 50):
+        query = urllib.parse.urlencode([("seo_urls[]", s) for s, _ in items[i:i + 50]])
+        try:
+            projects = _get_json("https://www.freelancer.com/api/projects/0.1/projects/?" + query)["result"]["projects"]
+        except Exception as e:
+            print(f"  [-] Error consultando fechas en Freelancer: {e}")
+            continue
+        for p in projects:
+            url = seos.get(p.get("seo_url"))
+            if url:
+                sub = p.get("time_submitted") or p.get("submitdate")
+                out[url] = (_iso(sub), _iso(sub + 86400 * (p.get("bidperiod") or 0)) if sub else None,
+                            p.get("frontend_project_status") == "open")
+    return out
+
+
 def _clean(text: str) -> str:
     return BeautifulSoup(text or "", "html.parser").get_text(separator=" ", strip=True)
 
@@ -87,6 +133,9 @@ def fetch_freelancer_api(skill_ids=FREELANCER_SKILL_IDS, pages=FREELANCER_PAGES)
                 "description": _clean(p.get("description") or p.get("preview_description", ""))[:1500],
                 "url": f"https://www.freelancer.com/projects/{p.get('seo_url', p.get('id'))}",
                 "project_type": p.get("type", ""),  # "fixed" | "hourly"
+                # se pueden ofertar bidperiod días desde que se publicó: esa es la fecha de cierre
+                "posted_at": _iso(p.get("time_submitted")),
+                "closes_at": _iso((p.get("time_submitted") or 0) + 86400 * (p.get("bidperiod") or 0)) if p.get("time_submitted") else None,
                 "budget_min_usd": round((budget.get("minimum") or 0) * rate),
                 "budget_max_usd": round((budget.get("maximum") or budget.get("minimum") or 0) * rate),
                 "competition": (p.get("bid_stats") or {}).get("bid_count") or 0,
@@ -127,6 +176,8 @@ def fetch_github_bounties() -> List[Dict]:
                 "description": (it.get("body") or "")[:1500],
                 "url": it.get("html_url", ""),
                 "project_type": "bounty",
+                "posted_at": (it.get("created_at") or "").replace("T", " ").replace("Z", "") or None,
+                "closes_at": None,  # abierto hasta que alguien lo resuelva
                 "budget_min_usd": amount,
                 "budget_max_usd": amount,
                 "competition": it.get("comments", 0),  # proxy: cuánta gente ya está encima
@@ -179,6 +230,8 @@ def fetch_workana(categories=("it-programming",), pages=WORKANA_PAGES) -> List[D
                         "description": _clean(p.get("description", ""))[:1500],
                         "url": f"https://www.workana.com/job/{p['slug']}" if p.get("slug") else "",
                         "project_type": "hourly" if p.get("isHourly") else "fixed",
+                    "posted_at": _relative_posted(_clean(p.get("postedDate", ""))),
+                    "closes_at": None,  # Workana no publica fecha de cierre
                         "budget_min_usd": lo,
                         "budget_max_usd": hi,
                         "competition": int(bids.group()) if bids else 0,

@@ -218,7 +218,8 @@ def main():
             # se guarda igual para no volver a mirarlo en la próxima corrida
             database.save_gig(url=gig["url"], platform=gig["platform"], title=gig["title"],
                               description=gig["description"], status="Descartado",
-                              match_percentage=0, reasoning=f"[Filtro] {reason}")
+                              match_percentage=0, reasoning=f"[Filtro] {reason}",
+                              posted_at=gig.get("posted_at"), closes_at=gig.get("closes_at"))
         else:
             to_evaluate.append(gig)
     # primero los que tienen menos competencia (más chance real de ganarlos); el resto queda sin
@@ -249,7 +250,7 @@ def main():
             url=gig["url"], platform=gig["platform"], title=gig["title"],
             description=gig["description"], status=status,
             match_percentage=fit.match_percentage, reasoning=summary, category=fit.category,
-            missing_skills=", ".join(fit.missing_skills),
+            missing_skills=", ".join(fit.missing_skills), posted_at=gig.get("posted_at"), closes_at=gig.get("closes_at"),
         )
         mark = "[V] APLICABLE" if applicable else "[X] Descartado"
         print(f"   {mark} ({fit.match_percentage}%, portafolio {fit.portfolio_value}/10): {fit.deliverable}")
