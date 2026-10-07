@@ -177,7 +177,7 @@ def get_freelance():
     cur = conn.cursor()
     cur.execute(
         """SELECT id, url, platform, title, description, status, match_percentage, category,
-                  reasoning, created_at, applied_at
+                  reasoning, created_at, applied_at, posted_at, closes_at
            FROM freelance_gigs
            ORDER BY match_percentage DESC, id DESC"""
     )
