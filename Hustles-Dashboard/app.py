@@ -1,5 +1,9 @@
+import json
 import os
 import sqlite3
+import time
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -224,6 +228,52 @@ def get_signals():
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+class LinksPayload(BaseModel):
+    urls: list[str]
+
+
+_link_cache: dict = {}  # url -> (cuándo, estado); 30 min para no martillar las plataformas
+_UA = {"User-Agent": "Mozilla/5.0"}
+
+
+def _freelancer_status(urls: list) -> dict:
+    """open | closed | removed según la API pública (un proyecto borrado no aparece: su página da 404)."""
+    seos = {u.split("freelancer.com/projects/", 1)[1].rstrip("/"): u for u in urls}
+    out, items = {}, list(seos.items())
+    for i in range(0, len(items), 50):
+        query = urllib.parse.urlencode([("seo_urls[]", s) for s, _ in items[i:i + 50]])
+        req = urllib.request.Request("https://www.freelancer.com/api/projects/0.1/projects/?" + query, headers=_UA)
+        with urllib.request.urlopen(req, timeout=15) as r:
+            found = {p.get("seo_url"): p for p in json.load(r)["result"]["projects"]}
+        for seo, url in items[i:i + 50]:
+            p = found.get(seo)
+            out[url] = "removed" if p is None else ("open" if p.get("frontend_project_status") == "open" else "closed")
+    return out
+
+
+@app.post("/api/link-status")
+def link_status(payload: LinksPayload):
+    """¿Siguen vivos estos avisos? Solo consulta la API de Freelancer (Workana bloquea con 403 desde el servidor)."""
+    now, out = time.time(), {}
+    todo = []
+    for u in payload.urls[:100]:
+        hit = _link_cache.get(u)
+        if hit and now - hit[0] < 1800:
+            out[u] = hit[1]
+        else:
+            todo.append(u)
+    fresh = {}
+    fl = [u for u in todo if u.startswith("https://www.freelancer.com/projects/")]
+    try:
+        fresh.update(_freelancer_status(fl) if fl else {})
+    except Exception:
+        fresh.update({u: "unknown" for u in fl})
+    for u, st in fresh.items():
+        if st != "unknown":
+            _link_cache[u] = (now, st)
+    return {**out, **fresh}
 
 
 @app.get("/api/trends")
