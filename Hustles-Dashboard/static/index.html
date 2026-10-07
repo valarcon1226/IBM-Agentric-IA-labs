@@ -128,6 +128,7 @@
   .t-click:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .mkt-open td { background: var(--surface-2); }
   .mkt-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .mkt-item.gone { opacity: .55; }
   .mkt-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .t-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
   .t-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -389,14 +390,31 @@
       comp: (a, b) => (a.avgBids ?? 1e9) - (b.avgBids ?? 1e9), recent: (a, b) => b.last.localeCompare(a.last)}[mkt.sort];
     return {list: list.sort(cmp), byCat, total: rows.length};
   };
+  const LINK = {};  // url -> open | closed | removed | unknown (el backend lo verifica solo en Freelancer)
+  const LINK_LABEL = {open: ['Abierto', 'done'], closed: ['Cerrado', 'pending'], removed: ['Ya no existe', 'discarded'], unknown: ['Sin verificar', '']};
+  const linkRank = s => ({open: 0, unknown: 1, closed: 2, removed: 3}[LINK[s.source_url]] ?? 1);
+  const checkLinks = async items => {
+    const urls = items.map(s => s.source_url).filter(u => u && !(u in LINK));
+    if (!urls.length) return;
+    try {
+      const res = await fetch('/api/link-status', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls})});
+      if (res.ok) Object.assign(LINK, await res.json());
+    } catch { /* sin red: se muestran sin estado */ }
+    urls.forEach(u => { if (!(u in LINK)) LINK[u] = 'unknown'; });
+    mktRender();
+  };
   const listingHtml = s => {
     const url = /^https?:\/\//.test(s.source_url) ? s.source_url : '';
+    const st = LINK[s.source_url], lab = LINK_LABEL[st];
     const facts = [siteName(url), `visto ${fmtDate(s.extracted_at)}`, s.competition != null ? `${s.competition} propuestas` : '',
       s.budget ? `hasta $${s.budget.toLocaleString('es-CO')}` : '', `pagan por ${payInfo('', url, '').short}`].filter(Boolean);
     // avisos viejos sin título guardado: el slug de la URL (freelancer.com/projects/…, workana.com/job/…) es legible
     const slug = !s.title && /freelancer\.com\/projects\/|workana\.com\/job\//.test(url) ? url.replace(/\/+$/, '').split('/').pop().replace(/-\d+$/, '').replace(/-/g, ' ') : '';
-    return `<li class="mkt-item"><div><b>${esc(s.title || (slug ? slug[0].toUpperCase() + slug.slice(1) : s.task))}</b><div class="t-sub">${esc(facts.join(' · '))}</div></div>
-      ${url ? `<a class="link-out" href="${esc(url)}" target="_blank" rel="noopener">Abrir y aplicar ↗</a>` : ''}</li>`;
+    const status = st === undefined ? '<span class="t-sub">Revisando si sigue abierto…</span>' : lab ? `<span class="pill ${lab[1]}">${lab[0]}</span>` : '';
+    const action = !url || st === 'removed' ? '<span class="t-sub">El cliente o la plataforma lo borró.</span>'
+      : `<a class="link-out" href="${esc(url)}" target="_blank" rel="noopener">${st === 'closed' ? 'Ver aviso (ya no recibe propuestas) ↗' : 'Abrir y aplicar ↗'}</a>`;
+    return `<li class="mkt-item ${st === 'removed' ? 'gone' : ''}"><div><b>${esc(s.title || (slug ? slug[0].toUpperCase() + slug.slice(1) : s.task))}</b> ${status}<div class="t-sub">${esc(facts.join(' · '))}</div></div>
+      ${action}</li>`;
   };
   const MKT_MAX = 150;
   const mktRender = () => {
@@ -406,7 +424,8 @@
     const chips = [['all', 'Todos', total], ...[...MKT_CATS.map(([k]) => k), 'other'].filter(k => byCat[k]).map(k => [k, MKT_LABEL[k], byCat[k]])];
     const rows = mktList.map((g, i) => {
       const comp = compLevel(g.avgBids), open = mkt.open === g.task;
-      const items = open ? g.items.slice().sort((a, b) => b.extracted_at.localeCompare(a.extracted_at)) : [];
+      const items = open ? g.items.slice().sort((a, b) => linkRank(a) - linkRank(b) || b.extracted_at.localeCompare(a.extracted_at)) : [];
+      if (open) checkLinks(items);
       return `<tr class="t-click" data-i="${i}" tabindex="0" aria-expanded="${open}"><td class="t-name">${open ? '▾' : '▸'} ${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
         <td class="num"><b>${g.n}</b>${g.n7 ? `<div class="t-sub">${g.n7} esta semana</div>` : ''}</td>
         <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
@@ -414,7 +433,7 @@
         <td><span class="pill ${levelCls(AUTO_ES[g.autoTop], true)}">${AUTO_ES[g.autoTop] || '—'}</span></td>
         <td class="t-sub">${esc([...new Set(g.items.map(s => payInfo('', s.source_url, '').short))].join(' / ') || 'No lo dice')}</td>
         <td class="t-sub">${g.items.length} ${g.items.length === 1 ? 'aviso' : 'avisos'}</td></tr>
-        ${open ? `<tr class="mkt-open"><td colspan="7"><p class="t-sub">Los avisos de hace más de 2 semanas probablemente ya cerraron: empieza por los más recientes.</p><ul class="mkt-items">${items.map(listingHtml).join('')}</ul></td></tr>` : ''}`;
+        ${open ? `<tr class="mkt-open"><td colspan="7"><p class="t-sub">Primero los abiertos y los más recientes. Los que ya no existen salen al final.</p><ul class="mkt-items">${items.map(listingHtml).join('')}</ul></td></tr>` : ''}`;
     }).join('');
     box.innerHTML = `
       <div class="t-chips mkt-cats" role="group" aria-label="Tipo de servicio">${chips.map(([k, l, n]) =>
