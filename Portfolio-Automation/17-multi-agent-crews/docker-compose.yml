@@ -1,0 +1,21 @@
+# Demo stack: the API talks to the deterministic fake LLM (no model needed).
+# To use a real model, set LLM_BASE_URL / LLM_MODEL (e.g. Ollama on the host: http://host.docker.internal:11434/v1).
+services:
+  fake-llm:
+    build: ./fake_llm  # no published port: only the API reaches it
+  api:
+    build: .
+    ports:
+      - "8017:8000"
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://fake-llm:8080/v1}
+      LLM_MODEL: ${LLM_MODEL:-fake}
+      LLM_API_KEY: ${LLM_API_KEY:-not-needed}
+      DATABASE_URL: sqlite:////app/data/reports.db
+    volumes:
+      - reports:/app/data
+    depends_on:
+      fake-llm:
+        condition: service_healthy
+volumes:
+  reports:
