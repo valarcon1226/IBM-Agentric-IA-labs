@@ -113,6 +113,14 @@
   .t-card dl { margin: 0; display: grid; gap: 4px; font-size: 13.5px; }
   .t-card dt { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin-top: 6px; }
   .t-card dd { margin: 0; line-height: 1.5; }
+  .t-sub { color: var(--ink-soft); font-size: 12px; font-weight: 400; }
+  .mkt-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 0 0 12px; }
+  .mkt-bar input { flex: 1 1 220px; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+  .mkt-f { display: flex; flex-direction: column; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+  .mkt-f select { min-height: 36px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; text-transform: none; letter-spacing: 0; }
+  .mkt-cats { margin-bottom: 8px; }
+  .mkt-cat { cursor: pointer; border: 1px solid var(--line); font: inherit; font-size: 13px; }
+  .mkt-cat[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
   .t-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
   .t-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .t-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -208,14 +216,15 @@
     return res.json();
   }
 
-  let JOBS = [], FREELANCE = [], TRENDS = [], LEARN = [];
+  let JOBS = [], FREELANCE = [], TRENDS = [], LEARN = [], SIGNALS = [];
   let loadError = null;
   try {
-    [JOBS, FREELANCE, TRENDS, LEARN] = await Promise.all([
+    [JOBS, FREELANCE, TRENDS, LEARN, SIGNALS] = await Promise.all([
       fetchJson('/api/jobs'),
       fetchJson('/api/freelance'),
       fetchJson('/api/trends'),
       fetchJson('/api/learning'),
+      fetchJson('/api/signals').catch(() => []),
     ]);
   } catch (err) {
     loadError = err;
@@ -285,6 +294,89 @@
     return o;
   };
   // verde = bueno para ti (competencia baja / automatización alta)
+  // ---- "Todo el mercado": cada vacante/gig analizado, con tipo de servicio por palabras clave (el primero que calza)
+  const MKT_CATS = [
+    ['video', 'Edición de video', /video|\bclips?\b|\breels?\b|tiktok|youtube|shorts|animat|motion graphic|podcast|footage|vfx/],
+    ['design', 'Diseño gráfico', /logo|graphic|design|banner|thumbnail|illustrat|flyer|branding|figma|mockup|poster|packaging|photo|image|retouch|\b3d\b/],
+    ['translation', 'Traducción y transcripción', /translat|transcri|subtit|caption|locali[sz]/],
+    ['writing', 'Redacción y contenido', /\bwrit|article|blog|copy|ghostwrit|content|script|newsletter|proofread|ebook|resume|cv\b/],
+    ['marketing', 'Marketing, SEO y ads', /\bseo\b|\bads?\b|advertis|campaign|marketing|social media|\bleads?\b|email|outreach|funnel|influencer|sales/],
+    ['web', 'Páginas web', /website|web site|landing|wordpress|shopify|webflow|wix|web page|storefront/],
+    ['ai', 'Automatización e IA', /automat|\bbots?\b|chatbot|agent|\bai\b|llm|gpt|scrap|workflow|n8n|zapier|make\.com|\brag\b/],
+    ['data', 'Datos, Excel y reportes', /data entry|excel|spreadsheet|dashboard|report|analy|bookkeep|accounting|invoice/],
+    ['qa', 'QA y testing', /\btest|\bqa\b|quality assurance|\bbugs?\b/],
+    ['dev', 'Apps y software', /\bapps?\b|\bapi\b|backend|frontend|software|develop|\bcode|integrat|mobile|platform|system|game/],
+    ['admin', 'Asistencia y soporte', /assistant|support|customer|virtual|schedul|\bcalls?\b|admin/],
+  ];
+  const mktCat = s => { const t = `${s.task} ${s.deliverable} ${s.domain}`.toLowerCase();
+    return (MKT_CATS.find(([, , re]) => re.test(t)) || ['other', 'Otros'])[0]; };
+  const MKT_LABEL = Object.fromEntries([...MKT_CATS.map(([k, l]) => [k, l]), ['other', 'Otros']]);
+  const AUTO_ES = {high: 'Alta', medium: 'Media', low: 'Baja'};
+  const compLevel = b => b == null ? null : (b < 20 ? 'Baja' : b <= 60 ? 'Media' : 'Alta');
+  const mkt = {cat: 'all', auto: 'all', comp: 'all', pay: 'all', src: 'all', q: '', sort: 'count'};
+  const mktGroups = () => {  // filtra (menos la categoría, para contar por chip) y agrupa por tarea igual
+    const weekAgo = Date.now() - 7 * 86400000, q = mkt.q.trim().toLowerCase(), byCat = {};
+    const rows = SIGNALS.filter(s => (mkt.auto === 'all' || s.automatable === mkt.auto)
+      && (mkt.src === 'all' || s.source === mkt.src)
+      && (mkt.comp === 'all' || compLevel(s.competition) === mkt.comp)
+      && (mkt.pay === 'all' || (mkt.pay === 'known' ? s.budget > 0 : (s.budget || 0) >= +mkt.pay))
+      && (!q || `${s.task} ${s.deliverable} ${s.domain}`.toLowerCase().includes(q)));
+    const groups = new Map();
+    rows.forEach(s => { const cat = mktCat(s); byCat[cat] = (byCat[cat] || 0) + 1;
+      if (mkt.cat !== 'all' && cat !== mkt.cat) return;
+      const g = groups.get(s.task) || {task: s.task, cat, n: 0, n7: 0, bids: [], pay: 0, auto: {}, domains: new Set(), urls: [], last: ''};
+      g.n++; g.n7 += utc(s.extracted_at) >= weekAgo; g.pay = Math.max(g.pay, s.budget || 0);
+      if (s.competition != null) g.bids.push(s.competition);
+      g.auto[s.automatable] = (g.auto[s.automatable] || 0) + 1; g.domains.add(s.domain);
+      if (/^https?:\/\//.test(s.source_url)) g.urls.push(s.source_url); if (s.extracted_at > g.last) g.last = s.extracted_at;
+      groups.set(s.task, g); });
+    const list = [...groups.values()].map(g => ({...g, avgBids: g.bids.length ? Math.round(g.bids.reduce((a, b) => a + b, 0) / g.bids.length) : null,
+      autoTop: Object.keys(g.auto).sort((a, b) => g.auto[b] - g.auto[a])[0]}));
+    const cmp = {count: (a, b) => b.n - a.n || b.last.localeCompare(a.last), pay: (a, b) => b.pay - a.pay,
+      comp: (a, b) => (a.avgBids ?? 1e9) - (b.avgBids ?? 1e9), recent: (a, b) => b.last.localeCompare(a.last)}[mkt.sort];
+    return {list: list.sort(cmp), byCat, total: rows.length};
+  };
+  const MKT_MAX = 150;
+  const mktRender = () => {
+    const box = document.getElementById('mktResults'); if (!box) return;
+    const {list, byCat, total} = mktGroups();
+    const chips = [['all', 'Todos', total], ...[...MKT_CATS.map(([k]) => k), 'other'].filter(k => byCat[k]).map(k => [k, MKT_LABEL[k], byCat[k]])];
+    const rows = list.slice(0, MKT_MAX).map(g => {
+      const comp = compLevel(g.avgBids);
+      return `<tr><td class="t-name">${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
+        <td class="num"><b>${g.n}</b>${g.n7 ? `<div class="t-sub">${g.n7} esta semana</div>` : ''}</td>
+        <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
+        <td class="num">${g.pay ? `$${g.pay.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
+        <td><span class="pill ${levelCls(AUTO_ES[g.autoTop], true)}">${AUTO_ES[g.autoTop] || '—'}</span></td>
+        <td>${g.urls.length ? `<a href="${esc(g.urls[0])}" target="_blank" rel="noopener">Ver</a>${g.urls.length > 1 ? ` <span class="t-sub">+${g.urls.length - 1}</span>` : ''}` : ''}</td></tr>`;
+    }).join('');
+    box.innerHTML = `
+      <div class="t-chips mkt-cats" role="group" aria-label="Tipo de servicio">${chips.map(([k, l, n]) =>
+        `<button type="button" class="t-chip mkt-cat" data-cat="${k}" aria-pressed="${mkt.cat === k}">${esc(l)} <b>${n}</b></button>`).join('')}</div>
+      <p class="t-sub">${list.length > MKT_MAX ? `Mostrando ${MKT_MAX} de ${list.length} tareas. Filtra o busca para ver el resto.` : `${list.length} tareas.`}</p>
+      <div class="t-table-wrap"><table class="t-table">
+        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Aviso</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="t-sub">Nada con esos filtros.</td></tr>'}</tbody></table></div>`;
+  };
+  const mktSelect = (key, label, opts) => `<label class="mkt-f">${label}<select data-mkt="${key}">${opts.map(([v, l]) =>
+    `<option value="${v}" ${mkt[key] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const mktSection = () => `
+    <section class="t-sec">
+      <h2>Todo el mercado</h2>
+      <p class="t-help">Cada vacante y gig que analizó el Trend Spotter en los últimos 30 días, sea automatizable o no (edición de video, diseño, redacción…). Filtra por tipo de servicio, competencia o pago. El pago solo se guarda desde hoy, así que los avisos anteriores salen con —.</p>
+      <div class="mkt-bar">
+        <input type="search" data-mkt="q" placeholder="Buscar (ej. video, logo, podcast)…" value="${esc(mkt.q)}" aria-label="Buscar tarea">
+        ${mktSelect('auto', 'Automatizable', [['all', 'Todas'], ['high', 'Alta'], ['medium', 'Media'], ['low', 'Baja']])}
+        ${mktSelect('comp', 'Competencia', [['all', 'Todas'], ['Baja', 'Baja'], ['Media', 'Media'], ['Alta', 'Alta']])}
+        ${mktSelect('pay', 'Pago', [['all', 'Todos'], ['known', 'Con pago informado'], ['100', '≥ $100'], ['500', '≥ $500'], ['1000', '≥ $1.000']])}
+        ${mktSelect('src', 'Origen', [['all', 'Todo'], ['gig', 'Gigs freelance'], ['job', 'Vacantes 9-5']])}
+        ${mktSelect('sort', 'Ordenar', [['count', 'Más pedidos'], ['pay', 'Mejor pago'], ['comp', 'Menos competencia'], ['recent', 'Más recientes']])}
+      </div>
+      <div id="mktResults"></div>
+    </section>`;
+  const customView = document.getElementById('customView');
+  customView.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.mkt; if (k) { mkt[k] = e.target.value; mktRender(); } });
+  customView.addEventListener('click', e => { const b = e.target.closest('.mkt-cat'); if (b) { mkt.cat = b.dataset.cat; mktRender(); } });
   const levelCls = (v, highIsGood) => { const x = String(v || '').toLowerCase();
     if (x.startsWith('baja')) return highIsGood ? 'discarded' : 'done';
     if (x.startsWith('alta')) return highIsGood ? 'done' : 'discarded';
@@ -455,7 +547,8 @@
             <div class="t-table-wrap"><table class="t-table">
               <thead><tr><th>Servicio</th><th>Demanda</th><th>Últimos 7 días</th><th>Competencia</th><th>Automatizable</th><th>Qué piden (ejemplos)</th></tr></thead>
               <tbody>${table}</tbody></table></div>
-          </section>`;
+          </section>
+          ${mktSection()}`;
       },
     },
     learn: {
@@ -590,7 +683,7 @@
     renderStats();
     const custom = !!cfg.custom;
     els.toolbar.hidden = custom; els.countLine.hidden = custom; els.custom.hidden = !custom;
-    if (custom) { els.list.innerHTML = ''; els.empty.hidden = true; els.custom.innerHTML = cfg.custom(cfg.data); return; }
+    if (custom) { els.list.innerHTML = ''; els.empty.hidden = true; els.custom.innerHTML = cfg.custom(cfg.data); mktRender(); return; }
     let items = cfg.data.filter(it => cfg.filterFn(it, state.filter));
     if(state.query.trim()){
       const q = state.query.trim().toLowerCase();
