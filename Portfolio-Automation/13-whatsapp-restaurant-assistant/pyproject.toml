@@ -1,0 +1,33 @@
+[project]
+name = "whatsapp-restaurant-assistant"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+exclude = ["^\\.venv/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m \"not integration and not e2e and not live\""
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: needs Docker (real Postgres via docker compose)",
+    "e2e: full conversation flow against the real docker compose stack",
+    "live: hits the real configured LLM instead of a fake one",
+]
+
+[tool.coverage.run]
+source = ["app"]
