@@ -1,0 +1,5 @@
+node_modules/
+.env
+lighthouse-report.json
+test-results/
+playwright-report/
