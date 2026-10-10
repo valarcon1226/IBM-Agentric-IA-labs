@@ -1,0 +1,9 @@
+langchain
+langchain-ollama
+selenium
+beautifulsoup4
+markdownify
+langgraph
+requests
+playwright
+pytest

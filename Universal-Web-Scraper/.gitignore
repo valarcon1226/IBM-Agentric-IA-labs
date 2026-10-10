@@ -1,0 +1,10 @@
+# Browser profiles hold session cookies: never commit
+chrome_profile/
+edge_profile/
+# Downloaded course content is personal, not for the repo
+courses/
+raw_data/
+output_test/
+Final_Report.md
+*.mp4
+__pycache__/
