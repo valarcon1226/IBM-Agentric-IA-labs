@@ -1,0 +1,238 @@
+{
+  "id": "f2-invoice-to-data",
+  "name": "F2 - Factura PDF a datos",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-invoice",
+      "name": "Invoice Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "webhookId": "f2-invoice-webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-upload",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": { "binaryData": true, "binaryPropertyName": "data" }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-webhook-api-key",
+          "name": "Webhook API Key"
+        }
+      }
+    },
+    {
+      "id": "extract-invoice-text",
+      "name": "Extract Invoice Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [220, 0],
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": {}
+      }
+    },
+    {
+      "id": "build-invoice-prompt",
+      "name": "Build Invoice Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const extracted = $input.first().json;\nconst rawText = typeof extracted.text === 'string' ? extracted.text : '';\nconst promptText = 'TAREA: FACTURA\\nExtrae de esta factura colombiana: proveedor, nit, fecha (YYYY-MM-DD), subtotal, iva, total (enteros en COP) e items. Responde SOLO JSON.\\nTexto de la factura:\\n' + rawText;\nreturn [{ json: { rawText, promptText } }];\n"
+      }
+    },
+    {
+      "id": "call-llm-invoice",
+      "name": "Call LLM Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [660, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "parameters": {
+        "method": "POST",
+        "url": "${LLM_BASE_URL}/chat/completions",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: '${LLM_MODEL}', messages: [ { role: 'user', content: $json.promptText } ] } }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-llm-api",
+          "name": "LLM API Key"
+        }
+      }
+    },
+    {
+      "id": "parse-validate-invoice",
+      "name": "Parse And Validate Invoice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const built = $('Build Invoice Prompt').first().json;\nconst llmResponse = $input.first().json;\nlet parsed = {};\ntry {\n  const content = (llmResponse.choices && llmResponse.choices[0] && llmResponse.choices[0].message && llmResponse.choices[0].message.content) || '{}';\n  parsed = JSON.parse(content);\n} catch (err) {\n  parsed = {};\n}\n\nconst errors = [];\nconst providerName = typeof parsed.proveedor === 'string' && parsed.proveedor.trim() ? parsed.proveedor.trim() : null;\nconst providerNit = typeof parsed.nit === 'string' && parsed.nit.trim() ? parsed.nit.trim() : null;\nconst invoiceDateRaw = typeof parsed.fecha === 'string' ? parsed.fecha.trim() : null;\nconst subtotal = Number.isFinite(parsed.subtotal) ? parsed.subtotal : null;\nconst iva = Number.isFinite(parsed.iva) ? parsed.iva : null;\nconst total = Number.isFinite(parsed.total) ? parsed.total : null;\nconst items = Array.isArray(parsed.items) ? parsed.items : [];\n\nif (!providerName) errors.push('proveedor is required');\nif (!providerNit) errors.push('nit is required');\nif (subtotal === null) errors.push('subtotal is required');\nif (iva === null) errors.push('iva is required');\nif (total === null) errors.push('total is required');\n\nconst datePattern = /^\\d{4}-\\d{2}-\\d{2}$/;\nlet dateValid = false;\nif (invoiceDateRaw && datePattern.test(invoiceDateRaw)) {\n  const [y, m, d] = invoiceDateRaw.split('-').map(Number);\n  const parsedDate = new Date(Date.UTC(y, m - 1, d));\n  dateValid = parsedDate.getUTCFullYear() === y && parsedDate.getUTCMonth() === m - 1 && parsedDate.getUTCDate() === d;\n}\nif (!invoiceDateRaw) {\n  errors.push('fecha is required');\n} else if (!dateValid) {\n  errors.push('fecha is invalid');\n}\n\nif (subtotal !== null && iva !== null && total !== null) {\n  if (Math.abs(total - (subtotal + iva)) > 1) {\n    errors.push('total does not match subtotal + iva');\n  }\n}\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    providerName,\n    providerNit,\n    invoiceDate: dateValid ? invoiceDateRaw : null,\n    subtotal,\n    iva,\n    total,\n    items,\n    rawText: built.rawText,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "if-invoice-valid",
+      "name": "Is Invoice Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1100, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-invoice-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "insert-invoice-validated",
+      "name": "Insert Validated Invoice",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1320, -140],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO invoices (provider_name, provider_nit, invoice_date, subtotal_cop, iva_cop, total_cop, items, status, raw_text) VALUES ($1, $2, $3, $4, $5, $6, $7, 'validated', $8) RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$json.providerName, $json.providerNit, $json.invoiceDate, $json.subtotal, $json.iva, $json.total, JSON.stringify($json.items), $json.rawText] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "respond-invoice-validated",
+      "name": "Respond Validated",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1540, -140],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'validated', invoice_id: $json.id } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "insert-invoice-needs-review",
+      "name": "Insert Needs Review Invoice",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1320, 160],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO invoices (provider_name, provider_nit, invoice_date, subtotal_cop, iva_cop, total_cop, items, status, raw_text) VALUES ($1, $2, $3, $4, $5, $6, $7, 'needs_review', $8) RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$json.providerName, $json.providerNit, $json.invoiceDate, $json.subtotal, $json.iva, $json.total, JSON.stringify($json.items), $json.rawText] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "needs-review-email",
+      "name": "Needs Review Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1540, 160],
+      "parameters": {
+        "fromEmail": "facturas@sabordecasa.local",
+        "toEmail": "equipo@sabordecasa.local",
+        "subject": "=Factura #{{ $json.id }} requiere revisión manual",
+        "emailFormat": "text",
+        "text": "=La factura #{{ $json.id }} no pasó la validación automática y quedó en estado needs_review.\n\nErrores: {{ $('Parse And Validate Invoice').first().json.errors.join(', ') }}\n\nRevisa la tabla invoices para completarla a mano.",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "cred-smtp",
+          "name": "Mailpit SMTP"
+        }
+      }
+    },
+    {
+      "id": "respond-invoice-needs-review",
+      "name": "Respond Needs Review",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1760, 160],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'needs_review', invoice_id: $('Insert Needs Review Invoice').first().json.id, errors: $('Parse And Validate Invoice').first().json.errors } }}",
+        "options": { "responseCode": 200 }
+      }
+    }
+  ],
+  "connections": {
+    "Invoice Webhook": {
+      "main": [[{ "node": "Extract Invoice Text", "type": "main", "index": 0 }]]
+    },
+    "Extract Invoice Text": {
+      "main": [[{ "node": "Build Invoice Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build Invoice Prompt": {
+      "main": [[{ "node": "Call LLM Invoice", "type": "main", "index": 0 }]]
+    },
+    "Call LLM Invoice": {
+      "main": [[{ "node": "Parse And Validate Invoice", "type": "main", "index": 0 }]]
+    },
+    "Parse And Validate Invoice": {
+      "main": [[{ "node": "Is Invoice Valid?", "type": "main", "index": 0 }]]
+    },
+    "Is Invoice Valid?": {
+      "main": [
+        [{ "node": "Insert Validated Invoice", "type": "main", "index": 0 }],
+        [{ "node": "Insert Needs Review Invoice", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert Validated Invoice": {
+      "main": [[{ "node": "Respond Validated", "type": "main", "index": 0 }]]
+    },
+    "Insert Needs Review Invoice": {
+      "main": [[{ "node": "Needs Review Email", "type": "main", "index": 0 }]]
+    },
+    "Needs Review Email": {
+      "main": [[{ "node": "Respond Needs Review", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "errorWorkflow": "shared-error-handler"
+  }
+}
