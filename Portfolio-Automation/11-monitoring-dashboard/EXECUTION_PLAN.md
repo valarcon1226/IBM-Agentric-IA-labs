@@ -1,37 +1,34 @@
 # Execution Plan — Monitoring & Alerting Dashboard
 
-Source of truth: `README.md`. Note: only instrument/scrape services that already exist and are running — add coverage incrementally as more portfolio projects come online.
+Source of truth: `README.md`.
 
 ## Prerequisites
 - Docker + Docker Compose
-- At least one already-built FastAPI/Celery service from `01`-`09` to instrument first
-- Slack webhook URL for alert testing
+- Python 3.12 (`uv`)
 
 ## Build Checklist
 
-- [ ] Add Prometheus, Grafana, Loki, Promtail, Alertmanager to `docker-compose.yml`.
-  - Verify: `docker compose up -d` → all 5 healthy; Grafana reachable on `:3000`.
-- [ ] Add `prometheus-client` + `/metrics` to each already-built service (start with the furthest-along one).
-  - Verify: `curl localhost:8000/metrics` returns Prometheus text format.
-- [ ] Configure `node-exporter` and `postgres-exporter` for existing services.
-  - Verify: both show `state: up` on Prometheus `/targets`.
-- [ ] Write `prometheus.yml` scrape configs — one job per instrumented service only.
-  - Verify: every configured job shows `up`.
-- [ ] Provision Grafana dashboards (README section 4) for data sources that exist.
-  - Verify: panels show real data, not "No data".
-- [ ] Write `alert.rules.yml` (README section 5) + connect Alertmanager to Slack.
-  - Verify: lowering a threshold temporarily fires a real Slack message.
-- [ ] Configure Promtail → Loki log shipping. *(Promtail's last release is 3.6.11, 2026-05; Grafana's replacement is Alloy. Keep Promtail for this build; consider Alloy if Promtail stops working with the pinned Loki.)*
-  - Verify: a manual test log line is queryable in Grafana Explore within seconds.
-- [ ] Implement the business metrics exporter (README section 6) once a relevant service exists (e.g. invoice processor).
-  - Then uncomment the `business-exporter` service and the `custom_business_metrics` scrape job in the README config.
-  - Verify: `curl localhost:8001/metrics` shows non-zero business counters after real activity.
-- [ ] Add `celery-exporter` pointing at the Celery broker (include the Redis password when the broker requires one, as in `10-docker-compose-lab`).
-  - Verify: `celery_queue_length` appears in Prometheus (the `alert.rules.yml` queue alert depends on it).
+- [x] Compose autónomo con versiones fijas: Prometheus, Alertmanager, Grafana, Loki, Promtail, Node Exporter, Postgres Exporter y Postgres demo.
+  - Verificado: `docker compose up -d --build` levanta los 10 servicios healthy en la red `monitoring_net`.
+- [x] Demo App FastAPI instrumentada con métricas SLA y de negocio (`/metrics`) y logging estructurado a archivo/stdout.
+  - Verificado: 13 tests unitarios pasan; métricas `http_requests_total`, `http_request_duration_seconds`, `business_processed_rows_total` y `business_active_users` exportadas en formato Prometheus.
+- [x] Generador de carga simple en Python (`load_generator.py`) sin dependencias pesadas como Locust.
+  - Verificado: Ejecución autónoma genera tráfico continuo hacia `/api/items`, `/api/process`, `/api/error` y `/api/slow`.
+- [x] Reglas de alerta PromQL (servicio caído, tasa de errores 5xx, latencia p95, disco, Postgres caído).
+  - Verificado: `promtool check rules` valida las 5 reglas sin errores.
+- [x] Alertmanager configurado con webhook-sink local y Slack documentado.
+  - Verificado: `amtool check-config` valida la configuración; parada de demo-app dispara alerta `ServiceDown` recibida exitosamente en `/alerts`.
+- [x] Provisionamiento automático de Grafana (datasources Prometheus + Loki, dashboards de servicios y negocio).
+  - Verificado: API `/api/datasources` y `/api/search` confirman ambos datasources y los dashboards `services-dashboard` y `business-dashboard`.
+- [x] Recolección y consulta de logs en Loki mediante Promtail.
+  - Verificado: Promtail scrapea `/var/log/demo-app/app.log`; API `/loki/api/v1/query_range` retorna los registros estructurados de demo-app.
+- [x] Puertos asignados mapeados a `127.0.0.1`: Grafana 3011, Prometheus 9091, Alertmanager 9093, demo-app 8011, webhook-sink 8012, Loki 3100.
+  - Verificado: Postgres y Exporters permanecen internos; ningún puerto publicado fuera de `127.0.0.1`.
+- [x] Suite de pruebas automatizadas:
+  - Verificado: `pytest -q` (13 passed) y `pytest -m integration -q` (6 passed).
 
 ## Definition of Done
-- [ ] Every currently-built portfolio service has working `/metrics` scraped by Prometheus.
-- [ ] At least one Grafana dashboard shows live, non-empty data.
-- [ ] A deliberately-triggered alert reaches Slack.
-- [ ] A test log line is retrievable via Loki/Grafana Explore.
-- [ ] No scrape config or dashboard panel references a service that doesn't exist yet.
+- [x] Stack de monitoreo y servicios desplegados y verificados en Docker Compose.
+- [x] Reglas de alerta y configuraciones validadas con herramientas nativas (`promtool` y `amtool`).
+- [x] Prueba de ciclo completo: tráfico sintético, logs en Loki, caída de servicio, alerta despachada y recibida en webhook sink.
+- [x] Documentación y planes sincronizados con la implementación real.
