@@ -1,6 +1,6 @@
 # Portfolio Automation — Master Build Plan
 
-This file sequences the 12 projects in this portfolio for an executing agent (Gemini CLI). Each project folder has its own `README.md` (architecture, schema, API, docker services — the source of truth) and `EXECUTION_PLAN.md` (the atomic, checkbox-driven build checklist derived from it).
+This file sequences the 12 base projects in this portfolio. Each project folder has its own `README.md` (architecture, schema, API, docker services — the source of truth) and `EXECUTION_PLAN.md` (the atomic, checkbox-driven build checklist derived from it).
 
 ## How to execute this plan
 
