@@ -48,8 +48,8 @@ Unlike aggressive scrapers that rely on stealth libraries, proxy rotation, and a
 3.  **Strict Rate Limiting:** Enforces a minimum interval (default: 1.0 second between requests per domain) to prevent overloading target servers.
 4.  **Exponential Backoff:** Retries 429 (Too Many Requests) and 5xx responses gracefully using `tenacity` without spamming the host.
 5.  **Prefer Official APIs & Structured Data:** Prioritizes official APIs (e.g. MercadoLibre Item API) and semantic `JSON-LD` schema over brittle CSS selectors.
-7.  **SSRF Guard:** Product URLs come from API users, so only `http(s)` URLs are accepted and every request (redirects included) to a loopback, private or link-local address is refused. The demo compose sets `ALLOW_PRIVATE_TARGETS=true` only because the demo store lives on the Docker network.
 6.  **No Amazon Scraping:** Excludes Amazon scraping in accordance with site policies.
+7.  **SSRF Guard:** Product URLs come from API users, so only `http(s)` URLs are accepted and every request (redirects included) to a loopback, private or link-local address is refused. The demo compose sets `ALLOW_PRIVATE_TARGETS=true` only because the demo store lives on the Docker network.
 
 ## 4. Database Schema
 
