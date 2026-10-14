@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>DailyTech B - Portal Informativo</title>
+    <link>https://dailytech-b.local</link>
+    <description>Novedades en ciberseguridad e inteligencia artificial</description>
+    <item>
+      <title>Llega GPT-5: OpenAI revoluciona la inteligencia artificial con nuevo motor de razonamiento</title>
+      <link>https://dailytech-b.local/llega-gpt-5-openai</link>
+      <author>Marcos Diaz</author>
+      <pubDate>Wed, 14 Oct 2026 10:15:00 GMT</pubDate>
+      <description>La empresa OpenAI presentó hoy su esperada actualización GPT-5. Este modelo de inteligencia artificial destaca por su razonamiento profundo, con avances notables en código y problemas matemáticos complejos.</description>
+      <content:encoded><![CDATA[La empresa OpenAI presentó hoy su esperada actualización GPT-5. Este modelo de inteligencia artificial destaca por su razonamiento profundo, con avances notables en código y problemas matemáticos complejos. El lanzamiento iniciará de manera progresiva durante las próximas semanas.]]></content:encoded>
+    </item>
+    <item>
+      <title>Alerta global por nueva ola de ataques de ransomware dirigidos a servidores Linux</title>
+      <link>https://dailytech-b.local/alerta-ransomware-linux</link>
+      <author>Sofia Mendez</author>
+      <pubDate>Wed, 14 Oct 2026 08:45:00 GMT</pubDate>
+      <description>Expertos en ciberseguridad advierten sobre una campaña masiva de phishing y malware que explota una vulnerabilidad crítica en sistemas de producción.</description>
+      <content:encoded><![CDATA[Expertos en ciberseguridad advierten sobre una campaña masiva de phishing y malware que explota una vulnerabilidad crítica en sistemas de producción empresariales.]]></content:encoded>
+    </item>
+  </channel>
+</rss>
