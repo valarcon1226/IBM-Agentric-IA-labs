@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Heavy video & audio files (do not commit)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wav
+*.mp3
+*.m4a
+clips/
+temp_audio/
+downloads/
+test_media/
+demo_output/
+web_workspace/
+
+# Environment secrets
+.env
