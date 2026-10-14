@@ -16,56 +16,66 @@ flowchart TD
     Beat[Celery Beat - DatabaseScheduler] -->|Reads PeriodicTask tables| Postgres
     Beat -->|Enqueues due tasks| Redis[(Redis Broker)]
     
-    Redis --> Worker1[Celery Worker - HTTP]
-    Redis --> Worker2[Celery Worker - Shell]
-    Redis --> Worker3[Celery Worker - Python]
+    Redis --> Worker[Celery Worker]
     
-    Worker1 -->|Executes HTTP| Web[External Web API]
-    Worker2 -->|Executes Command| OS[Operating System]
-    Worker3 -->|Executes Script| PythonEnv[Python Interpreter]
+    Worker -->|Executes HTTP| Web[External Web API / Webhook]
+    Worker -->|Executes Command from jobs/| Shell[Subprocess Shell Job]
+    Worker -->|Executes Script from jobs/| PythonEnv[Python Interpreter Job]
     
-    Worker1 -.->|Updates task_runs| Postgres
-    Worker2 -.->|Updates task_runs| Postgres
-    Worker3 -.->|Updates task_runs| Postgres
+    Worker -.->|Updates task_runs| Postgres
     
-    Worker1 -.->|On Failure > Threshold| Alerting[Notification Hub]
+    Worker -.->|On Consecutive Failures >= Threshold| Alerting[Webhook Sink / Notifier 03]
 ```
 
 ## 3. Features
 - **Dynamic Scheduling**: Add, modify, or delete tasks on the fly without restarting the scheduler. Beat's `DatabaseScheduler` picks up changes to the `PeriodicTask` tables automatically.
 - **Execution Types**: 
-  - *HTTP Requests* (webhooks, API polling)
-  - *Shell Commands* (db backups, file manipulation)
-  - *Python Scripts* (custom logic)
+  - *HTTP Requests* (webhooks, API polling) with SSRF protection against private networks (`ALLOW_PRIVATE_TARGETS=true` for demo/testing).
+  - *Shell Commands* (scripts strictly whitelisted inside `jobs/`, without `shell=True`, with timeout and output limit).
+  - *Python Scripts* (scripts strictly whitelisted inside `jobs/`, without `eval`, with timeout and output limit).
 - **Retry Mechanism**: Configurable exponential backoff leveraging Celery's native retry features.
-- **History & Logs**: Retain stdout, stderr, run durations, and completion states in PostgreSQL.
-- **Dependencies**: Execute Task B only if Task A's last run was successful.
-- **Alerting**: Integration with a central Notification Hub upon exceeding consecutive failure thresholds.
+- **History & Logs**: Retain stdout, stderr, exit codes, run durations, and completion states in PostgreSQL.
+- **Dependencies**: Execute Task B only if Task A's last *finished* run was successful (a run of A still in progress at the same tick is ignored); otherwise, mark Task B as `SKIPPED`.
+- **Alerting**: Integration with a central Notification Hub (`ALERT_WEBHOOK_URL`, compatible with project `03-multi-channel-notifier` and `webhook-sink`) upon exceeding consecutive failure thresholds.
 
 ## 4. Tech Stack
-- **API**: FastAPI
-- **Engine**: Celery Beat + Redis, with `sqlalchemy-celery-beat` (`DatabaseScheduler`) storing schedules in PostgreSQL
-- **Database**: PostgreSQL (via SQLAlchemy/asyncpg)
-- **UI Dashboard**: Streamlit
+- **API**: FastAPI 0.143+
+- **Engine**: Celery 5.6+ with Redis broker and `sqlalchemy-celery-beat` (`DatabaseScheduler`)
+- **Database**: PostgreSQL 15 (SQLAlchemy 2.1+)
+- **UI Dashboard**: Streamlit 1.66+
+- **Alert Sink**: `mendhak/http-https-echo:36`
 - **Deployment**: Docker Compose
 
 ## 5. Environment Variables
-Configure these in your `.env`:
+Configure these in your `.env` (see `.env.example`):
 
 ```ini
 # Database
-DATABASE_URL=postgresql://user:password@db:5432/scheduler
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=scheduler
+DATABASE_URL=postgresql+psycopg2://user:password@db:5432/scheduler
 
 # Redis / Celery
 REDIS_URL=redis://redis:6379/0
 
-# Alerting
-NOTIFICATION_HUB_URL=http://notifier:8000/api/v1/notify
+# Alerting / Webhook Sink
+ALERT_WEBHOOK_URL=http://webhook-sink:8080/
+ALERT_WEBHOOK_TOKEN=change_me_webhook_token
+FAILURE_ALERT_THRESHOLD=3
 
-# Engine configuration
+# Security & Execution limits
+ALLOW_PRIVATE_TARGETS=false
+JOBS_DIR=jobs
+EXECUTION_TIMEOUT_SECONDS=30
+MAX_OUTPUT_BYTES=100000
+
+# Retries
 MAX_RETRIES=3
-BASE_BACKOFF_SECONDS=60
-BEAT_POLL_INTERVAL=60
+BASE_BACKOFF_SECONDS=5
+
+# Dashboard
+API_URL=http://api:8000
 ```
 
 ## 6. Database Schema
@@ -89,9 +99,10 @@ CREATE TABLE tasks (
 CREATE TABLE task_runs (
     run_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     task_id UUID REFERENCES tasks(task_id) ON DELETE CASCADE,
-    status VARCHAR(50) NOT NULL, -- SUCCESS, FAILED, RUNNING
+    status VARCHAR(50) NOT NULL, -- SUCCESS, FAILED, RUNNING, SKIPPED, RETRYING
     stdout TEXT,
     stderr TEXT,
+    exit_code INT,
     started_at TIMESTAMP DEFAULT NOW(),
     finished_at TIMESTAMP,
     duration_ms INT
@@ -110,24 +121,27 @@ CREATE INDEX idx_task_runs_task_id ON task_runs(task_id);
 
 ## 7. API Endpoints
 
+Every `/api/v1/*` route requires `Authorization: Bearer $API_KEY` (`change_me_api_key` in `.env.example`); without it the API answers `401`. The API can run scripts, so it is never left open. `/health` is public.
+
 ### 7.1 POST /api/v1/tasks
 Create a new task.
 ```bash
-curl -X POST "http://localhost:8000/api/v1/tasks" \
+curl -X POST "http://localhost:8006/api/v1/tasks" -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Nightly Database Backup",
     "task_type": "SHELL",
-    "payload": {"command": "pg_dump -U user db > /backups/db.sql"},
+    "payload": {"command": "backup.sh", "args": ["db_prod"]},
     "schedule": "0 2 * * *",
     "max_retries": 3,
-    "retry_backoff": 60
+    "retry_backoff": 60,
+    "depends_on": []
   }'
 ```
 **Response:**
 ```json
 {
-  "task_id": "e4b3c2a1...",
+  "task_id": "e4b3c2a1-...",
   "name": "Nightly Database Backup",
   "status": "CREATED"
 }
@@ -136,149 +150,54 @@ curl -X POST "http://localhost:8000/api/v1/tasks" \
 ### 7.2 GET /api/v1/tasks
 List all tasks.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/tasks"
-```
-**Response:**
-```json
-[
-  {
-    "task_id": "e4b3c2a1...",
-    "name": "Nightly Database Backup",
-    "task_type": "SHELL",
-    "schedule": "0 2 * * *",
-    "is_active": true
-  }
-]
+curl -X GET "http://localhost:8006/api/v1/tasks" -H "Authorization: Bearer $API_KEY"
 ```
 
 ### 7.3 GET /api/v1/tasks/{id}
 Get a single task by ID.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/tasks/e4b3c2a1-..."
-```
-**Response:**
-```json
-{
-  "task_id": "e4b3c2a1...",
-  "name": "Nightly Database Backup",
-  "task_type": "SHELL",
-  "payload": {"command": "pg_dump -U user db > /backups/db.sql"},
-  "schedule": "0 2 * * *",
-  "is_active": true,
-  "last_run_at": "2026-09-20T02:00:00Z"
-}
+curl -X GET "http://localhost:8006/api/v1/tasks/e4b3c2a1-..." -H "Authorization: Bearer $API_KEY"
 ```
 
 ### 7.4 PUT /api/v1/tasks/{id}
-Update a task (e.g., change cron, edit command, toggle pause).
+Update a task (e.g. toggle pause/resume, change schedule).
 ```bash
-curl -X PUT "http://localhost:8000/api/v1/tasks/e4b3c2a1-..." \
+curl -X PUT "http://localhost:8006/api/v1/tasks/e4b3c2a1-..." -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "is_active": false,
     "schedule": "30 2 * * *"
   }'
 ```
-**Response:**
-```json
-{
-  "task_id": "e4b3c2a1...",
-  "status": "UPDATED"
-}
-```
 
 ### 7.5 DELETE /api/v1/tasks/{id}
 Delete a task.
 ```bash
-curl -X DELETE "http://localhost:8000/api/v1/tasks/e4b3c2a1-..."
-```
-**Response:**
-```json
-{
-  "task_id": "e4b3c2a1...",
-  "status": "DELETED"
-}
+curl -X DELETE "http://localhost:8006/api/v1/tasks/e4b3c2a1-..." -H "Authorization: Bearer $API_KEY"
 ```
 
 ### 7.6 POST /api/v1/tasks/{id}/trigger
 Manually trigger a task immediately, ignoring schedule.
 ```bash
-curl -X POST "http://localhost:8000/api/v1/tasks/e4b3c2a1-.../trigger"
-```
-**Response:**
-```json
-{
-  "task_id": "e4b3c2a1...",
-  "run_id": "r1a2b3c4...",
-  "message": "Task manually enqueued."
-}
+curl -X POST "http://localhost:8006/api/v1/tasks/e4b3c2a1-.../trigger" -H "Authorization: Bearer $API_KEY"
 ```
 
 ### 7.7 GET /api/v1/tasks/{id}/runs
-Get execution history with logs.
+Get execution history with logs for a specific task.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/tasks/e4b3c2a1-.../runs?limit=5"
-```
-**Response:**
-```json
-[
-  {
-    "run_id": "r1a2b3c4...",
-    "status": "SUCCESS",
-    "stdout": "Backup completed in 15s.",
-    "stderr": "",
-    "started_at": "2026-09-20T02:00:00Z",
-    "duration_ms": 15000
-  }
-]
+curl -X GET "http://localhost:8006/api/v1/tasks/e4b3c2a1-.../runs?limit=5" -H "Authorization: Bearer $API_KEY"
 ```
 
 ## 8. Docker Services
 
-> **Note:** The `NOTIFICATION_HUB_URL` depends on `03-multi-channel-notifier`. This service must be running externally or on the same Docker network for alerts to work.
-
-```yaml
-version: '3.8'
-services:
-  api:
-    build: .
-    ports: ["8000:8000"]
-    depends_on: [db, redis]
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/scheduler
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
-  scheduler:
-    build: .
-    command: celery -A app.core.celery_app beat -S sqlalchemy_celery_beat.schedulers:DatabaseScheduler --loglevel=info
-    depends_on: [db, redis]
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/scheduler
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
-  worker:
-    build: .
-    command: celery -A app.core.celery_app worker --loglevel=info
-    depends_on: [db, redis]
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/scheduler
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
-  dashboard:
-    build: .
-    command: streamlit run dashboard/app.py
-    ports: ["8501:8501"]
-    environment:
-      - API_URL=http://api:8000
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=scheduler
-  redis:
-    image: redis:7-alpine
-```
+In `docker-compose.yml`:
+- `api`: FastAPI on `127.0.0.1:8006:8000`
+- `dashboard`: Streamlit on `127.0.0.1:8506:8501`
+- `scheduler`: Celery Beat with `DatabaseScheduler`
+- `worker`: Celery Worker
+- `db`: PostgreSQL 15-alpine (internal to docker network, no host port published)
+- `redis`: Redis 7-alpine (internal to docker network, no host port published)
+- `webhook-sink`: `mendhak/http-https-echo:36` (internal echo sink for failure alerts)
 
 ## 9. File Structure
 ```
@@ -291,6 +210,7 @@ services:
 │   │   ├── celery_app.py
 │   │   └── config.py
 │   ├── executors/
+│   │   ├── base.py
 │   │   ├── http_executor.py
 │   │   ├── shell_executor.py
 │   │   └── python_executor.py
@@ -299,26 +219,47 @@ services:
 │   └── main.py
 ├── dashboard/
 │   └── app.py
+├── jobs/
+│   ├── backup.sh
+│   ├── demo_dependent.py
+│   ├── demo_failure.py
+│   └── demo_success.py
 ├── tests/
+│   ├── conftest.py
+│   ├── test_api.py
 │   ├── test_executors.py
-│   └── test_api.py
+│   ├── test_integration.py
+│   └── test_scheduler_logic.py
+├── .env.example
+├── .gitignore
 ├── Dockerfile
 ├── docker-compose.yml
-└── requirements.txt
+├── init-db.sql
+├── pyproject.toml
+├── requirements.txt
+└── requirements-dev.txt
 ```
 
-## 10. Implementation Steps
-1. **Repo skeleton + infra** — create the tree from section 9; `docker-compose.yml` with all services. *Verify:* `docker compose up -d` → healthy.
-2. **Schema & Models** — Apply `tasks`, `task_runs`, `task_dependencies` via an init SQL file. Map SQLAlchemy models.
-3. **Executors (Standalone Tests)** — Implement `executors/http_executor.py`, `shell_executor.py` (subprocess with timeout), and `python_executor.py` (exec with isolated locals). Test without DB/Celery dependencies.
-4. **Celery Beat Database Scheduler** — Use `sqlalchemy-celery-beat` (not the abandoned `celery-sqlalchemy-scheduler`, last released 2021). In `app/core/celery_app.py` set `beat_dburi` to the same PostgreSQL URL (sync driver, e.g. `postgresql+psycopg2://...`) and start Beat with `-S sqlalchemy_celery_beat.schedulers:DatabaseScheduler`. The library creates its own tables (`PeriodicTask`, `CrontabSchedule`, ...). The API remains the owner of `tasks`: creating, editing, pausing or deleting a task creates/updates/disables/deletes exactly one `PeriodicTask` (named `task-<task_id>`, pointing to the worker task with the task id as argument) in the **same transaction**. Change `PeriodicTask` rows through ORM objects; a bulk `UPDATE` statement is not detected by Beat unless `PeriodicTaskChanged` is also updated (see the library README).
-5. **Worker Execution Logic** — The Celery worker processes the enqueued job: updates `task_runs` to RUNNING, checks `task_dependencies`, executes via the appropriate Executor, and updates `task_runs` to SUCCESS/FAILED.
-6. **Retry & Alerting** — On failure, if `run_count < max_retries`, raise `self.retry(countdown=backoff)`. If final failure, increment `consecutive_failures`. If threshold exceeded, POST to `NOTIFICATION_HUB_URL`.
-7. **API Endpoints** — Wire all FastAPI CRUD routes per section 7.
-8. **Streamlit Dashboard** — Build a simple React-like UI in Streamlit to fetch `/api/v1/tasks` and display them in a table, with buttons to trigger/pause.
-9. **Full Stack Smoke Test** — End to end test inserting a shell command schedule and watching logs populate.
+## 10. Verification Commands
 
-## 11. Testing Strategy
-1. **Unit tests (Executors):** Mock HTTP calls, test subprocess timeouts, validate python eval safety mechanisms.
-2. **Schedule sync test:** creating/pausing/deleting a task via the API creates/disables/removes exactly one matching `PeriodicTask`; a due task produces a `task_runs` row.
-3. **Integration tests:** Check dependency-skip logic, retry backoff calculation, and API CRUD correctness.
+1. **Unit test suite & coverage**:
+   ```powershell
+   .venv\Scripts\pytest.exe -q
+   ```
+2. **Quality & style checks**:
+   ```powershell
+   .venv\Scripts\ruff.exe check .
+   ```
+3. **Full stack deployment**:
+   ```powershell
+   docker compose up -d --build
+   docker compose ps
+   ```
+4. **Integration tests against stack**:
+   ```powershell
+   .venv\Scripts\pytest.exe -m integration -q
+   ```
+5. **Teardown**:
+   ```powershell
+   docker compose down -v
+   ```
