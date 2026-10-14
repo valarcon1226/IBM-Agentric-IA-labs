@@ -33,7 +33,10 @@ def test_parse_feeds_b_and_c(fixtures_dir: Path):
     articles_c = parse_rss_feed((fixtures_dir / "feed_tech_c.xml").read_text(encoding="utf-8"))
     assert len(articles_c) == 2
     assert "redefine los estándares" in articles_c[0]["title"]
-    assert "Wall Street" in articles_c[1]["raw_content"] or "acciones" in articles_c[1]["title"].lower()
+    assert (
+        "Wall Street" in articles_c[1]["raw_content"]
+        or "acciones" in articles_c[1]["title"].lower()
+    )
 
 
 def test_parse_invalid_feed():
@@ -46,6 +49,11 @@ def test_local_paths_and_internal_urls_are_refused(fixtures_dir: Path, monkeypat
     from ingestion.net import BlockedTarget
 
     monkeypatch.setattr(settings, "ALLOW_PRIVATE_TARGETS", False)
-    for target in (str(fixtures_dir / "feed_tech_a.xml"), "file:///etc/passwd", "http://127.0.0.1:5432/", "http://169.254.169.254/latest/"):
+    for target in (
+        str(fixtures_dir / "feed_tech_a.xml"),
+        "file:///etc/passwd",
+        "http://127.0.0.1:5432/",
+        "http://169.254.169.254/latest/",
+    ):
         with pytest.raises(BlockedTarget):
             parse_rss_feed(target)

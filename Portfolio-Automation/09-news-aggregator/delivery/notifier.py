@@ -60,7 +60,9 @@ def send_digest_email(
     try:
         with smtplib.SMTP(smtp_host, smtp_port, timeout=timeout) as server:
             server.sendmail(from_email, [to_email], msg.as_string())
-        logger.info(f"Digest email successfully dispatched to {to_email} via {smtp_host}:{smtp_port}")
+        logger.info(
+            f"Digest email successfully dispatched to {to_email} via {smtp_host}:{smtp_port}"
+        )
         return True
     except Exception as exc:
         logger.error(f"Failed to send email to {to_email} via {smtp_host}:{smtp_port}: {exc}")

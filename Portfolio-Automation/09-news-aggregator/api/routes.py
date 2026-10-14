@@ -69,19 +69,23 @@ def search_articles(
     )
     results = []
     for a in raw_articles:
-        results.append({
-            "id": str(a["id"]),
-            "title": a["title"],
-            "url": a["url"],
-            "author": a.get("author"),
-            "published_date": a.get("published_date"),
-            "ai_summary": a.get("ai_summary"),
-            "category": a.get("category_name"),
-            "source_name": a.get("source_name"),
-            "is_duplicate": a.get("is_duplicate", False),
-            "parent_article_id": str(a["parent_article_id"]) if a.get("parent_article_id") else None,
-            "created_at": a.get("created_at"),
-        })
+        results.append(
+            {
+                "id": str(a["id"]),
+                "title": a["title"],
+                "url": a["url"],
+                "author": a.get("author"),
+                "published_date": a.get("published_date"),
+                "ai_summary": a.get("ai_summary"),
+                "category": a.get("category_name"),
+                "source_name": a.get("source_name"),
+                "is_duplicate": a.get("is_duplicate", False),
+                "parent_article_id": str(a["parent_article_id"])
+                if a.get("parent_article_id")
+                else None,
+                "created_at": a.get("created_at"),
+            }
+        )
     return results
 
 
@@ -103,7 +107,9 @@ def list_digests(limit: int = Query(default=50, ge=1, le=100)) -> list[dict[str,
     ]
 
 
-@router.post("/digests/generate", response_model=DigestResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/digests/generate", response_model=DigestResponse, status_code=status.HTTP_201_CREATED
+)
 def trigger_digest(payload: DigestGenerateRequest) -> dict[str, Any]:
     digest = generate_and_dispatch_digest(
         target_audience=payload.target_audience,

@@ -52,7 +52,9 @@ def test_full_pipeline_cross_source_deduplication(feeds_url: str):
     assert len(uniques) == 4
 
     # Parent article for GPT-5 should be from TechNews A
-    gpt5_parent = next((a for a in uniques if "gpt-5" in a["title"].lower() or "gpt 5" in a["title"].lower()), None)
+    gpt5_parent = next(
+        (a for a in uniques if "gpt-5" in a["title"].lower() or "gpt 5" in a["title"].lower()), None
+    )
     assert gpt5_parent is not None
     assert gpt5_parent["ai_summary"] is not None
 

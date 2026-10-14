@@ -66,22 +66,26 @@ def process_single_source(source: dict[str, Any]) -> dict[str, int]:
             if existing_by_hash:
                 # Flag as duplicate of the matched article
                 parent_id = str(existing_by_hash["id"])
-                db.create_article({
-                    "source_id": source_id,
-                    "category_id": existing_by_hash.get("category_id"),
-                    "title": title,
-                    "url": item_url,
-                    "author": author,
-                    "published_date": pub_date,
-                    "raw_content": raw_content,
-                    "content_hash": content_hash,
-                    "embedding": None,
-                    "ai_summary": None,
-                    "is_duplicate": True,
-                    "parent_article_id": parent_id,
-                })
+                db.create_article(
+                    {
+                        "source_id": source_id,
+                        "category_id": existing_by_hash.get("category_id"),
+                        "title": title,
+                        "url": item_url,
+                        "author": author,
+                        "published_date": pub_date,
+                        "raw_content": raw_content,
+                        "content_hash": content_hash,
+                        "embedding": None,
+                        "ai_summary": None,
+                        "is_duplicate": True,
+                        "parent_article_id": parent_id,
+                    }
+                )
                 stats["duplicates"] += 1
-                logger.info(f"Duplicate flagged by SHA-256 hash: '{title}' -> Parent ID: {parent_id}")
+                logger.info(
+                    f"Duplicate flagged by SHA-256 hash: '{title}' -> Parent ID: {parent_id}"
+                )
                 continue
 
             # Step 2: Semantic similarity deduplication
@@ -95,7 +99,9 @@ def process_single_source(source: dict[str, Any]) -> dict[str, int]:
 
             parent_id = None
             if embedding:
-                parent_id = db.find_duplicate_by_vector(embedding, threshold=settings.SIMILARITY_THRESHOLD)
+                parent_id = db.find_duplicate_by_vector(
+                    embedding, threshold=settings.SIMILARITY_THRESHOLD
+                )
             else:
                 # TF-IDF fallback against non-duplicate articles
                 recent_articles = db.get_articles_for_digest()
@@ -103,20 +109,22 @@ def process_single_source(source: dict[str, Any]) -> dict[str, int]:
 
             if parent_id:
                 # Semantic duplicate detected
-                db.create_article({
-                    "source_id": source_id,
-                    "category_id": None,
-                    "title": title,
-                    "url": item_url,
-                    "author": author,
-                    "published_date": pub_date,
-                    "raw_content": raw_content,
-                    "content_hash": content_hash,
-                    "embedding": embedding,
-                    "ai_summary": None,
-                    "is_duplicate": True,
-                    "parent_article_id": parent_id,
-                })
+                db.create_article(
+                    {
+                        "source_id": source_id,
+                        "category_id": None,
+                        "title": title,
+                        "url": item_url,
+                        "author": author,
+                        "published_date": pub_date,
+                        "raw_content": raw_content,
+                        "content_hash": content_hash,
+                        "embedding": embedding,
+                        "ai_summary": None,
+                        "is_duplicate": True,
+                        "parent_article_id": parent_id,
+                    }
+                )
                 stats["duplicates"] += 1
                 logger.info(f"Semantic duplicate detected: '{title}' -> Parent ID: {parent_id}")
             else:
@@ -133,20 +141,22 @@ def process_single_source(source: dict[str, Any]) -> dict[str, int]:
                     api_key=settings.LLM_API_KEY,
                 )
 
-                db.create_article({
-                    "source_id": source_id,
-                    "category_id": category_id,
-                    "title": title,
-                    "url": item_url,
-                    "author": author,
-                    "published_date": pub_date,
-                    "raw_content": raw_content,
-                    "content_hash": content_hash,
-                    "embedding": embedding,
-                    "ai_summary": ai_summary,
-                    "is_duplicate": False,
-                    "parent_article_id": None,
-                })
+                db.create_article(
+                    {
+                        "source_id": source_id,
+                        "category_id": category_id,
+                        "title": title,
+                        "url": item_url,
+                        "author": author,
+                        "published_date": pub_date,
+                        "raw_content": raw_content,
+                        "content_hash": content_hash,
+                        "embedding": embedding,
+                        "ai_summary": ai_summary,
+                        "is_duplicate": False,
+                        "parent_article_id": None,
+                    }
+                )
                 stats["new"] += 1
 
         db.update_source_health(source_id, "HEALTHY", datetime.now(timezone.utc), None)

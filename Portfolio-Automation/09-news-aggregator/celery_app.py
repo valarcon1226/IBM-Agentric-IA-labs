@@ -53,6 +53,8 @@ def generate_digest_task(target_audience: str = "TEAM_DIGEST", recipient_email: 
     from ingestion.pipeline import generate_and_dispatch_digest
 
     logger.info(f"Starting scheduled digest generation for {target_audience}...")
-    digest = generate_and_dispatch_digest(target_audience=target_audience, recipient_email=recipient_email)
+    digest = generate_and_dispatch_digest(
+        target_audience=target_audience, recipient_email=recipient_email
+    )
     logger.info(f"Digest generated with ID: {digest.get('id')}, status: {digest.get('status')}")
     return {"digest_id": str(digest.get("id")), "status": digest.get("status")}

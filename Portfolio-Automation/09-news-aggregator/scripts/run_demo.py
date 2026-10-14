@@ -97,7 +97,9 @@ def run_e2e_verification():
             print(f"   - Para: {[t.get('Address') for t in latest.get('To', [])]}")
             print(f"   - ID de Mensaje: {latest.get('ID')}")
     else:
-        print(f"   [!] No se pudo consultar Mailpit en {MAILPIT_BASE_URL}: {mailpit_resp.status_code}")
+        print(
+            f"   [!] No se pudo consultar Mailpit en {MAILPIT_BASE_URL}: {mailpit_resp.status_code}"
+        )
 
     print("\n[OK] Verificación de punta a punta completada con éxito.")
 

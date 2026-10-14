@@ -94,7 +94,9 @@ def detect_duplicate_vector(
             article_id = str(row[0])
             distance = float(row[1])
             if distance < threshold:
-                logger.info(f"Duplicate detected via pgvector: distance {distance:.4f} < {threshold}")
+                logger.info(
+                    f"Duplicate detected via pgvector: distance {distance:.4f} < {threshold}"
+                )
                 return article_id
     except Exception as exc:
         logger.warning(f"pgvector query error: {exc}")
@@ -135,7 +137,9 @@ def detect_duplicate_tfidf(
 
         if max_score >= threshold:
             matched_id = str(valid_candidates[max_idx]["id"])
-            logger.info(f"Duplicate detected via TF-IDF fallback: score {max_score:.4f} >= {threshold}")
+            logger.info(
+                f"Duplicate detected via TF-IDF fallback: score {max_score:.4f} >= {threshold}"
+            )
             return matched_id
     except Exception as exc:
         logger.warning(f"TF-IDF duplicate detection error: {exc}")
@@ -162,7 +166,9 @@ def categorize_article(
     best_category = None
     best_score = 0
 
-    general_cat = next((c for c in categories if c.get("name", "").lower() == "general"), categories[0])
+    general_cat = next(
+        (c for c in categories if c.get("name", "").lower() == "general"), categories[0]
+    )
 
     for cat in categories:
         name = cat.get("name", "")

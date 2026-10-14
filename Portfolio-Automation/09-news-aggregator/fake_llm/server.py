@@ -30,6 +30,7 @@ TOPIC_KEYWORDS = {
 
 def _topic_vector(topic: str, dim: int) -> list[float]:
     import random
+
     rng = random.Random(int(hashlib.md5(topic.encode("utf-8")).hexdigest(), 16))
     return [rng.gauss(0, 1) for _ in range(dim)]
 
@@ -37,6 +38,7 @@ def _topic_vector(topic: str, dim: int) -> list[float]:
 def generate_deterministic_embedding(text: str, dim: int = 768) -> list[float]:
     """Generates a deterministic unit-length vector with dense semantic alignment."""
     import random
+
     vec = [0.0] * dim
     words = re.findall(r"[a-zA-Z0-9_\-\.]{3,}", text.lower())
     if not words:
@@ -98,7 +100,9 @@ def generate_summary(text: str) -> str:
 
 def handle_chat_completion(body: dict) -> dict:
     messages = body.get("messages", [])
-    user_prompt = " ".join(_clean_text(m.get("content")) for m in messages if m.get("role") == "user")
+    user_prompt = " ".join(
+        _clean_text(m.get("content")) for m in messages if m.get("role") == "user"
+    )
     summary = generate_summary(user_prompt)
 
     return {
@@ -123,11 +127,13 @@ def handle_embeddings(body: dict) -> dict:
     data = []
     for i, t in enumerate(texts):
         embedding = generate_deterministic_embedding(str(t), dim=768)
-        data.append({
-            "object": "embedding",
-            "index": i,
-            "embedding": embedding,
-        })
+        data.append(
+            {
+                "object": "embedding",
+                "index": i,
+                "embedding": embedding,
+            }
+        )
 
     return {
         "object": "list",

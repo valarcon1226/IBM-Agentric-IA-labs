@@ -59,34 +59,40 @@ def test_sources_crud(client, auth_headers):
 
 def test_articles_search(client, auth_headers, memory_db):
     # Seed articles directly into memory_db
-    memory_db.create_article({
-        "id": "art-1",
-        "title": "Avances en modelos de lenguaje y redes neuronales",
-        "url": "https://news.local/art-1",
-        "category_id": "cat-1",
-        "raw_content": "Detalles técnicos sobre transformers y LLMs.",
-        "ai_summary": "- Viñeta de resumen 1.",
-        "is_duplicate": False,
-    })
-    memory_db.create_article({
-        "id": "art-2",
-        "title": "Actualización de Kubernetes 1.32",
-        "url": "https://news.local/art-2",
-        "category_id": "cat-3",
-        "raw_content": "Mejoras para clusters en la nube y DevOps.",
-        "ai_summary": "- Viñeta de resumen 2.",
-        "is_duplicate": False,
-    })
-    memory_db.create_article({
-        "id": "art-3",
-        "title": "Copia duplicada de modelo de lenguaje",
-        "url": "https://news.local/art-3",
-        "category_id": "cat-1",
-        "raw_content": "Texto similar.",
-        "ai_summary": None,
-        "is_duplicate": True,
-        "parent_article_id": "art-1",
-    })
+    memory_db.create_article(
+        {
+            "id": "art-1",
+            "title": "Avances en modelos de lenguaje y redes neuronales",
+            "url": "https://news.local/art-1",
+            "category_id": "cat-1",
+            "raw_content": "Detalles técnicos sobre transformers y LLMs.",
+            "ai_summary": "- Viñeta de resumen 1.",
+            "is_duplicate": False,
+        }
+    )
+    memory_db.create_article(
+        {
+            "id": "art-2",
+            "title": "Actualización de Kubernetes 1.32",
+            "url": "https://news.local/art-2",
+            "category_id": "cat-3",
+            "raw_content": "Mejoras para clusters en la nube y DevOps.",
+            "ai_summary": "- Viñeta de resumen 2.",
+            "is_duplicate": False,
+        }
+    )
+    memory_db.create_article(
+        {
+            "id": "art-3",
+            "title": "Copia duplicada de modelo de lenguaje",
+            "url": "https://news.local/art-3",
+            "category_id": "cat-1",
+            "raw_content": "Texto similar.",
+            "ai_summary": None,
+            "is_duplicate": True,
+            "parent_article_id": "art-1",
+        }
+    )
 
     # Search by keyword
     resp = client.get("/api/v1/articles?q=kubernetes", headers=auth_headers)
@@ -109,15 +115,17 @@ def test_articles_search(client, auth_headers, memory_db):
 
 
 def test_digests_generate_and_list(client, auth_headers, memory_db):
-    memory_db.create_article({
-        "id": "art-digest-1",
-        "title": "Noticia para el boletin de hoy",
-        "url": "https://news.local/art-digest-1",
-        "category_id": "cat-1",
-        "raw_content": "Contenido para digest.",
-        "ai_summary": "- Resumen ejecutivo.",
-        "is_duplicate": False,
-    })
+    memory_db.create_article(
+        {
+            "id": "art-digest-1",
+            "title": "Noticia para el boletin de hoy",
+            "url": "https://news.local/art-digest-1",
+            "category_id": "cat-1",
+            "raw_content": "Contenido para digest.",
+            "ai_summary": "- Resumen ejecutivo.",
+            "is_duplicate": False,
+        }
+    )
 
     with patch("ingestion.pipeline.send_digest_email", return_value=True):
         payload = {

@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_USER_AGENT = "NewsIntelligenceBot/1.0 (+http://news-aggregator.local/bot)"
 
 
-def is_allowed_by_robots(url: str, user_agent: str = DEFAULT_USER_AGENT, timeout: float = 3.0) -> bool:
+def is_allowed_by_robots(
+    url: str, user_agent: str = DEFAULT_USER_AGENT, timeout: float = 3.0
+) -> bool:
     """Checks whether crawling this URL is permitted according to robots.txt."""
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):

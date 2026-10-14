@@ -1,6 +1,5 @@
 """Unit tests for exact hash, semantic vector, and TF-IDF deduplication."""
 
-
 from fake_llm.server import generate_deterministic_embedding
 from intelligence.nlp_processor import (
     compute_content_hash,
@@ -70,6 +69,8 @@ def test_tfidf_fallback_deduplication():
     assert matched_id == "article-parent-1"
 
     # Unrelated story
-    unrelated_text = "Alerta global por nueva ola de ataques de ransomware dirigidos a servidores Linux."
+    unrelated_text = (
+        "Alerta global por nueva ola de ataques de ransomware dirigidos a servidores Linux."
+    )
     matched_unrelated = detect_duplicate_tfidf(unrelated_text, candidates, threshold=0.35)
     assert matched_unrelated is None
