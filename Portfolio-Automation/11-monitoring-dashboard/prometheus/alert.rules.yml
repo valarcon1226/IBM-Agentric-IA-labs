@@ -1,0 +1,47 @@
+groups:
+  - name: portfolio_monitoring_rules
+    rules:
+      - alert: ServiceDown
+        expr: up{job="demo-app"} == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Demo App is down"
+          description: "Target demo-app has been unreachable for more than 10 seconds."
+
+      - alert: HighErrorRate5xx
+        expr: sum(rate(http_requests_total{status=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) * 100 > 5
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API Error Rate (5xx)"
+          description: "HTTP 5xx error rate is above 5% in the last 1 minute."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) > 0.5
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API Latency p95"
+          description: "95th percentile request latency exceeds 500ms."
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Disk Usage"
+          description: "Filesystem disk usage is over 85%."
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL Database Down"
+          description: "Postgres exporter reports database is down (pg_up == 0)."
