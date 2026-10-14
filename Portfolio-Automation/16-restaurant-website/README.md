@@ -11,10 +11,6 @@ Sitio web completo para el restaurante "Sabor de Casa", construido con WordPress
 *   **Integración WhatsApp**: Botón flotante para chat directo.
 *   **Performance**: Imágenes optimizadas en WebP y configuración de rendimiento.
 
-## Capturas (Placeholder)
-![Inicio](https://via.placeholder.com/800x400.png?text=Inicio)
-![Menú](https://via.placeholder.com/800x400.png?text=Men%C3%BA)
-
 ## Requisitos
 
 *   Docker y Docker Compose
@@ -60,11 +56,15 @@ Sitio web completo para el restaurante "Sabor de Casa", construido con WordPress
 
 ## Puntajes actuales (Lighthouse)
 
-*   Performance: 95+
-*   Accessibility: 90+
-*   Best Practices: 100
-*   SEO: 90+
+Última medición local (página de inicio, `lighthouse-report.json`):
 
-## Decisiones TAc-cnicas
+*   Performance: 81
+*   Accessibility: 95
+*   Best Practices: 100
+*   SEO: 92
+
+Rendimiento es lo que falta mejorar: caché de página y carga diferida de imágenes y scripts que no se ven al inicio.
+
+## Decisiones técnicas
 
 *   **Plugin de Reservas**: Se decidió reemplazar el plugin `restaurant-reservations` por un Custom Post Type (`rtb-booking` interno para compatibilidad) y un shortcode en el mu-plugin `sabor-custom.php`. Esto permite que en un montaje 100% limpio (desde cero con `setup.sh`) el formulario se genere y configure de forma totalmente confiable, enviando directamente los correos a Mailpit sin depender del asistente de configuración que exigen algunos plugins.
