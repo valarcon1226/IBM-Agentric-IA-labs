@@ -1,281 +1,218 @@
-# Project: CI/CD & Automated Testing Pipeline
+# Project 12: CI/CD & Automated Testing Pipeline
 
 ## 1. Problem Statement
-Manual testing and deployments introduce high risk, human error, and downtime. This project implements an automated, zero-touch Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions. It guarantees that code is linted, type-checked, security-scanned, tested, and safely deployed to production with zero downtime.
+Manual testing and deployments introduce high risk, human error, and downtime. This project implements a secure, automated Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions, containerization, and static/dynamic security analysis.
 
-## 2. Architecture
+It guarantees that code is linted, type-checked, security-scanned (SAST), tested against isolated unit and integration environments with Testcontainers, packaged in a multi-stage non-root container, scanned for container CVEs (Trivy), published to GitHub Container Registry (GHCR), and deployed safely via SSH with rollback capabilities.
+
+---
+
+## 2. Architecture & Pipeline Stages
+
 ```mermaid
 flowchart TD
-    Developer((Developer)) -->|Push/PR| GitHub[GitHub Repository]
-    
-    subgraph CI Pipeline [GitHub Actions: ci.yml]
-        GitHub --> Lint[Ruff & Mypy]
-        Lint --> SecScan[Bandit & Trivy]
-        SecScan --> Test[Pytest & Coverage & Testcontainers]
+    Dev((Developer)) -->|Push / PR| GH[GitHub Repository]
+
+    subgraph CI ["CI Pipeline (Matrix: Python 3.11, 3.12)"]
+        GH --> Lint["Ruff Check & Format"]
+        Lint --> Type["Mypy Type-check"]
+        Type --> SAST["Bandit Security Scan"]
+        SAST --> Unit["Pytest (Coverage >= 80%)"]
+        Unit --> Int["Testcontainers (PostgreSQL 16)"]
     end
-    
-    subgraph CD Pipeline [GitHub Actions: cd.yml]
-        Test --> Build[Docker Multi-Stage Build]
-        Build --> Push[Push to GHCR]
-        Push --> Deploy[SSH Deploy to VPS]
-        Deploy --> Verify[Health Check & Verification]
-        Verify --> Notify[Slack/Email Notification]
+
+    subgraph Security ["Container Build & Security Scan"]
+        Int --> DockerBuild["Multi-Stage Docker Build (Slim, Non-Root)"]
+        DockerBuild --> Trivy["Trivy Vulnerability Scan (Fails on CRITICAL)"]
+    end
+
+    subgraph CD ["CD & Deployment (main / portfolio-automation)"]
+        Trivy --> Publish["Publish to GHCR (ghcr.io)"]
+        Publish --> DeployCheck{"vars.DEPLOY_ENABLED == 'true'?"}
+        DeployCheck -->|Yes| SSHDeploy["SSH Deploy to VPS (Zero Downtime)"]
+        DeployCheck -->|No| Disabled["Deploy Skipped (Guarded)"]
+    end
+
+    subgraph Ops ["Rollback Operations (Manual)"]
+        Dispatch["workflow_dispatch (image_tag)"] --> RollbackCheck{"vars.DEPLOY_ENABLED == 'true'?"}
+        RollbackCheck -->|Yes| SSHRollback["SSH Rollback & Verification"]
+        RollbackCheck -->|No| RollbackDisabled["Rollback Skipped (Guarded)"]
     end
 ```
 
+---
+
 ## 3. Tech Stack
-*   **CI/CD Engine:** GitHub Actions
-*   **Registry:** GitHub Container Registry (ghcr.io)
-*   **Testing:** Pytest, pytest-cov, Testcontainers (testcontainers-python)
-*   **Linting & Type Checking:** Ruff, Mypy
-*   **Security:** Bandit (SAST), Trivy (Container Vulnerabilities)
-*   **Deployment:** SSH, Docker Compose (Zero-downtime methodology)
+*   **CI/CD Engine:** GitHub Actions (`.github/workflows/12-ci-cd.yml`)
+*   **Workflow Linter:** `actionlint` (rhysd/actionlint)
+*   **Application:** FastAPI (Python 3.12 / 3.11) with SQLAlchemy 2.0 ORM
+*   **Database:** PostgreSQL 16 (`postgres:16-alpine`)
+*   **Linting & Formatting:** Ruff
+*   **Type Checking:** Mypy
+*   **Security Analysis:** Bandit (SAST AST scanner), Trivy (Container CVE scanner)
+*   **Testing:** Pytest, pytest-cov, Testcontainers (`testcontainers[postgres]`)
+*   **Containerization:** Docker multi-stage build, non-root user (`appuser`, UID 10001), `python:3.12-slim-bookworm`
+*   **Registry:** GitHub Container Registry (`ghcr.io`)
+*   **Deployment:** Docker Compose, SSH (`appleboy/ssh-action`)
+
+---
 
 ## 4. File Structure
 ```
-.
+Portfolio-Automation/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml
-│       ├── cd.yml
-│       ├── rollback.yml
-│       └── scheduled-tests.yml
-├── src/
-│   └── main.py
-├── tests/
-│   └── test_main.py
-├── Dockerfile
-├── requirements.txt
-├── pytest.ini
-└── README.md
+│       ├── 12-ci-cd.yml                     # Unified CI/CD workflow (root)
+│       └── portfolio-automation-ci.yml      # Portfolio-wide CI (untouched)
+└── 12-ci-cd-pipeline/
+    ├── app/
+    │   ├── __init__.py
+    │   ├── config.py                        # Pydantic Settings
+    │   ├── crud.py                          # SQLAlchemy CRUD operations
+    │   ├── database.py                      # Engine, sessionmaker, health checks
+    │   ├── main.py                          # FastAPI endpoints (/health, /api/v1/deployments)
+    │   └── models.py                        # SQLAlchemy & Pydantic schemas
+    ├── tests/
+    │   ├── __init__.py
+    │   ├── conftest.py                      # SQLite in-memory fixtures & TestClient
+    │   ├── test_integration.py              # Real PostgreSQL testcontainers suite
+    │   └── test_unit.py                     # Comprehensive unit & endpoint tests
+    ├── .dockerignore
+    ├── .env.example
+    ├── .gitignore
+    ├── docker-compose.yml                   # Services: db (Postgres), api (127.0.0.1:8022:8000)
+    ├── Dockerfile                           # Multi-stage, slim, non-root runner
+    ├── EXECUTION_PLAN.md                    # Synchronized execution checklist
+    ├── pyproject.toml                       # Ruff, mypy, pytest, coverage config
+    ├── README.md                            # Complete technical documentation
+    ├── requirements.txt                     # Pinned runtime dependencies
+    └── requirements-dev.txt                 # Pinned development & testing dependencies
 ```
 
-## 5. Multi-Stage Dockerfile (Example: FastAPI)
-```dockerfile
-# Stage 1: Builder
-FROM python:3.12-slim as builder
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt --target=/app/deps
+---
 
-# Stage 2: Production
-FROM python:3.12-slim as production
-WORKDIR /app
-COPY --from=builder /app/deps /usr/local/lib/python3.12/site-packages
-COPY ./src /app/src
-RUN useradd -m appuser && chown -R appuser /app
-USER appuser
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+## 5. API Endpoints
+The sample service manages deployment records in PostgreSQL:
 
-## 6. GitHub Actions Workflows
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Health check verifying API and PostgreSQL connectivity |
+| `POST` | `/api/v1/deployments` | Create a new deployment record (Status 201) |
+| `GET` | `/api/v1/deployments` | List deployments (filters: `environment`, `status`, pagination: `skip`, `limit`) |
+| `GET` | `/api/v1/deployments/{id}` | Retrieve deployment by ID (Status 200 or 404) |
+| `PUT` | `/api/v1/deployments/{id}` | Update deployment fields (Status 200 or 404) |
+| `DELETE` | `/api/v1/deployments/{id}` | Delete deployment (Status 204 or 404) |
 
-### `.github/workflows/ci.yml` (Pull Requests)
-```yaml
-name: CI Pipeline
+---
 
-on:
-  pull_request:
-    branches: [ main ]
+## 6. Security & Hardening
 
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff mypy pytest pytest-cov bandit testcontainers
-          pip install -r requirements.txt
-          
-      - name: Lint with Ruff
-        run: ruff check .
-        
-      - name: Type check with mypy
-        run: mypy src/
-        
-      - name: Security Scan (Bandit)
-        run: bandit -r src/
-        
-      - name: Run Tests
-        run: pytest --cov=src --cov-fail-under=80 tests/
-        
-      - name: Upload Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report-${{ matrix.python-version }}
-          path: coverage.xml
-```
+1. **Non-Root Container Execution:**
+   The multi-stage `Dockerfile` creates a dedicated group `appgroup` (GID 10001) and user `appuser` (UID 10001). The container runs without root privileges.
+2. **SAST Analysis (Bandit):**
+   Bandit scans all Python code in `app/` to detect security anti-patterns, hardcoded credentials, and unsafe calls.
+3. **Container CVE Scanning (Trivy):**
+   Trivy scans the generated Docker image and fails the build on any `CRITICAL` vulnerability (`--severity CRITICAL --exit-code 1 --ignore-unfixed`). System packages are patched during image build.
+4. **Least-Privilege GitHub Actions:**
+   - Top-level permissions default to `contents: read`.
+   - The `publish` job explicitly requests only `packages: write`.
+   - All actions are pinned to specific version tags (`@v4.2.2`, `@v5.3.0`, `@v3.8.0`, `@v3.3.0`, `@v6.11.0`, `@v4.5.0`, `@v1.2.0`, `0.28.0`).
+5. **Path Filtering:**
+   The workflow triggers only on modifications to `Portfolio-Automation/12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`, avoiding unnecessary CI runs when other projects change.
 
-### `.github/workflows/cd.yml` (Deploy to Production)
-```yaml
-name: CD Pipeline
+---
 
-on:
-  push:
-    branches: [ main ]
+## 7. Secrets and Environment Variables
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/fastapi-gateway
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/portfolio
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose pull fastapi-gateway
-            docker compose up -d --no-deps fastapi-gateway
-            
-            # VPS-side Health Check
-            echo "Waiting for service to start..."
-            sleep 15
-            if ! curl -sf http://localhost:8000/health; then
-              echo "Health check failed! Service is not healthy."
-              exit 1
-            fi
-            echo "Deployment healthy!"
-          
-      - name: Notify Slack
-        if: always()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-```
-
-### `.github/workflows/rollback.yml` (Manual Rollback)
-```yaml
-name: Rollback Pipeline
-
-on:
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: 'The full Git SHA tag to rollback to'
-        required: true
-        type: string
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/fastapi-gateway
-
-jobs:
-  rollback:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Rollback on VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/portfolio
-            # Update docker-compose or pull specific image
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}
-            
-            # Typically you'd tag it as latest to simplify docker-compose or update the tag in env
-            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            
-            docker compose up -d --no-deps fastapi-gateway
-            
-            sleep 15
-            if ! curl -sf http://localhost:8000/health; then
-              echo "Health check failed after rollback."
-              exit 1
-            fi
-            echo "Rollback successful!"
-```
-
-## 7. Secrets Management
+### Required Repository Secrets
+Configure these in GitHub under **Settings > Secrets and variables > Actions > Secrets**:
 
 | Secret Name | Description | Example |
 |---|---|---|
-| `SERVER_HOST` | VPS IP address or domain | `192.168.1.50` |
-| `SERVER_USER` | SSH user for deployment | `deploy` |
-| `SERVER_SSH_KEY` | Private SSH key (ED25519) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `SLACK_WEBHOOK` | Webhook URL for Slack alerts | `https://hooks.slack.com/services/...` |
-| `CR_PAT` | Personal Access Token for GHCR | `ghp_...` |
+| `SERVER_HOST` | VPS IP address or domain for SSH deployment | `192.168.1.50` |
+| `SERVER_USER` | Non-root SSH deployment user on target host | `deploy` |
+| `SERVER_SSH_KEY` | Private SSH key (ED25519 or RSA) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `CR_PAT` | Fine-grained Personal Access Token with `read:packages` used by host to pull from GHCR | `ghp_...` |
 
-Configure these in your GitHub Repository under **Settings > Secrets and variables > Actions**.
+*(Note: `GITHUB_TOKEN` is automatically supplied by GitHub Actions with minimal scoped permissions).*
 
-## 8. Integration Testing with Testcontainers
-For integration tests that require databases, we use `testcontainers-python` to spin up ephemeral containers during CI.
+### Repository Variables (Deployment Gate)
+Configure under **Settings > Secrets and variables > Actions > Variables**:
 
-Example in `tests/test_db.py`:
-```python
-import pytest
-from testcontainers.postgres import PostgresContainer
+| Variable Name | Required Value | Default | Description |
+|---|---|---|---|
+| `DEPLOY_ENABLED` | `"true"` | (empty/disabled) | Controls SSH deployment and manual rollback jobs. If unset or not `"true"`, deployment and rollback jobs are skipped safely. |
 
-@pytest.fixture(scope="module")
-def postgres_db():
-    with PostgresContainer("postgres:16-alpine") as postgres:
-        yield postgres.get_connection_url()
+---
 
-def test_database_connection(postgres_db):
-    assert "postgresql://" in postgres_db
-    # Pass this URL to your app configuration for testing
-```
+## 8. Branch Protection Rules
 
-## 9. Branch Protection & Policies
-To ensure code quality, configure branch protection rules on `main`:
-1. **Require pull request reviews before merging.**
+To safeguard `main` and `portfolio-automation`, configure branch protection under **Settings > Branches > Branch protection rules**:
+
+1. **Require a pull request before merging:**
+   - Require approvals: 1
+   - Dismiss stale pull request approvals when new commits are pushed: Enabled.
 2. **Require status checks to pass before merging:**
-   *   `lint-and-test (3.11)`
-   *   `lint-and-test (3.12)`
-3. **Do not allow bypassing the above settings.**
+   - `Test (Python 3.11)`
+   - `Test (Python 3.12)`
+   - `Build image and scan with Trivy`
+3. **Do not allow bypassing the above settings:** Enabled for all users and administrators.
 
-## 10. Implementation Steps
-1.  **Write `ci.yml`:** add the workflow from section 6 to `.github/workflows/ci.yml`. *Verify:* the file is valid YAML.
-2.  **Write `cd.yml`:** add the workflow from section 6 to `.github/workflows/cd.yml`.
-3.  **Write `rollback.yml`:** add the workflow from section 6 to `.github/workflows/rollback.yml`.
-4.  **Configure repository secrets:** add `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`, `SLACK_WEBHOOK` in GitHub Settings.
-5.  **Configure GHCR permissions:** enable "Read and write permissions" for GitHub Actions.
-6.  **Write the multi-stage Dockerfile:** add the Dockerfile from section 5. *Verify:* `docker build -t test-image .` succeeds.
-7.  **Reach 80% coverage:** add tests to hit `pytest --cov-fail-under=80`.
-8.  **Pipeline dry run:** open a PR to trigger `ci.yml`.
-9.  **Merge & deploy:** merge to `main` to trigger `cd.yml` and check the health check output on the VPS.
-10. **Verify rollback:** trigger `rollback.yml` manually using a past Git SHA.
+---
+
+## 9. Rollback Procedure
+
+When an emergency rollback is required:
+1. Navigate to **Actions > 12-ci-cd > Run workflow**.
+2. Provide the input `image_tag` with the target Git commit SHA or specific image tag to restore (e.g. `a1b2c3d4e5f6`).
+3. If `vars.DEPLOY_ENABLED` is `"true"`, the `rollback` job will:
+   - Log in to GHCR on the host.
+   - Pull the specified image tag.
+   - Retag it as `latest`.
+   - Restart the container with `docker compose up -d --no-deps api`.
+   - Run a live health check against `http://127.0.0.1:8022/health` to confirm recovery.
+
+---
+
+## 10. Local Verification Guide
+
+Run the complete quality gate from the repository:
+
+```powershell
+# 1. Activate virtual environment
+cd 12-ci-cd-pipeline
+.\.venv\Scripts\activate
+
+# 2. Linting & Formatting Check
+.\.venv\Scripts\ruff.exe check app tests
+.\.venv\Scripts\ruff.exe format --check app tests
+
+# 3. Type Checking
+.\.venv\Scripts\mypy.exe app
+
+# 4. SAST Security Scan
+.\.venv\Scripts\bandit.exe -r app
+
+# 5. Unit Tests with Coverage (>= 80%)
+.\.venv\Scripts\pytest.exe -q --cov=app --cov-report=term --cov-fail-under=80
+
+# 6. Integration Tests with Testcontainers (real PostgreSQL)
+.\.venv\Scripts\pytest.exe -m integration -q
+
+# 7. Multi-stage Docker Image Build
+docker build -t 12-ci-cd-pipeline:test .
+
+# 8. Trivy Security Scan (Fails on CRITICAL)
+docker run --rm -v //var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity CRITICAL --exit-code 1 --ignore-unfixed 12-ci-cd-pipeline:test
+
+# 9. GitHub Actions Workflow Linting
+docker run --rm -v "${PWD}/..:/repo" -w /repo rhysd/actionlint .github/workflows/12-ci-cd.yml
+
+# 10. Full Docker Compose Stack Test
+docker compose up -d --build
+docker compose ps
+# Verify health endpoint
+curl -sf http://127.0.0.1:8022/health
+# Tear down with volumes
+docker compose down -v
+```
