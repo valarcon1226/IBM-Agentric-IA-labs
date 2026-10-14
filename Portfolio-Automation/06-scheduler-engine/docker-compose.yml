@@ -1,0 +1,125 @@
+services:
+  api:
+    build: .
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8006:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/scheduler
+      REDIS_URL: redis://redis:6379/0
+      API_KEY: ${API_KEY:-change_me_api_key}
+      ALERT_WEBHOOK_URL: http://webhook-sink:8080/
+      ALLOW_PRIVATE_TARGETS: "true"
+      FAILURE_ALERT_THRESHOLD: 3
+      JOBS_DIR: jobs
+      BASE_BACKOFF_SECONDS: 3
+      MAX_RETRIES: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  scheduler:
+    build: .
+    command: ["celery", "-A", "app.core.celery_app.celery_app", "beat", "-S", "sqlalchemy_celery_beat.schedulers:DatabaseScheduler", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/scheduler
+      REDIS_URL: redis://redis:6379/0
+      ALERT_WEBHOOK_URL: http://webhook-sink:8080/
+      ALLOW_PRIVATE_TARGETS: "true"
+      FAILURE_ALERT_THRESHOLD: 3
+      JOBS_DIR: jobs
+      BASE_BACKOFF_SECONDS: 3
+      MAX_RETRIES: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["celery", "-A", "app.core.celery_app.celery_app", "worker", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@db:5432/scheduler
+      REDIS_URL: redis://redis:6379/0
+      ALERT_WEBHOOK_URL: http://webhook-sink:8080/
+      ALLOW_PRIVATE_TARGETS: "true"
+      FAILURE_ALERT_THRESHOLD: 3
+      JOBS_DIR: jobs
+      BASE_BACKOFF_SECONDS: 3
+      MAX_RETRIES: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.core.celery_app.celery_app inspect ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  dashboard:
+    build: .
+    command: ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    ports:
+      - "127.0.0.1:8506:8501"
+    environment:
+      API_URL: http://api:8000
+      API_KEY: ${API_KEY:-change_me_api_key}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: scheduler
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d scheduler"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  webhook-sink:
+    image: mendhak/http-https-echo:36
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
