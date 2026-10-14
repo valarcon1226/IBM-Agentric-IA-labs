@@ -81,13 +81,13 @@ def test_add_all_items_problem(page):
 
     inventory_page = InventoryPage(page)
     for prod in [
-        "backpack",
-        "bike-light",
-        "bolt-t-shirt",
-        "fleece-jacket",
-        "onesie",
-        "t-shirt-(red)",
+        "sauce-labs-backpack",
+        "sauce-labs-bike-light",
+        "sauce-labs-bolt-t-shirt",
+        "sauce-labs-fleece-jacket",
+        "sauce-labs-onesie",
+        "test.allthethings()-t-shirt-(red)",
     ]:
-        page.locator(f"[data-test='add-to-cart-sauce-labs-{prod}']").click()
+        page.locator(f"[data-test='add-to-cart-{prod}']").click()
 
     assert inventory_page.cart_badge.inner_text() == "6"

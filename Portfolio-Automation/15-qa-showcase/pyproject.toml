@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--html=reports/report.html --self-contained-html --tracing=retain-on-failure --screenshot=only-on-failure"
+addopts = "--browser-channel msedge --html=reports/report.html --self-contained-html --tracing=retain-on-failure --screenshot=only-on-failure"
 testpaths = ["tests"]
 
 [tool.ruff]
