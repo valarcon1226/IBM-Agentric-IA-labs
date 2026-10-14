@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.env
+data/
+logs/
+alertmanager_data/
+prometheus_data/
+grafana_data/
+loki_data/
