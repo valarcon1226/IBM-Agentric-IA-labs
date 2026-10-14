@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5438:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-leads}
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-leads}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8008:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@postgres:5432/leads}
+      - API_KEY=${API_KEY:-change_me_api_key}
+      - DEMO_DIRECTORY_BASE_URL=${DEMO_DIRECTORY_BASE_URL:-http://demo-directory}
+      - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY:-}
+      - SCRAPER_USER_AGENT=${SCRAPER_USER_AGENT:-LeadGeneratorBot/1.0 (+https://example.com/leadbot)}
+      - SCRAPER_RATE_LIMIT_PER_SECOND=${SCRAPER_RATE_LIMIT_PER_SECOND:-1.0}
+      - FUZZY_MATCH_THRESHOLD=${FUZZY_MATCH_THRESHOLD:-85}
+      - EMAIL_MX_TIMEOUT_SECONDS=${EMAIL_MX_TIMEOUT_SECONDS:-3.0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      demo-directory:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  demo-directory:
+    image: nginx:alpine
+    ports:
+      - "8088:80"
+    volumes:
+      - ./demo-directory:/usr/share/nginx/html:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Directorio — Clínicas Dentales</title>
+</head>
+<body>
+<div class="directory" data-category="clinicas-dentales" data-js-rendered="true"></div>
+<script>
+// TODO(batch B): rendered client-side on purpose; the httpx adapter cannot see these cards,
+// a Playwright adapter is required for this listing.
+var LEADS = [{"name": "Cl\u00ednica Dental Sonrisas", "phone": "3011234567", "address": "Calle 72 # 10-34, Bogot\u00e1", "site": "clinica-dental-sonrisas"}, {"name": "Odontolog\u00eda Integral Bogot\u00e1", "phone": "3023456789", "address": "Cra 15 # 88-20, Bogot\u00e1", "site": "odontologia-integral-bogota"}, {"name": "Cl\u00ednica Dental Nueva Imagen", "phone": "(601) 901-2345", "address": "Calle 100 # 19-61, Bogot\u00e1", "site": null}, {"name": "Consultorio Dental Dra. Mart\u00ednez", "phone": "3134455667", "address": "Cra 24 # 53-12, Bogot\u00e1", "site": null}, {"name": "Cl\u00ednica Odontol\u00f3gica del Norte", "phone": "3145566778", "address": "Calle 134 # 7-45, Bogot\u00e1", "site": null}, {"name": "Cl\u00ednica Dental Sonrisas SAS", "phone": "301 123 4567", "address": "Calle 72 # 10-34, Bogot\u00e1", "site": "clinica-dental-sonrisas"}, {"name": "Odontolog\u00eda Especializada El Dorado", "phone": "3156789023", "address": "Cra 50 # 26-80, Bogot\u00e1", "site": "odontologia-especializada-el-dorado"}, {"name": "Cl\u00ednica Dental Familiar", "phone": "3167890234", "address": "Calle 63 # 16-22, Bogot\u00e1", "site": null}, {"name": "Consultorio Odontol\u00f3gico Vida Sana", "phone": "3178901345", "address": "Cra 30 # 45-10, Bogot\u00e1", "site": null}, {"name": "Cl\u00ednica Dental Avanzada", "phone": "3189012456", "address": "Calle 80 # 20-15, Bogot\u00e1", "site": "clinica-dental-avanzada"}, {"name": "Odontolog\u00eda Est\u00e9tica y Funcional", "phone": "3190123567", "address": "Cra 11 # 95-30, Bogot\u00e1", "site": null}, {"name": "Centro de Especialistas Dentales", "phone": "3101234678", "address": "Calle 45 # 13-50, Bogot\u00e1", "site": null}, {"name": "Cl\u00ednica Dental El Bosque", "phone": "3112345789", "address": "Cra 7 # 134-20, Bogot\u00e1", "site": "clinica-dental-el-bosque"}];
+var container = document.querySelector('[data-category="clinicas-dentales"]');
+LEADS.forEach(function (lead) {
+  var card = document.createElement('article');
+  card.className = 'lead-card';
+  card.innerHTML = '<h3 class="name">' + lead.name + '</h3>' +
+    '<p class="phone">' + lead.phone + '</p>' +
+    '<p class="address">' + lead.address + '</p>';
+  container.appendChild(card);
+});
+</script>
+<noscript>Esta vista requiere JavaScript (ver docs/DEMO-SCRIPT.md).</noscript>
+</body>
+</html>
