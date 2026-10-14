@@ -1,0 +1,8 @@
+# Mock Coffee Store
+
+> Tienda y cafetería de especialidad colombiana con envíos nacionales.
+
+## Enlaces Principales
+- Inicio: http://127.0.0.1:8899/
+- Menú: http://127.0.0.1:8899/menu.html
+- Sobre Nosotros: http://127.0.0.1:8899/about.html

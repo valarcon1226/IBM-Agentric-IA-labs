@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ t.page_title }} - {{ target_url }}</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #818cf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    
+    /* Header */
+    .header {
+      background: #0f172a;
+      color: #fff;
+      padding: 32px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .badge-client {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .header h1 { font-size: 2rem; margin-top: 12px; color: #fff; }
+    .header p { color: #94a3b8; font-size: 1rem; margin-top: 6px; }
+
+    /* Score Grid */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .score-card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 14px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    }
+    .score-card h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 12px; }
+    .score-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .score-green { background: #dcfce7; color: #15803d; border: 3px solid #22c55e; }
+    .score-yellow { background: #fef3c7; color: #b45309; border: 3px solid #f59e0b; }
+    .score-red { background: #fee2e2; color: #b91c1c; border: 3px solid #ef4444; }
+    .score-muted { background: #f1f5f9; color: #64748b; border: 3px dashed #cbd5e1; font-size: 1.2rem; }
+
+    /* Section Cards */
+    .card {
+      background: #fff;
+      padding: 28px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+    .executive-box {
+      background: #f8fafc;
+      border-left: 5px solid #38bdf8;
+      padding: 20px;
+      border-radius: 0 10px 10px 0;
+      font-size: 1.05rem;
+      color: #334155;
+      line-height: 1.7;
+    }
+    .source-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    /* AEO Table */
+    .aeo-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .aeo-table th, .aeo-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .aeo-table th { background: #f8fafc; font-weight: 600; color: #475569; }
+    .aeo-pts { font-weight: 700; color: #0f172a; text-align: right; }
+
+    /* Issues */
+    .issue-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+    .issue-item.severity-CRITICAL { border-left: 6px solid #ef4444; }
+    .issue-item.severity-HIGH { border-left: 6px solid #f97316; }
+    .issue-item.severity-MEDIUM { border-left: 6px solid #f59e0b; }
+    .issue-item.severity-LOW { border-left: 6px solid #3b82f6; }
+
+    .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+    .issue-title { font-weight: 700; font-size: 1.05rem; color: #0f172a; }
+    .pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .pill-CRITICAL { background: #fee2e2; color: #b91c1c; }
+    .pill-HIGH { background: #ffedd5; color: #c2410c; }
+    .pill-MEDIUM { background: #fef3c7; color: #b45309; }
+    .pill-LOW { background: #dbeafe; color: #1d4ed8; }
+
+    .issue-fix {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+    .issue-fix strong { color: #0f172a; }
+
+    /* Good Points */
+    .good-list { list-style: none; }
+    .good-list li {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      color: #166534;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Pages Table */
+    .pages-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+    .pages-table th, .pages-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .pages-table th { background: #f8fafc; color: #475569; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; color: #000; }
+      .card, .header { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .score-circle { border-width: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <span class="badge-client">{{ t.badge_text }}</span>
+        <span style="font-size: 0.85rem; color: #94a3b8;">{{ date_str }}</span>
+      </div>
+      <h1>{{ t.report_title }}</h1>
+      <p><strong>{{ t.target_label }}:</strong> <a href="{{ target_url }}" style="color: #38bdf8; text-decoration: none;" target="_blank">{{ target_url }}</a> | <strong>{{ t.pages_crawled_label }}:</strong> {{ pages_count }}</p>
+    </div>
+
+    <!-- Score Grid -->
+    <div class="score-grid">
+      <div class="score-card">
+        <h3>{{ t.global_score_label }}</h3>
+        <div class="score-circle {{ get_score_class(overall_score) }}">
+          {{ overall_score }}
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">{{ t.global_score_sub }}</p>
+      </div>
+
+      <div class="score-card">
+        <h3>{{ t.seo_score_label }}</h3>
+        <div class="score-circle {{ get_score_class(seo_score) }}">
+          {{ seo_score }}
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">{{ t.seo_score_sub }}</p>
+      </div>
+
+      <div class="score-card">
+        <h3>{{ t.aeo_score_label }}</h3>
+        <div class="score-circle {{ get_score_class(aeo_score) }}">
+          {{ aeo_score }}
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">{{ t.aeo_score_sub }}</p>
+      </div>
+
+      <div class="score-card">
+        <h3>Lighthouse (Inicio)</h3>
+        {% if lighthouse.available %}
+          <div class="score-circle {{ get_score_class(lighthouse.performance or 0) }}">
+            {{ lighthouse.performance }}
+          </div>
+          <p style="font-size: 0.75rem; color: #64748b;">
+            A11y: <strong>{{ lighthouse.accessibility }}</strong> | BP: <strong>{{ lighthouse.best_practices }}</strong> | SEO: <strong>{{ lighthouse.seo }}</strong>
+          </p>
+        {% else %}
+          <div class="score-circle score-muted">N/D</div>
+          <p style="font-size: 0.75rem; color: #94a3b8;">{{ lighthouse.reason }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋</span> {{ t.executive_summary_title }}
+      </div>
+      <div class="executive-box">
+        {{ executive_summary | replace('\n', '<br>') | safe }}
+        <div class="source-tag">{{ t.summary_source_tag }}: {{ summary_source }}</div>
+      </div>
+    </div>
+
+    <!-- AEO Details -->
+    <div class="card">
+      <div class="card-title">
+        <span>🤖</span> {{ t.aeo_details_title }} (Puntaje: {{ aeo_score }}/100)
+      </div>
+      <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 16px;">
+        {{ t.aeo_desc }}
+      </p>
+      <table class="aeo-table">
+        <thead>
+          <tr>
+            <th>{{ t.criterion_label }}</th>
+            <th>{{ t.analysis_label }}</th>
+            <th style="text-align: right;">{{ t.score_label }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cr in aeo.criteria_breakdown %}
+          <tr>
+            <td><strong>{{ cr.criterion }}</strong></td>
+            <td style="color: #475569;">{{ cr.details }}</td>
+            <td class="aeo-pts">{{ cr.points }} / {{ cr.max_points }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Issues by Impact -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚠️</span> {{ t.issues_title }} ({{ all_issues | length }})
+      </div>
+      {% if all_issues %}
+        {% for issue in all_issues %}
+        <div class="issue-item severity-{{ issue.severity }}">
+          <div class="issue-header">
+            <span class="issue-title">{{ issue.message }}</span>
+            <span class="pill pill-{{ issue.severity }}">{{ issue.severity }}</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>{{ t.category_label }}:</strong> {{ issue.category }} | <strong>URL:</strong> {{ issue.url }}
+          </p>
+          {% if issue.details %}
+            <p style="font-size: 0.8rem; color: #475569; margin-bottom: 6px;">
+              <strong>Detalle:</strong> {{ issue.details }}
+            </p>
+          {% endif %}
+          <div class="issue-fix">
+            <strong>💡 {{ t.how_to_fix_label }}:</strong> {{ issue.fix }}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color: #166534; font-weight: 600;">{{ t.no_issues_message }}</p>
+      {% endif %}
+    </div>
+
+    <!-- What is Good -->
+    <div class="card">
+      <div class="card-title">
+        <span>✅</span> {{ t.good_points_title }} ({{ all_good_points | length }})
+      </div>
+      <ul class="good-list">
+        {% for good in all_good_points %}
+        <li><span>✓</span> {{ good }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Crawled Pages Overview -->
+    <div class="card">
+      <div class="card-title">
+        <span>🌐</span> {{ t.crawled_pages_title }} ({{ pages_count }})
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="pages-table">
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Estado</th>
+              <th>Tiempo</th>
+              <th>Título</th>
+              <th>H1</th>
+              <th>JSON-LD</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in pages %}
+            <tr>
+              <td><a href="{{ p.url }}" target="_blank" style="color: #0284c7; text-decoration: none;">{{ p.url }}</a></td>
+              <td><span style="color: {% if p.status_code == 200 %}#16a34a{% else %}#dc2626{% endif %}; font-weight: 700;">{{ p.status_code }}</span></td>
+              <td>{{ p.response_time_ms }} ms</td>
+              <td>{{ p.title or '-' }}</td>
+              <td>{{ p.h1[0] if p.h1 else '-' }}</td>
+              <td>{{ p.json_ld_types | join(', ') if p.json_ld_types else 'No' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>{{ t.footer_text }} &bull; Portfolio-Automation 21-seo-aeo-audit &bull; Generado para prospección comercial</p>
+    </div>
+  </div>
+</body>
+</html>
