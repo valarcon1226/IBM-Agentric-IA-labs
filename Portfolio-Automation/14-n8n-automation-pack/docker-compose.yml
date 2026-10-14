@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8027:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/"]
+      interval: 5s
+      retries: 10
+
+  webhook-sink:
+    image: mendhak/http-https-echo
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 5s
+      retries: 10
+
+  # Deterministic OpenAI-compatible stand-in for a real LLM (DECISIONES-14 A2/A4). F2/F3 call it
+  # through LLM_BASE_URL; no port is published, it's reachable only from the compose network.
+  fake-llm:
+    build: ./fake-llm
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      retries: 10
+
+  # Runs once: generates n8n credentials from env vars (never from files with real secrets, A3),
+  # imports them plus workflows/*.json, and activates every workflow marked "active" in its JSON
+  # (DECISIONES-14 A2). Exits after that; `n8n` below only starts once this finished successfully.
+  n8n-init:
+    image: n8nio/n8n:2.41.5
+    entrypoint: ["/bin/sh", "/init/n8n-init.sh"]
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      WEBHOOK_API_KEY: ${WEBHOOK_API_KEY}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+      LLM_API_KEY: ${LLM_API_KEY}
+      # Substituted into workflows/f2-invoice-to-data.json and f3-daily-report.json at import
+      # time (render-workflows.mjs), not read by n8n at runtime -- see N8N_BLOCK_ENV_ACCESS_IN_NODE
+      # note on the `n8n` service below.
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_MODEL: ${LLM_MODEL}
+    volumes:
+      - ./credentials:/credentials:ro
+      - ./workflows:/workflows:ro
+      - ./scripts:/init:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      webhook-sink:
+        condition: service_healthy
+      fake-llm:
+        condition: service_healthy
+
+  n8n:
+    image: n8nio/n8n:2.41.5
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # F4's "Verify Signature" Code node needs Node's built-in `crypto` module for a
+      # constant-time HMAC comparison (`crypto.timingSafeEqual`, A3).
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      WEBHOOK_URL: http://localhost:5680/
+      GENERIC_TIMEZONE: America/Bogota
+      # NOT set (security follow-up): N8N_BLOCK_ENV_ACCESS_IN_NODE stays at n8n's secure
+      # default (true), because this container's environment also holds N8N_ENCRYPTION_KEY and
+      # DB_POSTGRESDB_PASSWORD -- setting it to "false" would let any expression or Code node in
+      # any workflow read those too. F2/F3's LLM endpoint is baked into the workflow JSON by
+      # n8n-init at import time instead (render-workflows.mjs), so switching provider in
+      # production (OmniRoute/Groq/OpenAI) is still just an env change + re-import, not a
+      # workflow edit.
+    ports:
+      - "5680:5678"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      n8n-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      interval: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  pgdata:

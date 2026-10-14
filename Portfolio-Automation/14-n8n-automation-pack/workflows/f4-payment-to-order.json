@@ -1,0 +1,337 @@
+{
+  "id": "f4-payment-to-order",
+  "name": "F4 - Pago recibido a pedido",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-payment",
+      "name": "Payment Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "webhookId": "f4-payment-webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payment-webhook",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": { "rawBody": true }
+      }
+    },
+    {
+      "id": "compute-hmac",
+      "name": "Compute HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "action": "hmac",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "type": "SHA256",
+        "encoding": "hex",
+        "dataPropertyName": "computedSignature"
+      },
+      "credentials": {
+        "crypto": {
+          "id": "cred-payment-hmac",
+          "name": "Payment Webhook HMAC"
+        }
+      }
+    },
+    {
+      "id": "verify-signature",
+      "name": "Verify Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst item = $input.first().json;\nconst headers = item.headers || {};\nconst header = headers['x-signature'] || headers['X-Signature'] || '';\nconst expectedHex = String(header).replace(/^sha256=/, '').trim();\nconst computedHex = item.computedSignature || '';\n\nlet valid = false;\ntry {\n  const expectedBuf = Buffer.from(expectedHex, 'hex');\n  const computedBuf = Buffer.from(computedHex, 'hex');\n  valid = expectedHex.length > 0 && expectedBuf.length === computedBuf.length && crypto.timingSafeEqual(expectedBuf, computedBuf);\n} catch (err) {\n  valid = false;\n}\n\nreturn [{ json: { ...item, signatureValid: valid } }];\n"
+      }
+    },
+    {
+      "id": "if-signature-valid",
+      "name": "Signature Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [660, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-sig-valid",
+              "leftValue": "={{ $json.signatureValid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-invalid-signature",
+      "name": "Respond Invalid Signature",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [880, 160],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', message: 'invalid signature' } }}",
+        "options": { "responseCode": 401 }
+      }
+    },
+    {
+      "id": "try-insert-event",
+      "name": "Try Insert Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [880, -160],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO processed_events (event_id) VALUES ($1) ON CONFLICT (event_id) DO NOTHING RETURNING event_id",
+        "options": {
+          "queryReplacement": "={{ [$json.body.id] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "compute-is-new",
+      "name": "Compute Is New",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, -160],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const verified = $('Verify Signature').first().json;\nconst body = verified.body || {};\nconst data = body.data || {};\nconst rows = $input.all();\nconst isNew = rows.length > 0 && rows[0].json.event_id !== undefined;\nreturn [{\n  json: {\n    isNew,\n    eventId: body.id || null,\n    orderId: data.order_id != null ? data.order_id : null,\n    amountCop: data.amount_cop != null ? data.amount_cop : null,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "if-is-new-event",
+      "name": "Is New Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1320, -160],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-is-new",
+              "leftValue": "={{ $json.isNew }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-duplicate-event",
+      "name": "Respond Duplicate Event",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1540, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'ignored', reason: 'duplicate_event' } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "mark-order-paid",
+      "name": "Mark Order Paid",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1540, -320],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "UPDATE orders SET status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = $1 AND status = 'pending' RETURNING id, customer_name, customer_email, total_cop",
+        "options": {
+          "queryReplacement": "={{ [$json.orderId] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "compute-order-result",
+      "name": "Compute Order Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, -320],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const computed = $('Compute Is New').first().json;\nconst rows = $input.all();\nconst updated = rows.length > 0 && rows[0].json.id !== undefined;\nconst row = updated ? rows[0].json : {};\nreturn [{\n  json: {\n    updated,\n    orderId: computed.orderId,\n    customerName: row.customer_name || null,\n    customerEmail: row.customer_email || null,\n    totalCop: row.total_cop != null ? row.total_cop : null,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "if-order-updated",
+      "name": "Order Updated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1980, -320],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-order-updated",
+              "leftValue": "={{ $json.updated }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-order-ignored",
+      "name": "Respond Order Ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2200, -160],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'ignored', reason: 'order_not_found_or_already_paid' } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "payment-confirmation-email",
+      "name": "Payment Confirmation Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2200, -480],
+      "parameters": {
+        "fromEmail": "pagos@sabordecasa.local",
+        "toEmail": "={{ $json.customerEmail }}",
+        "subject": "Tu pago fue confirmado - Sabor de Casa",
+        "emailFormat": "text",
+        "text": "=Hola {{ $json.customerName }},\n\nConfirmamos el pago de tu pedido #{{ $json.orderId }} por ${{ $json.totalCop }} COP.\n\n¡Gracias por tu compra!",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "cred-smtp",
+          "name": "Mailpit SMTP"
+        }
+      }
+    },
+    {
+      "id": "notify-team-payment",
+      "name": "Notify Team Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [2420, -480],
+      "parameters": {
+        "method": "POST",
+        "url": "http://webhook-sink:8080/f4-payment-confirmed",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { event: 'payment_confirmed', order_id: $('Compute Order Result').first().json.orderId, customer_email: $('Compute Order Result').first().json.customerEmail, total_cop: $('Compute Order Result').first().json.totalCop } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2640, -480],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'ok', order_id: $('Compute Order Result').first().json.orderId } }}",
+        "options": { "responseCode": 200 }
+      }
+    }
+  ],
+  "connections": {
+    "Payment Webhook": {
+      "main": [[{ "node": "Compute HMAC", "type": "main", "index": 0 }]]
+    },
+    "Compute HMAC": {
+      "main": [[{ "node": "Verify Signature", "type": "main", "index": 0 }]]
+    },
+    "Verify Signature": {
+      "main": [[{ "node": "Signature Valid?", "type": "main", "index": 0 }]]
+    },
+    "Signature Valid?": {
+      "main": [
+        [{ "node": "Try Insert Event", "type": "main", "index": 0 }],
+        [{ "node": "Respond Invalid Signature", "type": "main", "index": 0 }]
+      ]
+    },
+    "Try Insert Event": {
+      "main": [[{ "node": "Compute Is New", "type": "main", "index": 0 }]]
+    },
+    "Compute Is New": {
+      "main": [[{ "node": "Is New Event?", "type": "main", "index": 0 }]]
+    },
+    "Is New Event?": {
+      "main": [
+        [{ "node": "Mark Order Paid", "type": "main", "index": 0 }],
+        [{ "node": "Respond Duplicate Event", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mark Order Paid": {
+      "main": [[{ "node": "Compute Order Result", "type": "main", "index": 0 }]]
+    },
+    "Compute Order Result": {
+      "main": [[{ "node": "Order Updated?", "type": "main", "index": 0 }]]
+    },
+    "Order Updated?": {
+      "main": [
+        [{ "node": "Payment Confirmation Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond Order Ignored", "type": "main", "index": 0 }]
+      ]
+    },
+    "Payment Confirmation Email": {
+      "main": [[{ "node": "Notify Team Payment", "type": "main", "index": 0 }]]
+    },
+    "Notify Team Payment": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "errorWorkflow": "shared-error-handler"
+  }
+}

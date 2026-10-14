@@ -1,0 +1,260 @@
+{
+  "id": "f1-lead-to-crm",
+  "name": "F1 - Lead de formulario a CRM",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-lead-form",
+      "name": "Lead Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "webhookId": "f1-lead-form-webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-form",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-webhook-api-key",
+          "name": "Webhook API Key"
+        }
+      }
+    },
+    {
+      "id": "validate-lead",
+      "name": "Validate Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const body = ($input.first().json && $input.first().json.body) || {};\nconst errors = [];\n\nconst name = typeof body.name === 'string' ? body.name.trim() : '';\nconst email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';\nconst emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nif (!name) errors.push('name is required');\nif (!email) errors.push('email is required');\nelse if (!emailPattern.test(email)) errors.push('email is invalid');\n\nconst phone = typeof body.phone === 'string' ? body.phone.trim() : null;\nconst eventType = typeof body.event_type === 'string' ? body.event_type.trim() : null;\nconst eventDate = typeof body.event_date === 'string' ? body.event_date.trim() : null;\nlet guests = null;\nif (Number.isInteger(body.guests)) {\n  guests = body.guests;\n} else if (typeof body.guests === 'string' && body.guests.trim() !== '') {\n  const parsed = parseInt(body.guests, 10);\n  guests = Number.isFinite(parsed) ? parsed : null;\n}\nconst message = typeof body.message === 'string' ? body.message.trim() : null;\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    name,\n    email,\n    phone,\n    event_type: eventType,\n    event_date: eventDate,\n    guests,\n    message,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "if-is-valid",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-invalid",
+      "name": "Respond Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [660, 120],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', errors: $json.errors } }}",
+        "options": { "responseCode": 400 }
+      }
+    },
+    {
+      "id": "dedupe-by-email",
+      "name": "Dedupe By Email",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "alwaysOutputData": true,
+      "position": [660, -120],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT id FROM crm_leads WHERE email = $1 LIMIT 1",
+        "options": {
+          "queryReplacement": "={{ [$json.email] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "compute-lead-decision",
+      "name": "Compute Lead Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -120],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const validated = $('Validate Lead').first().json;\nconst rows = $input.all();\nconst exists = rows.length > 0 && rows[0].json.id !== undefined;\nreturn [{\n  json: {\n    exists,\n    name: validated.name,\n    email: validated.email,\n    phone: validated.phone,\n    event_type: validated.event_type,\n    event_date: validated.event_date,\n    guests: validated.guests,\n    message: validated.message,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "if-lead-exists",
+      "name": "Lead Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1100, -120],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-exists",
+              "leftValue": "={{ $json.exists }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-duplicate",
+      "name": "Respond Duplicate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1320, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'duplicate' } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "insert-lead",
+      "name": "Insert Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1320, -220],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO crm_leads (name, email, phone, event_type, event_date, guests, message) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$json.name, $json.email, $json.phone, $json.event_type, $json.event_date, $json.guests, $json.message] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "welcome-email",
+      "name": "Welcome Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1540, -220],
+      "parameters": {
+        "fromEmail": "hola@sabordecasa.local",
+        "toEmail": "={{ $('Compute Lead Decision').first().json.email }}",
+        "subject": "¡Gracias por tu interés en Sabor de Casa!",
+        "emailFormat": "text",
+        "text": "=Hola {{ $('Compute Lead Decision').first().json.name }},\n\nGracias por escribirnos sobre tu evento. Nuestro equipo te contactará pronto para coordinar los detalles.\n\n¡Sabor de Casa!",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "cred-smtp",
+          "name": "Mailpit SMTP"
+        }
+      }
+    },
+    {
+      "id": "notify-team",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [1760, -220],
+      "parameters": {
+        "method": "POST",
+        "url": "http://webhook-sink:8080/f1-new-lead",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { event: 'new_lead', lead_id: $('Insert Lead').first().json.id, name: $('Compute Lead Decision').first().json.name, email: $('Compute Lead Decision').first().json.email, event_type: $('Compute Lead Decision').first().json.event_type, event_date: $('Compute Lead Decision').first().json.event_date, guests: $('Compute Lead Decision').first().json.guests } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-created",
+      "name": "Respond Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1980, -220],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'created', lead_id: $('Insert Lead').first().json.id } }}",
+        "options": { "responseCode": 200 }
+      }
+    }
+  ],
+  "connections": {
+    "Lead Form Webhook": {
+      "main": [[{ "node": "Validate Lead", "type": "main", "index": 0 }]]
+    },
+    "Validate Lead": {
+      "main": [[{ "node": "Is Valid?", "type": "main", "index": 0 }]]
+    },
+    "Is Valid?": {
+      "main": [
+        [{ "node": "Dedupe By Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond Invalid", "type": "main", "index": 0 }]
+      ]
+    },
+    "Dedupe By Email": {
+      "main": [[{ "node": "Compute Lead Decision", "type": "main", "index": 0 }]]
+    },
+    "Compute Lead Decision": {
+      "main": [[{ "node": "Lead Exists?", "type": "main", "index": 0 }]]
+    },
+    "Lead Exists?": {
+      "main": [
+        [{ "node": "Respond Duplicate", "type": "main", "index": 0 }],
+        [{ "node": "Insert Lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert Lead": {
+      "main": [[{ "node": "Welcome Email", "type": "main", "index": 0 }]]
+    },
+    "Welcome Email": {
+      "main": [[{ "node": "Notify Team", "type": "main", "index": 0 }]]
+    },
+    "Notify Team": {
+      "main": [[{ "node": "Respond Created", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "errorWorkflow": "shared-error-handler"
+  }
+}

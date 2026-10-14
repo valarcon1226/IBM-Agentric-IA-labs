@@ -1,0 +1,81 @@
+{
+  "id": "shared-error-handler",
+  "name": "Shared Error Handler",
+  "active": true,
+  "nodes": [
+    {
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "format-error",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const data = $input.first().json;\nconst workflowName = (data.workflow && data.workflow.name) || 'unknown';\nconst errorMessage = (data.execution && data.execution.error && data.execution.error.message) || 'unknown error';\nreturn [{ json: { workflowName, errorMessage } }];\n"
+      }
+    },
+    {
+      "id": "log-error",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [440, 0],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_errors (workflow_name, error_message) VALUES ($1, $2)",
+        "options": {
+          "queryReplacement": "={{ [$json.workflowName, $json.errorMessage] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "notify-team",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 0],
+      "parameters": {
+        "fromEmail": "alertas@sabordecasa.local",
+        "toEmail": "equipo@sabordecasa.local",
+        "subject": "=Error en flujo \"{{ $json.workflowName }}\"",
+        "emailFormat": "text",
+        "text": "=Ocurrió un error en el flujo \"{{ $json.workflowName }}\":\n\n{{ $json.errorMessage }}\n\nRevisa la tabla workflow_errors para más detalle.",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "cred-smtp",
+          "name": "Mailpit SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{ "node": "Format Error", "type": "main", "index": 0 }]]
+    },
+    "Format Error": {
+      "main": [[{ "node": "Log Error", "type": "main", "index": 0 }]]
+    },
+    "Log Error": {
+      "main": [[{ "node": "Notify Team", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {}
+}

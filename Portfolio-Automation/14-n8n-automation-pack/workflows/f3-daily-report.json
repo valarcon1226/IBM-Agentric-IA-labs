@@ -1,0 +1,249 @@
+{
+  "id": "f3-daily-report",
+  "name": "F3 - Reporte diario con IA",
+  "active": true,
+  "nodes": [
+    {
+      "id": "schedule-daily-report",
+      "name": "Daily Report Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, -120],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * *" }]
+        }
+      }
+    },
+    {
+      "id": "webhook-manual-report",
+      "name": "Manual Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 120],
+      "webhookId": "f3-daily-report-webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "daily-report-trigger",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-webhook-api-key",
+          "name": "Webhook API Key"
+        }
+      }
+    },
+    {
+      "id": "resolve-report-date",
+      "name": "Resolve Report Date",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const body = ($input.first().json && $input.first().json.body) || {};\nconst requestedDate = typeof body.date === 'string' ? body.date.trim() : '';\nconst errors = [];\n\nfunction yesterdayBogota() {\n  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() - 24 * 60 * 60 * 1000));\n}\n\nconst datePattern = /^\\d{4}-\\d{2}-\\d{2}$/;\nfunction isValidDate(value) {\n  if (!datePattern.test(value)) return false;\n  const [y, m, d] = value.split('-').map(Number);\n  const parsed = new Date(Date.UTC(y, m - 1, d));\n  return parsed.getUTCFullYear() === y && parsed.getUTCMonth() === m - 1 && parsed.getUTCDate() === d;\n}\n\nlet reportDate = null;\nif (!requestedDate) {\n  // No `date` in the body: the 07:00 cron (no body at all) and a manual demo call without a\n  // date both fall back to \"yesterday\", same as before this date parameter existed.\n  reportDate = yesterdayBogota();\n} else if (isValidDate(requestedDate)) {\n  reportDate = requestedDate;\n} else {\n  errors.push('date must be YYYY-MM-DD');\n}\n\nreturn [{ json: { valid: errors.length === 0, errors, reportDate } }];\n"
+      }
+    },
+    {
+      "id": "is-date-valid",
+      "name": "Is Date Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-date-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-invalid-date",
+      "name": "Respond Invalid Date",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [660, 260],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', errors: $json.errors } }}",
+        "options": { "responseCode": 400 }
+      }
+    },
+    {
+      "id": "query-yesterday-sales",
+      "name": "Query Yesterday Sales",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "alwaysOutputData": true,
+      "position": [660, -120],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT dish_name, SUM(quantity) AS qty, SUM(total_cop) AS total FROM sales WHERE sale_date = $1::date GROUP BY dish_name ORDER BY total DESC",
+        "options": {
+          "queryReplacement": "={{ [$json.reportDate] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "cred-postgres",
+          "name": "Postgres - Sabor de Casa"
+        }
+      }
+    },
+    {
+      "id": "build-report-prompt",
+      "name": "Build Report Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -120],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map((item) => item.json).filter((row) => row.dish_name !== undefined);\nconst reportDate = $('Resolve Report Date').first().json.reportDate;\n\nlet totalCop = 0;\nconst lines = rows.map((row) => {\n  const qty = Number(row.qty);\n  const total = Number(row.total);\n  totalCop += total;\n  return `- ${row.dish_name}: ${qty} unidades, $${total}`;\n});\n\nconst promptText = 'TAREA: REPORTE_DIARIO\\nFecha: ' + reportDate + '\\nVentas:\\n' + (lines.length ? lines.join('\\n') : '(sin ventas)') + '\\nTotal del dia: $' + totalCop;\n\nreturn [{ json: { reportDate, totalCop, rowCount: rows.length, promptText } }];\n"
+      }
+    },
+    {
+      "id": "call-llm-report",
+      "name": "Call LLM Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [660, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "parameters": {
+        "method": "POST",
+        "url": "${LLM_BASE_URL}/chat/completions",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: '${LLM_MODEL}', messages: [ { role: 'user', content: $json.promptText } ] } }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-llm-api",
+          "name": "LLM API Key"
+        }
+      }
+    },
+    {
+      "id": "extract-report-summary",
+      "name": "Extract Report Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const built = $('Build Report Prompt').first().json;\nconst llmResponse = $input.first().json;\nconst summary = (llmResponse.choices && llmResponse.choices[0] && llmResponse.choices[0].message && llmResponse.choices[0].message.content) || 'No se pudo generar el resumen.';\nreturn [{ json: { summary, reportDate: built.reportDate, totalCop: built.totalCop } }];\n"
+      }
+    },
+    {
+      "id": "report-email",
+      "name": "Report Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, 0],
+      "parameters": {
+        "fromEmail": "reportes@sabordecasa.local",
+        "toEmail": "equipo@sabordecasa.local",
+        "subject": "=Reporte diario de ventas - {{ $json.reportDate }}",
+        "emailFormat": "text",
+        "text": "={{ $json.summary }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "cred-smtp",
+          "name": "Mailpit SMTP"
+        }
+      }
+    },
+    {
+      "id": "notify-report-sink",
+      "name": "Notify Report Sink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [1320, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://webhook-sink:8080/f3-daily-report",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { event: 'daily_report', report_date: $('Extract Report Summary').first().json.reportDate, total_cop: $('Extract Report Summary').first().json.totalCop, summary: $('Extract Report Summary').first().json.summary } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-report-ok",
+      "name": "Respond Report OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1540, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'ok', report_date: $('Extract Report Summary').first().json.reportDate, total_cop: $('Extract Report Summary').first().json.totalCop } }}",
+        "options": { "responseCode": 200 }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Report Schedule": {
+      "main": [[{ "node": "Resolve Report Date", "type": "main", "index": 0 }]]
+    },
+    "Manual Report Webhook": {
+      "main": [[{ "node": "Resolve Report Date", "type": "main", "index": 0 }]]
+    },
+    "Resolve Report Date": {
+      "main": [[{ "node": "Is Date Valid?", "type": "main", "index": 0 }]]
+    },
+    "Is Date Valid?": {
+      "main": [
+        [{ "node": "Query Yesterday Sales", "type": "main", "index": 0 }],
+        [{ "node": "Respond Invalid Date", "type": "main", "index": 0 }]
+      ]
+    },
+    "Query Yesterday Sales": {
+      "main": [[{ "node": "Build Report Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build Report Prompt": {
+      "main": [[{ "node": "Call LLM Report", "type": "main", "index": 0 }]]
+    },
+    "Call LLM Report": {
+      "main": [[{ "node": "Extract Report Summary", "type": "main", "index": 0 }]]
+    },
+    "Extract Report Summary": {
+      "main": [[{ "node": "Report Email", "type": "main", "index": 0 }]]
+    },
+    "Report Email": {
+      "main": [[{ "node": "Notify Report Sink", "type": "main", "index": 0 }]]
+    },
+    "Notify Report Sink": {
+      "main": [[{ "node": "Respond Report OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "errorWorkflow": "shared-error-handler"
+  }
+}
