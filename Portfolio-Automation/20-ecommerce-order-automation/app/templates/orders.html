@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h1 style="color: var(--coffee-dark); font-size: 1.8rem;">📦 Pedidos Consolidados</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Fulfillment unificado para WooCommerce, Shopify y Stripe en tiempo real.
+    </p>
+  </div>
+  <a href="/admin/orders/export?status={{ current_status or '' }}&source={{ current_source or '' }}&search={{ current_search or '' }}" class="btn btn-success">
+    📊 Exportar a Excel (.xlsx)
+  </a>
+</div>
+
+<!-- Tarjetas de métricas -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="title">Total Pedidos</div>
+    <div class="value">{{ total_count }}</div>
+  </div>
+  <div class="metric-card ready">
+    <div class="title">Listos para Despachar</div>
+    <div class="value">{{ ready_count }}</div>
+  </div>
+  <div class="metric-card shipped">
+    <div class="title">Despachados</div>
+    <div class="value">{{ shipped_count }}</div>
+  </div>
+  <div class="metric-card delivered">
+    <div class="title">Entregados</div>
+    <div class="value">{{ delivered_count }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Total Recaudado</div>
+    <div class="value">${{ "{:,.0f}".format(total_revenue) }} COP</div>
+  </div>
+</div>
+
+<!-- Filtros de búsqueda -->
+<div class="card" style="padding: 16px;">
+  <form method="GET" action="/admin/orders" class="filter-bar" style="margin-bottom: 0;">
+    <div class="filter-group">
+      <select name="status">
+        <option value="">-- Todos los estados --</option>
+        <option value="listo_para_despachar" {% if current_status == 'listo_para_despachar' %}selected{% endif %}>Listo para despachar</option>
+        <option value="despachado" {% if current_status == 'despachado' %}selected{% endif %}>Despachado</option>
+        <option value="entregado" {% if current_status == 'entregado' %}selected{% endif %}>Entregado</option>
+        <option value="pendiente" {% if current_status == 'pendiente' %}selected{% endif %}>Pendiente</option>
+        <option value="cancelado" {% if current_status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+      </select>
+
+      <select name="source">
+        <option value="">-- Todas las plataformas --</option>
+        <option value="woocommerce" {% if current_source == 'woocommerce' %}selected{% endif %}>WooCommerce</option>
+        <option value="shopify" {% if current_source == 'shopify' %}selected{% endif %}>Shopify</option>
+        <option value="stripe" {% if current_source == 'stripe' %}selected{% endif %}>Stripe</option>
+      </select>
+
+      <input type="text" name="search" value="{{ current_search or '' }}" placeholder="Buscar por cliente, email o ID...">
+      
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      {% if current_status or current_source or current_search %}
+      <a href="/admin/orders" class="btn btn-outline">Limpiar</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Tabla de pedidos -->
+<div class="card" style="padding: 0;">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Canal</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Ciudad</th>
+          <th>Estado</th>
+          <th>Total</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if orders %}
+          {% for o in orders %}
+          <tr>
+            <td><strong>{{ o.id }}</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Ext: {{ o.external_id }}</span></td>
+            <td>
+              <span class="badge badge-source-{{ o.source.value }}">
+                {{ o.source.value }}
+              </span>
+            </td>
+            <td style="white-space: nowrap;">{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              <strong>{{ o.customer.name }}</strong><br>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">{{ o.customer.email }}</span>
+            </td>
+            <td>{{ o.customer.shipping_address.city }}</td>
+            <td>
+              <span class="badge badge-status-{{ o.status.value }}">
+                {{ o.status.value.replace('_', ' ') }}
+              </span>
+            </td>
+            <td style="font-weight: bold; text-align: right; white-space: nowrap;">
+              ${{ "{:,.0f}".format(o.total_amount) }} {{ o.currency }}
+            </td>
+            <td>
+              <a href="/admin/orders/{{ o.id }}" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.82rem;">
+                Ver / Gestionar
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+              No se encontraron pedidos con los filtros seleccionados.<br>
+              <small>Envía webhooks de prueba desde <code>samples/</code> para ver pedidos en tiempo real.</small>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

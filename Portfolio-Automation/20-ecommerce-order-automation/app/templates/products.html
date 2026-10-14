@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo de Café de Origen{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+  <h1 style="color: var(--coffee-dark); font-size: 1.8rem;">☕ Catálogo de Especialidad: Café de Origen</h1>
+  <p style="color: var(--text-muted); font-size: 0.95rem;">
+    Productos colombianos seleccionados para demostración y sincronización con Shopify, WooCommerce y Stripe.
+  </p>
+</div>
+
+<div class="products-grid">
+  {% for p in products %}
+  <div class="product-card">
+    <span class="tag-ficticio">DEMO · FICTICIO</span>
+    <h3 style="color: var(--coffee-dark); font-size: 1.15rem; margin-bottom: 4px;">{{ p.name }}</h3>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+      SKU: <code>{{ p.sku }}</code> · Stock: <strong>{{ p.stock }} un.</strong>
+    </div>
+
+    <p style="font-size: 0.88rem; color: var(--text-dark); margin-bottom: 12px; flex: 1;">
+      {{ p.description }}
+    </p>
+
+    <div style="font-size: 0.85rem; margin-bottom: 6px;">
+      📍 <strong>Origen:</strong> {{ p.origin }}
+    </div>
+    <div style="font-size: 0.85rem; margin-bottom: 10px;">
+      🔥 <strong>Tueste:</strong> {{ p.roast }}
+    </div>
+
+    <div class="price">
+      ${{ "{:,.0f}".format(p.price) }} {{ p.currency }}
+    </div>
+
+    <div class="tasting-notes">
+      {% for n in p.notes %}
+      <span class="note-pill">{{ n }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

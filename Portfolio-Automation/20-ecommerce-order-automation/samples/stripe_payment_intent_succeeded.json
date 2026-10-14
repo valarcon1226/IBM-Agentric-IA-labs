@@ -1,0 +1,40 @@
+{
+  "id": "evt_1P8xYz2eZvKYlo2C8K9LmnOp",
+  "object": "event",
+  "api_version": "2024-06-20",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_3P8xYz2eZvKYlo2C0abc999",
+      "object": "payment_intent",
+      "amount": 8400000,
+      "amount_received": 8400000,
+      "currency": "cop",
+      "status": "succeeded",
+      "receipt_email": "andrea.gomez@example.com",
+      "customer_name": "Andrea Gómez",
+      "shipping": {
+        "name": "Andrea Gómez",
+        "phone": "+573204567890",
+        "address": {
+          "line1": "Avenida El Poblado # 5A-110",
+          "city": "Medellín",
+          "state": "Antioquia",
+          "postal_code": "050022",
+          "country": "CO"
+        }
+      },
+      "metadata": {
+        "customer_name": "Andrea Gómez",
+        "customer_email": "andrea.gomez@example.com",
+        "customer_phone": "+573204567890",
+        "shipping_street": "Avenida El Poblado # 5A-110",
+        "shipping_city": "Medellín",
+        "shipping_state": "Antioquia",
+        "shipping_postal_code": "050022",
+        "items": "[{\"sku\": \"CF-HUI-250\", \"title\": \"Café Huila Especial (250g)\", \"quantity\": 3, \"unit_price\": 28000.0, \"total_price\": 84000.0}]"
+      },
+      "payment_method_types": ["card"]
+    }
+  }
+}

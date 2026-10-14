@@ -1,0 +1,57 @@
+{
+  "id": 501,
+  "number": "501",
+  "status": "processing",
+  "currency": "COP",
+  "date_created": "2026-10-14T10:15:00",
+  "date_modified": "2026-10-14T10:15:05",
+  "discount_total": "0.00",
+  "shipping_total": "0.00",
+  "total": "86000.00",
+  "payment_method": "pse",
+  "payment_method_title": "PSE / Transferencia Bancaria",
+  "billing": {
+    "first_name": "Valentina",
+    "last_name": "Alarcón",
+    "company": "",
+    "address_1": "Carrera 7 # 72-41 Oficina 802",
+    "city": "Bogotá",
+    "state": "Cundinamarca",
+    "postcode": "110221",
+    "country": "CO",
+    "email": "valentina.alarcon@example.com",
+    "phone": "+573001234567"
+  },
+  "shipping": {
+    "first_name": "Valentina",
+    "last_name": "Alarcón",
+    "company": "",
+    "address_1": "Carrera 7 # 72-41 Oficina 802",
+    "city": "Bogotá",
+    "state": "Cundinamarca",
+    "postcode": "110221",
+    "country": "CO"
+  },
+  "line_items": [
+    {
+      "id": 101,
+      "name": "Café Huila Especial (250g)",
+      "product_id": 12,
+      "quantity": 2,
+      "price": 28000.0,
+      "subtotal": "56000.00",
+      "total": "56000.00",
+      "sku": "CF-HUI-250"
+    },
+    {
+      "id": 102,
+      "name": "Café Nariño Supremo (250g)",
+      "product_id": 14,
+      "quantity": 1,
+      "price": 30000.0,
+      "subtotal": "30000.00",
+      "total": "30000.00",
+      "sku": "CF-NAR-250"
+    }
+  ]
+}

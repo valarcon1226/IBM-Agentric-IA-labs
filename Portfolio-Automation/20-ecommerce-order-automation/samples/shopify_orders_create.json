@@ -1,0 +1,41 @@
+{
+  "id": 1042,
+  "name": "#1042",
+  "created_at": "2026-10-14T11:20:00-05:00",
+  "updated_at": "2026-10-14T11:20:02-05:00",
+  "financial_status": "paid",
+  "fulfillment_status": null,
+  "currency": "COP",
+  "total_price": "55000.00",
+  "subtotal_price": "55000.00",
+  "total_tax": "0.00",
+  "email": "carlos.mendoza@example.com",
+  "phone": "+573159876543",
+  "customer": {
+    "id": 883921,
+    "first_name": "Carlos",
+    "last_name": "Mendoza",
+    "email": "carlos.mendoza@example.com",
+    "phone": "+573159876543"
+  },
+  "shipping_address": {
+    "first_name": "Carlos",
+    "last_name": "Mendoza",
+    "address1": "Calle 10 # 43E-12, Apto 502",
+    "city": "Medellín",
+    "province": "Antioquia",
+    "country": "Colombia",
+    "zip": "050021",
+    "country_code": "CO"
+  },
+  "line_items": [
+    {
+      "id": 9001,
+      "title": "Café Geisha Sierra Nevada (250g)",
+      "quantity": 1,
+      "price": "55000.00",
+      "sku": "CF-GEI-250",
+      "variant_title": "Grano entero"
+    }
+  ]
+}

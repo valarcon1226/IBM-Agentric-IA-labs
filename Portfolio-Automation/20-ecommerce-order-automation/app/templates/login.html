@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="login-box">
+  <div style="text-align: center; font-size: 3rem; margin-bottom: 10px;">☕</div>
+  <h2>Café de Origen</h2>
+  <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">
+    Ingreso seguro al panel de control y despachos
+  </p>
+
+  {% if error %}
+  <div class="alert alert-error">
+    {{ error }}
+  </div>
+  {% endif %}
+
+  {% if message %}
+  <div class="alert alert-success">
+    {{ message }}
+  </div>
+  {% endif %}
+
+  <form method="POST" action="/admin/login">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    
+    <div class="form-group">
+      <label for="username">Usuario:</label>
+      <input type="text" id="username" name="username" required autofocus placeholder="admin">
+    </div>
+
+    <div class="form-group">
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" name="password" required placeholder="••••••••">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+      Ingresar al Panel
+    </button>
+  </form>
+
+  <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+    🔒 Sesión encriptada con Cookie segura y protección contra ataques de fuerza bruta (bloqueo tras 5 intentos fallidos).
+  </div>
+</div>
+{% endblock %}

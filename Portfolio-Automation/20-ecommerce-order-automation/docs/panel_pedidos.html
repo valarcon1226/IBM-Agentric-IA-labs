@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pedidos - Café de Origen</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="/admin/orders" class="brand">
+      <span>☕</span> Café de Origen · Panel de Despachos
+    </a>
+    
+    <nav class="nav-links">
+      <a href="/admin/orders" class="nav-link active">Pedidos</a>
+      <a href="/admin/products" class="nav-link ">Catálogo Café</a>
+      <a href="/admin/logout" class="nav-link logout">Cerrar Sesión (admin)</a>
+    </nav>
+    
+  </header>
+
+  <main class="container">
+    
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h1 style="color: var(--coffee-dark); font-size: 1.8rem;">📦 Pedidos Consolidados</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Fulfillment unificado para WooCommerce, Shopify y Stripe en tiempo real.
+    </p>
+  </div>
+  <a href="/admin/orders/export?status=&source=&search=" class="btn btn-success">
+    📊 Exportar a Excel (.xlsx)
+  </a>
+</div>
+
+<!-- Tarjetas de métricas -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="title">Total Pedidos</div>
+    <div class="value">3</div>
+  </div>
+  <div class="metric-card ready">
+    <div class="title">Listos para Despachar</div>
+    <div class="value">3</div>
+  </div>
+  <div class="metric-card shipped">
+    <div class="title">Despachados</div>
+    <div class="value">0</div>
+  </div>
+  <div class="metric-card delivered">
+    <div class="title">Entregados</div>
+    <div class="value">0</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Total Recaudado</div>
+    <div class="value">$225,000 COP</div>
+  </div>
+</div>
+
+<!-- Filtros de búsqueda -->
+<div class="card" style="padding: 16px;">
+  <form method="GET" action="/admin/orders" class="filter-bar" style="margin-bottom: 0;">
+    <div class="filter-group">
+      <select name="status">
+        <option value="">-- Todos los estados --</option>
+        <option value="listo_para_despachar" >Listo para despachar</option>
+        <option value="despachado" >Despachado</option>
+        <option value="entregado" >Entregado</option>
+        <option value="pendiente" >Pendiente</option>
+        <option value="cancelado" >Cancelado</option>
+      </select>
+
+      <select name="source">
+        <option value="">-- Todas las plataformas --</option>
+        <option value="woocommerce" >WooCommerce</option>
+        <option value="shopify" >Shopify</option>
+        <option value="stripe" >Stripe</option>
+      </select>
+
+      <input type="text" name="search" value="" placeholder="Buscar por cliente, email o ID...">
+      
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      
+    </div>
+  </form>
+</div>
+
+<!-- Tabla de pedidos -->
+<div class="card" style="padding: 0;">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Canal</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Ciudad</th>
+          <th>Estado</th>
+          <th>Total</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+          
+          <tr>
+            <td><strong>ORD-STP-ABC999</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Ext: pi_3P8xYz2eZvKYlo2C0abc999</span></td>
+            <td>
+              <span class="badge badge-source-stripe">
+                stripe
+              </span>
+            </td>
+            <td style="white-space: nowrap;">2026-10-14 17:48</td>
+            <td>
+              <strong>Andrea Gómez</strong><br>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">andrea.gomez@example.com</span>
+            </td>
+            <td>Medellín</td>
+            <td>
+              <span class="badge badge-status-listo_para_despachar">
+                listo para despachar
+              </span>
+            </td>
+            <td style="font-weight: bold; text-align: right; white-space: nowrap;">
+              $84,000 COP
+            </td>
+            <td>
+              <a href="/admin/orders/ORD-STP-ABC999" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.82rem;">
+                Ver / Gestionar
+              </a>
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>ORD-SHP-1042</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Ext: 1042</span></td>
+            <td>
+              <span class="badge badge-source-shopify">
+                shopify
+              </span>
+            </td>
+            <td style="white-space: nowrap;">2026-10-14 17:48</td>
+            <td>
+              <strong>Carlos Mendoza</strong><br>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">carlos.mendoza@example.com</span>
+            </td>
+            <td>Medellín</td>
+            <td>
+              <span class="badge badge-status-listo_para_despachar">
+                listo para despachar
+              </span>
+            </td>
+            <td style="font-weight: bold; text-align: right; white-space: nowrap;">
+              $55,000 COP
+            </td>
+            <td>
+              <a href="/admin/orders/ORD-SHP-1042" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.82rem;">
+                Ver / Gestionar
+              </a>
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>ORD-WC-501</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Ext: 501</span></td>
+            <td>
+              <span class="badge badge-source-woocommerce">
+                woocommerce
+              </span>
+            </td>
+            <td style="white-space: nowrap;">2026-10-14 17:48</td>
+            <td>
+              <strong>Valentina Alarcón</strong><br>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">valentina.alarcon@example.com</span>
+            </td>
+            <td>Bogotá</td>
+            <td>
+              <span class="badge badge-status-listo_para_despachar">
+                listo para despachar
+              </span>
+            </td>
+            <td style="font-weight: bold; text-align: right; white-space: nowrap;">
+              $86,000 COP
+            </td>
+            <td>
+              <a href="/admin/orders/ORD-WC-501" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.82rem;">
+                Ver / Gestionar
+              </a>
+            </td>
+          </tr>
+          
+        
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  </main>
+
+  <footer>
+    <p>Café de Origen &copy; 2026 · Automatización Centralizada de Pedidos (Shopify, WooCommerce, Stripe)</p>
+  </footer>
+</body>
+</html>

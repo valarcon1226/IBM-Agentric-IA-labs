@@ -1,0 +1,21 @@
+[project]
+name = "ecommerce-order-automation"
+version = "0.1.0"
+description = "Centralized order fulfillment automation for WooCommerce, Shopify, Stripe, and MongoDB"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["B008"]
+extend-ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
