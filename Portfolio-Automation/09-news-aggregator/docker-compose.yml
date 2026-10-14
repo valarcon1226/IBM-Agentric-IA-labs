@@ -1,0 +1,148 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.7.4-pg16
+    container_name: news_postgres
+    environment:
+      POSTGRES_USER: news_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_postgres_password}
+      POSTGRES_DB: newsdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U news_user -d newsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.2-alpine
+    container_name: news_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: news_mailpit
+    ports:
+      - "127.0.0.1:8029:8025"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8025/api/v1/info || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  feeds:
+    # Fictitious demo feeds served over HTTP, like a real publisher.
+    image: python:3.12-alpine
+    container_name: news_feeds
+    command: ["python", "-m", "http.server", "8000", "--directory", "/feeds"]
+    volumes:
+      - ./tests/fixtures:/feeds:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8000/feed_tech_a.xml || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  fake_llm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: news_fake_llm
+    command: ["python", "fake_llm/server.py"]
+    environment:
+      PORT: "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: news_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      fake_llm:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8009:8009"
+    environment:
+      DATABASE_URL: postgresql://news_user:${POSTGRES_PASSWORD:-change_me_postgres_password}@postgres:5432/newsdb
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SMTP_HOST: mailpit
+      # Only for the demo: the feeds service lives on the Docker network.
+      ALLOW_PRIVATE_TARGETS: "true"
+      SMTP_PORT: 1025
+      SMTP_FROM: intelligence@news-aggregator.local
+      DEFAULT_DIGEST_EMAIL: briefing@empresa-ficticia.com
+      LLM_PROVIDER: fake_llm
+      LLM_BASE_URL: http://fake_llm:8080/v1
+      LLM_API_KEY: fake-key
+      LLM_MODEL: llama3:8b
+      EMBEDDING_MODEL: nomic-embed-text
+      SIMILARITY_THRESHOLD: 0.15
+      API_BEARER_TOKEN: ${API_BEARER_TOKEN:-change_me_api_bearer_token}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8009/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: news_worker
+    command: ["celery", "-A", "celery_app.celery", "worker", "--beat", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      fake_llm:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://news_user:${POSTGRES_PASSWORD:-change_me_postgres_password}@postgres:5432/newsdb
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SMTP_HOST: mailpit
+      # Only for the demo: the feeds service lives on the Docker network.
+      ALLOW_PRIVATE_TARGETS: "true"
+      SMTP_PORT: 1025
+      SMTP_FROM: intelligence@news-aggregator.local
+      DEFAULT_DIGEST_EMAIL: briefing@empresa-ficticia.com
+      LLM_PROVIDER: fake_llm
+      LLM_BASE_URL: http://fake_llm:8080/v1
+      LLM_API_KEY: fake-key
+      LLM_MODEL: llama3:8b
+      EMBEDDING_MODEL: nomic-embed-text
+      SIMILARITY_THRESHOLD: 0.15
+      API_BEARER_TOKEN: ${API_BEARER_TOKEN:-change_me_api_bearer_token}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: news_postgres_data
