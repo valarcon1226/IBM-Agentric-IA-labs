@@ -1,10 +1,10 @@
-# 🚀 Auditoría SEO & AEO Automática para Clientes
+# Auditoría SEO & AEO Automática para Clientes
 
 Herramienta profesional de diagnóstico y prospección comercial en Python (CLI + FastAPI). Genera en **menos de 60 segundos** un informe exhaustivo de **SEO Técnico, On-Page, Core Web Vitals (Lighthouse) y AEO (Answer Engine Optimization para ChatGPT, Perplexity y Gemini)**, diseñado como gancho de venta irresistible para cerrar gigs de páginas web y posicionamiento digital.
 
 ---
 
-## 🎯 Por qué existe este proyecto (Gancho Comercial)
+## Por qué existe este proyecto (Gancho Comercial)
 
 El 90% de los dueños de negocios locales y pymes no compran servicios de desarrollo web ni consultoría SEO porque no entienden los términos técnicos abstractos. Sin embargo, cuando ven un **informe personalizado con la URL de su propio negocio**, con calificaciones claras (0 a 100), problemas ordenados por impacto financiero y la explicación exacta de **por qué los motores de IA no están recomendando su marca**, la venta se cierra sola.
 
@@ -16,7 +16,7 @@ Este software permite:
 
 ---
 
-## 🔍 Qué revisa la auditoría
+## Qué revisa la auditoría
 
 ### 1. Revisiones SEO por Página (On-Page)
 - **Título (`<title>`)**: Presencia, longitud óptima (30–60 caracteres) y detección de títulos duplicados.
@@ -56,7 +56,7 @@ Evaluación específica de qué tan fácil es para un asistente de IA extraer re
 
 ---
 
-## 🛠️ Instalación y Requisitos
+## Instalación y Requisitos
 
 ### Requisitos
 - Python 3.12+ (o `uv`)
@@ -72,7 +72,7 @@ uv pip install -p .venv\Scripts\python.exe -r requirements-dev.txt
 
 ---
 
-## 💻 Guía de Uso
+## Guía de Uso
 
 ### 1. Vía Línea de Comandos (CLI)
 
@@ -121,7 +121,7 @@ curl -X POST http://localhost:8021/audit \
 
 ---
 
-## 🧪 Pruebas Automatizadas
+## Pruebas Automatizadas
 
 La suite incluye 28 pruebas unitarias y de integración que verifican cada regla sobre fixtures controlados y un servidor HTTP de pruebas:
 ```powershell
@@ -135,7 +135,7 @@ Verificación de estándares de código y tipado con Ruff:
 
 ---
 
-## 📂 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 21-seo-aeo-audit/

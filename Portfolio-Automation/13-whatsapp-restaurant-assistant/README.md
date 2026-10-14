@@ -30,7 +30,7 @@ en los casos que de verdad necesitan trato humano.
 | **Traspaso a una persona** | Si el cliente lo pide, o el bot falla dos veces seguidas respondiendo, la conversación pasa a una persona: el bot queda en silencio con ese cliente por 12 horas y el equipo recibe una notificación con el motivo y un resumen. |
 | **Comandos del equipo** | Desde los números de staff: `/pedidos` (pedidos pendientes de hoy), `/bot <número>` (reactivar el bot con un cliente) y `/r <número> <texto>` (responder directamente al cliente). |
 
-Lo que el bot **no** hace (a propósito, ver `docs/reviews/DECISIONES-13.md`): no reemplaza al
+Lo que el bot **no** hace (a propósito): no reemplaza al
 equipo en casos complejos, no gestiona pagos en línea, no tiene frontend ni base de datos
 adicional (Celery/Redis/Mongo) — todo corre en un solo proceso Python + Postgres.
 
@@ -219,6 +219,4 @@ un log de error.
 ```
 
 Las pruebas de integración/E2E (`pytest -m "integration or e2e"`) necesitan el stack de Docker
-levantado y están excluidas por defecto; ver
-[`docs/reviews/T-13-lote-c.md`](docs/reviews/T-13-lote-c.md) para la salida real de la última
-corrida.
+levantado y están excluidas por defecto.

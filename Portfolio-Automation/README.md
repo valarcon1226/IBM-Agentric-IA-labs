@@ -89,7 +89,6 @@ NN-project-name/
   app/ tests/         Code and tests (implemented projects)
 docs/
   BUILD-PLAN.md       Build order and cross-project decisions
-  AI-ASSISTED-DEVELOPMENT.md  How AI tools are used and reviewed here
 ```
 
 ## Running a service

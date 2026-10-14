@@ -238,7 +238,7 @@ def detect_duplicate(new_embedding: list[float], db_connection, threshold: float
 <!-- email_template.html -->
 <html>
 <body style="font-family: Arial, sans-serif;">
-    <h2>Daily Intelligence Digest 📰</h2>
+    <h2>Daily Intelligence Digest </h2>
     <p>Top stories for {{ date }}</p>
 
     {% for category, articles in clustered_articles.items() %}

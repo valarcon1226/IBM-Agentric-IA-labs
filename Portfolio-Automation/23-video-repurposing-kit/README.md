@@ -1,11 +1,11 @@
-# 🎬 Kit de Reutilización de Video: Clips Verticales, Subtítulos y Paquete de YouTube
+# Kit de Reutilización de Video: Clips Verticales, Subtítulos y Paquete de YouTube
 
 > **Multiplica el impacto de tu contenido largo en minutos.**  
 > Transforma un video horizontal o podcast de 1 hora en **10 clips verticales virales (9:16) con subtítulos dinámicos estilo TikTok** y un **paquete completo de publicación para YouTube**, todo ejecutado **100% en tu máquina local y sin costos de APIs externas**.
 
 ---
 
-## ⚡ El Problema vs. La Solución
+## El Problema vs. La Solución
 
 | Flujo Tradicional (Manual) | Con Video Repurposing Kit |
 |---|---|
@@ -18,7 +18,7 @@
 
 ---
 
-## 🚀 Servicios Ofrecidos / Paquetes Comerciales
+## Servicios Ofrecidos / Paquetes Comerciales
 
 Diseñado para gigs de alta demanda en plataformas como Upwork, Fiverr y agencias de creadores:
 * *"Edit Instagram Reels & TikTok shorts from long form podcasts"*
@@ -32,13 +32,13 @@ Diseñado para gigs de alta demanda en plataformas como Upwork, Fiverr y agencia
 
 ---
 
-## ⚖️ Aviso Legal de Uso Responsable (YouTube / yt-dlp)
+## Aviso Legal de Uso Responsable (YouTube / yt-dlp)
 
 > **IMPORTANTE:** La funcionalidad opcional de descarga mediante URL (`yt-dlp`) debe utilizarse **únicamente** con videos de tu propia autoría, videos con autorización explícita y por escrito de los titulares de derechos, o material publicado bajo licencias abiertas compatibles (como Creative Commons CC-BY). Respeta siempre la legislación vigente de derechos de autor y los términos de servicio de las plataformas.
 
 ---
 
-## 🛠️ Arquitectura y Funcionamiento
+## Arquitectura y Funcionamiento
 
 El kit se compone de 5 etapas modulares totalmente locales:
 
@@ -82,7 +82,7 @@ El kit se compone de 5 etapas modulares totalmente locales:
 
 ---
 
-## 💻 Instalación y Requisitos
+## Instalación y Requisitos
 
 ### Requisitos del Sistema:
 - Python 3.11 o 3.12
@@ -115,7 +115,7 @@ WHISPER_COMPUTE_TYPE=int8
 
 ---
 
-## 📖 Guía de Uso
+## Guía de Uso
 
 ### 1. Ejecutar el Pipeline Completo (CLI)
 ```bash
@@ -147,7 +147,7 @@ Abre tu navegador en `http://localhost:8000` para subir videos, revisar los mome
 
 ---
 
-## 🧪 Pruebas Automatizadas
+## Pruebas Automatizadas
 
 El proyecto incluye una suite de pruebas con `pytest` que verifica:
 * Extracción y transcripción con marcas por palabra.
