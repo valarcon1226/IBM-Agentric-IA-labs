@@ -8,7 +8,9 @@ from pydantic import BaseModel, Field, field_serializer
 
 class SourceCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100, description="Nombre de la fuente")
-    url: str = Field(..., min_length=5, pattern=r"^https?://", description="URL http(s) del feed RSS o sitio web")
+    url: str = Field(
+        ..., min_length=5, pattern=r"^https?://", description="URL http(s) del feed RSS o sitio web"
+    )
     source_type: str = Field(default="RSS", description="Tipo de fuente: RSS o SCRAPE")
     is_active: bool = Field(default=True, description="Estado activo para ingesta")
 

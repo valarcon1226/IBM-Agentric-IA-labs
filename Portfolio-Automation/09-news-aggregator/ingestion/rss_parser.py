@@ -69,16 +69,20 @@ def parse_rss_feed(source_input: str) -> list[dict[str, Any]]:
             continue
 
         author = getattr(entry, "author", "") or getattr(entry, "creator", "")
-        pub_parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
+        pub_parsed = getattr(entry, "published_parsed", None) or getattr(
+            entry, "updated_parsed", None
+        )
         pub_date = parse_datetime(pub_parsed)
         content = extract_content(entry)
 
-        articles.append({
-            "title": title,
-            "url": link,
-            "author": author.strip() if author else "Redacción",
-            "published_date": pub_date,
-            "raw_content": content,
-        })
+        articles.append(
+            {
+                "title": title,
+                "url": link,
+                "author": author.strip() if author else "Redacción",
+                "published_date": pub_date,
+                "raw_content": content,
+            }
+        )
 
     return articles

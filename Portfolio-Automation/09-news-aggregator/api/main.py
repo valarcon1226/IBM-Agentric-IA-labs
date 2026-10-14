@@ -20,7 +20,9 @@ async def lifespan(app: FastAPI):
         try:
             db.init_schema()
         except Exception as exc:
-            logger.warning(f"Could not initialize schema on startup (will retry on requests): {exc}")
+            logger.warning(
+                f"Could not initialize schema on startup (will retry on requests): {exc}"
+            )
     yield
 
 
@@ -38,9 +40,14 @@ def health() -> dict[str, str]:
     try:
         is_healthy = db.check_health()
         if not is_healthy:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unhealthy")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unhealthy"
+            )
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Database connection error: {exc}") from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database connection error: {exc}",
+        ) from exc
 
     return {"status": "healthy", "service": "news-aggregator-api"}
 

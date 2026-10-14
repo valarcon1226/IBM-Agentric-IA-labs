@@ -3,10 +3,26 @@
 from intelligence.nlp_processor import categorize_article
 
 CATEGORIES = [
-    {"id": "cat-ai", "name": "Inteligencia Artificial", "keywords": ["ia", "ai", "llm", "gpt", "modelos", "redes neuronales"]},
-    {"id": "cat-sec", "name": "Ciberseguridad", "keywords": ["seguridad", "vulnerabilidad", "ransomware", "malware", "phishing"]},
-    {"id": "cat-cloud", "name": "Cloud y DevOps", "keywords": ["cloud", "kubernetes", "docker", "devops", "aws"]},
-    {"id": "cat-fin", "name": "Fintech y Mercados", "keywords": ["fintech", "mercado", "inversión", "bolsa", "acciones"]},
+    {
+        "id": "cat-ai",
+        "name": "Inteligencia Artificial",
+        "keywords": ["ia", "ai", "llm", "gpt", "modelos", "redes neuronales"],
+    },
+    {
+        "id": "cat-sec",
+        "name": "Ciberseguridad",
+        "keywords": ["seguridad", "vulnerabilidad", "ransomware", "malware", "phishing"],
+    },
+    {
+        "id": "cat-cloud",
+        "name": "Cloud y DevOps",
+        "keywords": ["cloud", "kubernetes", "docker", "devops", "aws"],
+    },
+    {
+        "id": "cat-fin",
+        "name": "Fintech y Mercados",
+        "keywords": ["fintech", "mercado", "inversión", "bolsa", "acciones"],
+    },
     {"id": "cat-gen", "name": "General", "keywords": ["tecnología", "innovación", "digital"]},
 ]
 

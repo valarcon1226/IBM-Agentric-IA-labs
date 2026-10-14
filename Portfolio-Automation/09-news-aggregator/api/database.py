@@ -181,7 +181,9 @@ class PostgresDatabase:
                 row = cur.fetchone()
                 return dict(row) if row else None
 
-    def find_duplicate_by_vector(self, embedding: list[float], threshold: float = 0.15) -> str | None:
+    def find_duplicate_by_vector(
+        self, embedding: list[float], threshold: float = 0.15
+    ) -> str | None:
         if not embedding:
             return None
         query = """
@@ -330,7 +332,15 @@ class PostgresDatabase:
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING *;
                     """,
-                    (digest_id, target_audience, recipient_email, now, status, len(article_ids), error_message),
+                    (
+                        digest_id,
+                        target_audience,
+                        recipient_email,
+                        now,
+                        status,
+                        len(article_ids),
+                        error_message,
+                    ),
                 )
                 digest = dict(cur.fetchone() or {})
                 for aid in article_ids:
@@ -354,10 +364,26 @@ class MemoryDatabase:
     def __init__(self):
         self.sources: dict[str, dict[str, Any]] = {}
         self.categories: dict[str, dict[str, Any]] = {
-            "cat-1": {"id": "cat-1", "name": "Inteligencia Artificial", "keywords": ["ia", "ai", "llm", "gpt"]},
-            "cat-2": {"id": "cat-2", "name": "Ciberseguridad", "keywords": ["seguridad", "ciberseguridad", "malware"]},
-            "cat-3": {"id": "cat-3", "name": "Cloud y DevOps", "keywords": ["cloud", "devops", "kubernetes", "docker"]},
-            "cat-4": {"id": "cat-4", "name": "Fintech y Mercados", "keywords": ["fintech", "mercado", "inversión"]},
+            "cat-1": {
+                "id": "cat-1",
+                "name": "Inteligencia Artificial",
+                "keywords": ["ia", "ai", "llm", "gpt"],
+            },
+            "cat-2": {
+                "id": "cat-2",
+                "name": "Ciberseguridad",
+                "keywords": ["seguridad", "ciberseguridad", "malware"],
+            },
+            "cat-3": {
+                "id": "cat-3",
+                "name": "Cloud y DevOps",
+                "keywords": ["cloud", "devops", "kubernetes", "docker"],
+            },
+            "cat-4": {
+                "id": "cat-4",
+                "name": "Fintech y Mercados",
+                "keywords": ["fintech", "mercado", "inversión"],
+            },
             "cat-5": {"id": "cat-5", "name": "General", "keywords": ["tecnología", "innovación"]},
         }
         self.articles: dict[str, dict[str, Any]] = {}
@@ -440,7 +466,9 @@ class MemoryDatabase:
                 return a
         return None
 
-    def find_duplicate_by_vector(self, embedding: list[float], threshold: float = 0.15) -> str | None:
+    def find_duplicate_by_vector(
+        self, embedding: list[float], threshold: float = 0.15
+    ) -> str | None:
         # In memory simulation of vector distance using cosine distance
         if not embedding:
             return None
@@ -498,7 +526,10 @@ class MemoryDatabase:
             cat_name = cat.get("name", "General")
             if category and category.lower() not in cat_name.lower():
                 continue
-            if q and (q.lower() not in a.get("title", "").lower() and q.lower() not in a.get("raw_content", "").lower()):
+            if q and (
+                q.lower() not in a.get("title", "").lower()
+                and q.lower() not in a.get("raw_content", "").lower()
+            ):
                 continue
 
             src = self.sources.get(str(a.get("source_id")), {})
@@ -530,13 +561,20 @@ class MemoryDatabase:
             item["source_name"] = src_name
             # Duplicates
             item["duplicates"] = [
-                {"url": d["url"], "source_name": self.sources.get(str(d.get("source_id")), {}).get("name", "Fuente")}
+                {
+                    "url": d["url"],
+                    "source_name": self.sources.get(str(d.get("source_id")), {}).get(
+                        "name", "Fuente"
+                    ),
+                }
                 for d in self.articles.values()
                 if d.get("parent_article_id") == a["id"]
             ]
             results.append(item)
 
-        results.sort(key=lambda x: (x.get("category_name", ""), str(x.get("published_date"))), reverse=True)
+        results.sort(
+            key=lambda x: (x.get("category_name", ""), str(x.get("published_date"))), reverse=True
+        )
         return results[:50]
 
     def create_digest(
