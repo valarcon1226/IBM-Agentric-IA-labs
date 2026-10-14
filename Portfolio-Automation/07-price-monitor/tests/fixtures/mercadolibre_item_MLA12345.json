@@ -1,0 +1,35 @@
+{
+  "id": "MLA123456789",
+  "site_id": "MLA",
+  "title": "Auriculares Inalámbricos Sony Wh-1000xm5 Cancelación Ruido",
+  "seller_id": 123456,
+  "category_id": "MLA3697",
+  "price": 389999.00,
+  "base_price": 389999.00,
+  "original_price": 420000.00,
+  "currency_id": "ARS",
+  "initial_quantity": 50,
+  "available_quantity": 18,
+  "sold_quantity": 32,
+  "status": "active",
+  "permalink": "https://articulo.mercadolibre.com.ar/MLA-123456789-sony-wh1000xm5.html",
+  "shipping": {
+    "free_shipping": true,
+    "mode": "me2",
+    "logistic_type": "fulfillment"
+  },
+  "seller_address": {
+    "city": {
+      "id": "TUxBQ0NBUGZlZG1sYQ",
+      "name": "Capital Federal"
+    },
+    "state": {
+      "id": "AR-C",
+      "name": "Capital Federal"
+    },
+    "country": {
+      "id": "AR",
+      "name": "Argentina"
+    }
+  }
+}
