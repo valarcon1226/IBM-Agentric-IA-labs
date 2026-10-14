@@ -1,0 +1,27 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: |
+    cd 19-qa-java-suite
+    docker-compose up -d selenium
+    sleep 10
+    docker-compose run --rm tests mvn -q test || true
+  displayName: 'Run Tests in Docker'
+
+- task: PublishTestResults@2
+  condition: always()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/target/surefire-reports/TEST-*.xml'
+    searchFolder: '$(System.DefaultWorkingDirectory)/19-qa-java-suite'
+  displayName: 'Publish JUnit Test Results'
+
+- script: |
+    cd 19-qa-java-suite
+    docker-compose down
+  condition: always()
+  displayName: 'Tear down Docker'

@@ -1,0 +1,42 @@
+name: Java QA Suite
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run Tests in Docker
+      working-directory: ./19-qa-java-suite
+      run: |
+        docker-compose up -d selenium
+        # Esperar a que Selenium este listo
+        sleep 10
+        docker-compose run --rm tests mvn -q test || true
+        
+    - name: Generate Allure Report
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: ./19-qa-java-suite/target/allure-results
+        allure_history: allure-history
+
+    - name: Deploy report to Github Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: allure-history
+        
+    - name: Tear down
+      if: always()
+      working-directory: ./19-qa-java-suite
+      run: docker-compose down
