@@ -4,7 +4,7 @@
 
 ---
 
-## 🌟 Valor de Negocio
+## Valor de Negocio
 
 Para tiendas que venden en múltiples plataformas y canales online, la gestión manual de despachos genera errores humanos, pedidos duplicados, demoras en bodega y clientes desinformados.
 
@@ -17,7 +17,7 @@ Este producto resuelve esos problemas mediante:
 
 ---
 
-## 📐 Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ```mermaid
 flowchart TD
@@ -51,7 +51,7 @@ flowchart TD
 
 ---
 
-## ☕ Catálogo de Demostración ("Café de Origen")
+## Catálogo de Demostración ("Café de Origen")
 
 El sistema incluye un catálogo de 10 cafés especiales colombianos de muestra, claramente identificados como ficticios con propósitos de demostración:
 - **Café Huila Especial (250g)** · Notas a panela y cítricos dulces ($28.000 COP).
@@ -67,7 +67,7 @@ El sistema incluye un catálogo de 10 cafés especiales colombianos de muestra, 
 
 ---
 
-## 🚀 Puesta en Marcha Rápida con Docker Compose
+## Puesta en Marcha Rápida con Docker Compose
 
 La aplicación se distribuye completamente dockerizada con imágenes de versiones fijas y comprobaciones de salud (`healthchecks`):
 
@@ -96,7 +96,7 @@ docker compose down
 
 ---
 
-## 💻 Desarrollo Local y Ejecución de Pruebas
+## Desarrollo Local y Ejecución de Pruebas
 
 Si prefieres ejecutar el proyecto localmente con Python 3.12:
 
@@ -115,7 +115,7 @@ uv pip install -r requirements-dev.txt
 
 ---
 
-## 🧪 Demostración con Webhooks de Muestra (`samples/`)
+## Demostración con Webhooks de Muestra (`samples/`)
 
 El directorio `samples/` contiene cargas útiles (`payloads`) reales de cada plataforma y un script automatizado para firmar y enviar pedidos de prueba:
 
@@ -135,7 +135,7 @@ Revisa de inmediato el panel en [http://localhost:8000/admin](http://localhost:8
 
 ---
 
-## 🔒 Consideraciones de Seguridad
+## Consideraciones de Seguridad
 
 - **Cero Secretos en el Repositorio:** El archivo `.env` está en `.gitignore`. Solo se versiona `.env.example` con marcadores `change_me_<nombre>`.
 - **Mitigación de Ataques de Fuerza Bruta:** Tras 5 intentos fallidos consecutivos de inicio de sesión, el usuario o dirección IP queda bloqueado por 15 minutos (código HTTP 429).
@@ -144,7 +144,7 @@ Revisa de inmediato el panel en [http://localhost:8000/admin](http://localhost:8
 
 ---
 
-## 📚 Documentación Adicional
+## Documentación Adicional
 
 - [Guión de Demostración para Clientes (5 Minutos)](docs/DEMO-SCRIPT.md)
 - [Guía para Crear Cuentas Gratuitas de Prueba en Shopify y Stripe](docs/CUENTAS.md)

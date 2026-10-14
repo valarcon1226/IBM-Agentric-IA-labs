@@ -1,4 +1,4 @@
-# 🎬 Guion de Demostración Comercial (Demo Script)
+# Guion de Demostración Comercial (Demo Script)
 
 **Objetivo:** Cerrar gigs de optimización SEO/AEO o proyectos de rediseño de páginas web en una llamada de 5 minutos o mediante un video corto personalizado (Loom).
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 🎙️ Guion Paso a Paso
+## Guion Paso a Paso
 
 ### Minuto 0:00 – 0:45 | El Gancho (Romper el Hielo con Datos Reales)
 
@@ -86,7 +86,7 @@
 
 ---
 
-## 💡 Consejos para Maximizar la Tasa de Conversión
+## Consejos para Maximizar la Tasa de Conversión
 
 1. **Personalización previa:** Genera el PDF con el logo y URL del cliente antes de enviar el primer mensaje.
 2. **Enviar el PDF como obsequio sin compromiso:** La reciprocidad activa la curiosidad del prospecto.

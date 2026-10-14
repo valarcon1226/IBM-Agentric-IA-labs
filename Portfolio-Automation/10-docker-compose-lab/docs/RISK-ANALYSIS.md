@@ -30,7 +30,3 @@ Status values: **Observed, open** = defect confirmed in the code, fix pending ·
 - **DL-R04:** after changing passwords, an existing postgres volume keeps the old ones
   (`init-db.sh` only runs on an empty volume). Local reset: `docker compose down -v`, which
   deletes all data.
-- The exact code and verification for each fix are in
-  [`../../docs/tasks/T11-p10-passwords-fuera-del-codigo.md`](../../docs/tasks/T11-p10-passwords-fuera-del-codigo.md)
-  and [`../../docs/tasks/T12-p10-backend-health-real-y-ci.md`](../../docs/tasks/T12-p10-backend-health-real-y-ci.md).
-  Update the Status column here when each one is done.

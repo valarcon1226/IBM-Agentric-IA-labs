@@ -7,8 +7,7 @@ Excluded by default (see `pyproject.toml`'s `addopts`); run explicitly with:
 
 against a stack started with a one-off `LLM_FAKE=true` override, e.g.:
 
-    docker compose --env-file .env.example run -e LLM_FAKE=true ...  (see docs/reviews for the
-    exact one-off override used in this batch)
+    docker compose --env-file .env.example run -e LLM_FAKE=true ...
 
 If the API isn't reachable at `E2E_BASE_URL` (default `http://localhost:8004`), every test in
 this module is skipped cleanly — no stack required to collect or to run the rest of the suite.

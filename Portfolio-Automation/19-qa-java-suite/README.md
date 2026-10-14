@@ -4,7 +4,7 @@ Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada p
 
 ---
 
-## 🎯 Qué demuestra este proyecto
+## Qué demuestra este proyecto
 
 1. **Arquitectura modular y mantenible (Page Object Model - POM):**
    - Separación estricta entre lógica de interacción con la UI (`qa.ui.pages`) y assertions/flujos de prueba (`qa.ui.tests`).
@@ -32,7 +32,7 @@ Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada p
 
 ---
 
-## 📋 Matriz de Casos de Prueba (35 Casos)
+## Matriz de Casos de Prueba (35 Casos)
 
 | ID | Tipo | Qué valida |
 | :--- | :--- | :--- |
@@ -74,7 +74,7 @@ Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada p
 
 ---
 
-## 🚀 Cómo ejecutar las pruebas con Docker
+## Cómo ejecutar las pruebas con Docker
 
 No es necesario instalar Java, Maven ni el navegador Edge localmente. Todo el entorno corre orquestado con Docker Compose.
 
@@ -99,7 +99,7 @@ docker compose down
 
 ---
 
-## 📊 Generación y visualización del reporte Allure
+## Generación y visualización del reporte Allure
 
 El plugin oficial de Allure está integrado en `pom.xml`. Durante la ejecución de las pruebas se generan los archivos crudos en `target/allure-results`.
 
@@ -123,7 +123,7 @@ El reporte HTML autónomo se generará automáticamente en:
 
 ---
 
-## 🔄 Integración Continua (CI/CD)
+## Integración Continua (CI/CD)
 
 En el directorio `ci/` se incluyen configuraciones listas para producción:
 

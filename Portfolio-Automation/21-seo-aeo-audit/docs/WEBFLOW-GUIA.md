@@ -1,10 +1,10 @@
-# ☕ Guía Paso a Paso: Construcción del Sitio "Café de Origen" en Webflow (Plan Gratis)
+# Guía Paso a Paso: Construcción del Sitio "Café de Origen" en Webflow (Plan Gratis)
 
 Esta guía contiene la **estructura, textos definitivos (copywriting), marcado técnico SEO/AEO y tutorial paso a paso** para que la dueña arme a mano el sitio web de **Café de Origen** en Webflow utilizando el plan gratuito (sin costo de suscripción).
 
 ---
 
-## 🎨 1. Identidad de Marca y Sistema de Diseño
+## 1. Identidad de Marca y Sistema de Diseño
 
 ### Paleta de Colores
 - **Café Espresso (Principal):** `#2C1810` (Títulos, textos oscuros, contraste)
@@ -19,7 +19,7 @@ Esta guía contiene la **estructura, textos definitivos (copywriting), marcado t
 
 ---
 
-## 🗺️ 2. Estructura de Páginas (Plan Gratis de Webflow)
+## 2. Estructura de Páginas (Plan Gratis de Webflow)
 
 El plan gratuito de Webflow permite hasta 2 páginas estáticas por proyecto para publicación libre en subdominio `.webflow.io`. Diseñamos una arquitectura optimizada de **2 páginas completas** (o 1 Home integral tipo Landing Page + 1 Menú detallado) que maximiza la conversión y obtiene 100/100 en la auditoría SEO & AEO:
 
@@ -28,7 +28,7 @@ El plan gratuito de Webflow permite hasta 2 páginas estáticas por proyecto par
 
 ---
 
-## ✍️ 3. Contenidos y Copywriting Completo por Página
+## 3. Contenidos y Copywriting Completo por Página
 
 ### PÁGINA 1: Inicio (`/`)
 
@@ -117,7 +117,7 @@ El plan gratuito de Webflow permite hasta 2 páginas estáticas por proyecto par
 
 ---
 
-## 💻 4. Código Schema JSON-LD (Copiar y Pegar en Webflow)
+## 4. Código Schema JSON-LD (Copiar y Pegar en Webflow)
 
 Para obtener los **25 puntos completos de Schema en la auditoría AEO**, agrega un elemento **"HTML Embed"** en la página de Inicio dentro de Webflow (o pégalo en la configuración de la página en *Page Settings -> Custom Code -> Inside `<head>` code*):
 
@@ -193,7 +193,7 @@ Para obtener los **25 puntos completos de Schema en la auditoría AEO**, agrega 
 
 ---
 
-## 📱 5. Botón Flotante de WhatsApp (HTML Embed Sencillo)
+## 5. Botón Flotante de WhatsApp (HTML Embed Sencillo)
 
 Agrega un elemento **HTML Embed** al final del `body` en Webflow con este código ligero (sin plugins pesados, 100% responsivo y respetuoso con Lighthouse):
 
@@ -211,7 +211,7 @@ Agrega un elemento **HTML Embed** al final del `body` en Webflow con este códig
 
 ---
 
-## 🛠️ 6. Paso a Paso en Webflow: De Cero a Publicación
+## 6. Paso a Paso en Webflow: De Cero a Publicación
 
 ### Paso 1: Crear la cuenta y el proyecto
 1. Ingresa a [Webflow.com](https://webflow.com) y crea una cuenta gratuita.
@@ -228,11 +228,11 @@ Agrega un elemento **HTML Embed** al final del `body` en Webflow con este códig
 ### Paso 3: Optimizar Imágenes para Rendimiento Web
 1. Antes de subir tus fotos a Webflow, asegúrate de convertirlas a formato `.webp` o comprimirlas con herramientas gratuitas (ej. Squoosh o TinyPNG).
 2. Asegúrate de que ninguna imagen pese más de 200 KB.
-3. En el panel de Webflow, selecciona cada imagen y en la pestaña de ajustes (⚙️) llena el campo **Alt Text** con la descripción exacta que figura en esta guía.
+3. En el panel de Webflow, selecciona cada imagen y en la pestaña de ajustes () llena el campo **Alt Text** con la descripción exacta que figura en esta guía.
 
 ### Paso 4: Ajustar Metadatos SEO y Lenguaje
 1. En el panel izquierdo de Webflow, ve a **Pages (icono de páginas)**.
-2. Abre los ajustes (⚙️) de la página `Home`.
+2. Abre los ajustes () de la página `Home`.
 3. En la sección **SEO Settings**:
    - Pega el **Title Tag**: `Café de Origen | Café Especial de Finca en Colombia`
    - Pega la **Meta Description**: `Descubre el auténtico café especial colombiano de origen. Microlotes cultivados a 1.800 metros con tostión artesanal. Envíos frescos a domicilio.`

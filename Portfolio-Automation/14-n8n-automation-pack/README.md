@@ -30,18 +30,18 @@ necesita criterio humano.
 | **F3** Reporte diario de ventas con IA | Todos los días a las 7:00 a.m. (hora Colombia), consulta las ventas de ayer, una IA escribe un resumen en español, y lo manda por correo y al chat del equipo. | ~15 min diarios armando el resumen a mano. |
 | **F4** Pago recibido → pedido | Llega la notificación de pago (estilo Stripe/Wompi) → se verifica que la firma sea auténtica, se revisa que ese pago no se haya procesado antes (por si el proveedor reintenta el aviso), se marca el pedido como pagado y se le confirma al cliente. | Evita el "pagó pero quedó como pendiente" y el doble cobro por reintentos. |
 
-Lo que este paquete **no** hace (a propósito, ver `docs/reviews/DECISIONES-14.md`): no sustituye
+Lo que este paquete **no** hace (a propósito): no sustituye
 al equipo en decisiones de negocio (precios, excepciones, atención al cliente difícil), no tiene
 su propio frontend — todo se opera desde la interfaz de n8n o desde los sistemas que ya usa el
 negocio (CRM, correo, Sheets) una vez puesto en producción.
 
 ## 3. Capturas / demo
 
-> 📸 *(placeholder) Captura del lienzo de n8n con los 4 flujos activos.*
+> *(placeholder) Captura del lienzo de n8n con los 4 flujos activos.*
 >
-> 📸 *(placeholder) Captura de un correo de bienvenida en la bandeja de "equipo" (mailpit).*
+> *(placeholder) Captura de un correo de bienvenida en la bandeja de "equipo" (mailpit).*
 >
-> 🎞️ *(placeholder) GIF de 2 min mostrando los 4 flujos, ver `docs/DEMO-SCRIPT.md`.*
+> *(placeholder) GIF de 2 min mostrando los 4 flujos, ver `docs/DEMO-SCRIPT.md`.*
 
 Guion completo de demo (2 minutos) en [`docs/DEMO-SCRIPT.md`](docs/DEMO-SCRIPT.md).
 
@@ -219,6 +219,3 @@ necesita volver a correr `n8n-init` (reimportar F2/F3), no solo reiniciar `n8n`.
 .venv\Scripts\ruff.exe check .
 ```
 
-Salida real de la última corrida: [`docs/reviews/T-14-lote-a.md`](../docs/reviews/T-14-lote-a.md)
-(infraestructura + F1/F4) y [`docs/reviews/T-14-lote-b.md`](../docs/reviews/T-14-lote-b.md)
-(F2/F3 y entregables).
