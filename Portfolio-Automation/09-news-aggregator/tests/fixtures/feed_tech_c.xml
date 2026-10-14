@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>GlobalNews C - Actualidad Global</title>
+    <link>https://globalnews-c.local</link>
+    <description>Economía, mercados y tecnologías emergentes</description>
+    <item>
+      <title>OpenAI desvela GPT-5 y redefine los estándares de la computación cognitiva</title>
+      <link>https://globalnews-c.local/openai-desvela-gpt5</link>
+      <author>Andres Silva</author>
+      <pubDate>Wed, 14 Oct 2026 10:20:00 GMT</pubDate>
+      <description>En un comunicado oficial, OpenAI reveló los detalles de GPT-5. El sistema de inteligencia artificial ofrece razonamiento profundo para análisis técnico y programación, superando con creces los hitos de versiones pasadas.</description>
+      <content:encoded><![CDATA[En un comunicado oficial, OpenAI reveló los detalles de GPT-5. El sistema de inteligencia artificial ofrece razonamiento profundo para análisis técnico y programación, superando con creces los hitos de versiones pasadas. Estará disponible para empresas y suscriptores este trimestre.]]></content:encoded>
+    </item>
+    <item>
+      <title>Las acciones de gigantes tecnológicos impulsan el índice bursátil a máximos históricos</title>
+      <link>https://globalnews-c.local/mercados-record-acciones-tech</link>
+      <author>Valeria Castro</author>
+      <pubDate>Wed, 14 Oct 2026 09:00:00 GMT</pubDate>
+      <description>El sector fintech y las empresas de tecnología lideran las ganancias en Wall Street tras los anuncios de nuevos productos y récord de inversión.</description>
+      <content:encoded><![CDATA[El sector fintech y las empresas de tecnología lideran las ganancias en Wall Street tras los anuncios de nuevos productos y récord de inversión corporativa en startups de inteligencia artificial.]]></content:encoded>
+    </item>
+  </channel>
+</rss>
