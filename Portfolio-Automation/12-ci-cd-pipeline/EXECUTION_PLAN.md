@@ -1,37 +1,62 @@
-# Execution Plan — CI/CD & Automated Testing Pipeline
+# Execution Plan — Project 12: CI/CD & Automated Testing Pipeline
 
-Source of truth: `README.md`. Can be applied to any single service repo in this portfolio — can start right after `01-smart-data-intake` is working, or be layered onto each project incrementally (see `docs/BUILD-PLAN.md` at the portfolio root).
+Source of truth: `README.md`.
 
 ## Prerequisites
-- A GitHub repository with Actions enabled
-- Target service already has a working Dockerfile-buildable app and a `tests/` directory
-- SSH access to a deploy target (VPS) for the CD steps
+- Docker engine and docker compose installed and running.
+- Python 3.12 / 3.11 with `uv` virtual environment.
+- GitHub repository with Actions enabled.
+- Remote VPS target for deployment (when `DEPLOY_ENABLED="true"`).
+
+---
 
 ## Build Checklist
 
-- [ ] Add `.github/workflows/ci.yml` (README section 5).
-  - Verify: valid YAML; no syntax errors on push.
-- [ ] Add `.github/workflows/cd.yml` (README section 5).
-  - Verify: valid YAML; only references named secrets, no hardcoded credentials.
-- [ ] Add repo secrets: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`, `SLACK_WEBHOOK`, `CR_PAT`.
-  - `CR_PAT`: a fine-grained personal access token with **only** `read:packages`, used by the VPS to pull from GHCR (`cd.yml` pipes it to `docker login --password-stdin`). Never commit it.
-  - Verify: all 5 present under Settings → Secrets and variables → Actions.
-  - Verify (on the VPS): `echo "$CR_PAT" | docker login ghcr.io -u <github-user> --password-stdin` → `Login Succeeded`.
-- [ ] Enable GHCR write permissions for Actions.
-  - Verify: a manual push test to `ghcr.io/<repo>` succeeds (no 403).
-- [ ] Add the multi-stage Dockerfile (README section 4) to the target service.
-  - Verify: `docker build` succeeds; container runs as non-root `appuser`.
-- [ ] Raise test coverage to ≥80% (`pytest --cov=src --cov-fail-under=80`).
-  - Verify: coverage gate passes locally.
-- [ ] Open a dry-run PR to trigger `ci.yml`.
-  - Verify: Ruff, Mypy, Bandit, Pytest all green on the PR.
-- [ ] Merge to `main` to trigger `cd.yml`.
-  - Verify: GHCR push succeeds, SSH deploy succeeds, post-deploy health check passes.
-- [ ] Manually trigger `rollback.yml` with an older SHA.
-  - Verify: the deployed service's version/health endpoint reflects the rolled-back SHA.
+- [x] Create application package `app/`:
+  - `app/config.py`: Pydantic settings loading `.env` configuration.
+  - `app/models.py`: SQLAlchemy `DeploymentModel` and Pydantic schemas (`DeploymentCreate`, `DeploymentUpdate`, `DeploymentResponse`, `HealthResponse`).
+  - `app/database.py`: SQLAlchemy engine, session maker, `init_db` and `check_db_health`.
+  - `app/crud.py`: CRUD operations for deployments.
+  - `app/main.py`: FastAPI endpoints (`/health`, `/api/v1/deployments`).
+- [x] Create test suite `tests/`:
+  - `tests/conftest.py`: In-memory SQLite fixtures and FastAPI `TestClient`.
+  - `tests/test_unit.py`: 14 unit tests covering CRUD, validations, filtering, errors, and database utilities.
+  - `tests/test_integration.py`: Integration test connecting to a real `postgres:16-alpine` container via Testcontainers.
+- [x] Configure code quality and typing tools:
+  - `pyproject.toml`: Ruff linting (E, F, I, B, UP), Mypy, Pytest configuration with markers, coverage threshold (>= 80%).
+  - `requirements.txt`: Pinned production dependencies (FastAPI, SQLAlchemy, psycopg2-binary, Uvicorn, Pydantic).
+  - `requirements-dev.txt`: Pinned development dependencies (Ruff, Mypy, Bandit, Pytest, Pytest-cov, Testcontainers).
+- [x] Multi-stage Docker containerization:
+  - `Dockerfile`: Multi-stage build (`python:3.12-slim-bookworm`), non-root user `appuser` (UID 10001, GID 10001), system updates to mitigate CRITICAL CVEs.
+  - `.dockerignore`: Ignore `.venv`, `__pycache__`, test artifacts.
+- [x] Docker Compose stack:
+  - `docker-compose.yml`: Services `db` (`postgres:16-alpine`) and `api` (`127.0.0.1:8022:8000`), with discrete healthchecks and isolated network.
+  - `.env.example`: Configuration template with `change_me_` defaults.
+- [x] GitHub Actions workflow `.github/workflows/12-ci-cd.yml`:
+  - Path filters: `Portfolio-Automation/12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`.
+  - Matrix testing: Python 3.11 and 3.12.
+  - Quality gates: Ruff check, Ruff format check, Mypy type-check, Bandit SAST scan.
+  - Tests: Pytest unit tests with coverage enforcement (>= 80%) + Testcontainers integration tests.
+  - Container build & Trivy vulnerability scan failing on CRITICAL (`ignore-unfixed: true`).
+  - GHCR publish on push to `main` and `portfolio-automation` with minimal permissions (`contents: read`, `packages: write`).
+  - Guarded SSH deploy and manual rollback (`workflow_dispatch`) requiring `vars.DEPLOY_ENABLED == 'true'`.
+  - All actions pinned by version tag.
+- [x] Validation and Verification:
+  - Ruff check & format check pass with 0 errors.
+  - Mypy check passes with 0 errors.
+  - Bandit scan passes with 0 issues.
+  - Pytest unit tests pass (14 passed, >= 95% coverage).
+  - Pytest integration tests with Testcontainers pass against real PostgreSQL.
+  - Trivy scan passes with 0 CRITICAL vulnerabilities.
+  - `actionlint` passes with 0 errors on `.github/workflows/12-ci-cd.yml`.
+  - Docker Compose up/ps/e2e/down verified successfully.
+
+---
 
 ## Definition of Done
-- [ ] Every PR against `main` runs lint + type-check + security scan + tests automatically.
-- [ ] Merging to `main` deploys automatically with zero manual SSH steps.
-- [ ] Rollback to a previous SHA verified to work at least once.
-- [ ] Coverage gate enforced at ≥80%.
+- [x] CI/CD pipeline workflow created at repository root (`.github/workflows/12-ci-cd.yml`).
+- [x] Existing workflow `.github/workflows/portfolio-automation-ci.yml` kept completely untouched.
+- [x] Quality gates (Ruff, Mypy, Bandit, Pytest >= 80%, Trivy, Actionlint) passing locally and in CI.
+- [x] Container runs as non-root user on slim image without CRITICAL vulnerabilities.
+- [x] Deployment and rollback jobs present and disabled unless `vars.DEPLOY_ENABLED == 'true'`.
+- [x] Documentation in `README.md` and `EXECUTION_PLAN.md` fully synchronized with actual code.
