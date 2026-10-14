@@ -1,0 +1,198 @@
+name: 12-ci-cd
+
+on:
+  pull_request:
+    paths:
+      - "Portfolio-Automation/12-ci-cd-pipeline/**"
+      - ".github/workflows/12-ci-cd.yml"
+  push:
+    paths:
+      - "Portfolio-Automation/12-ci-cd-pipeline/**"
+      - ".github/workflows/12-ci-cd.yml"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag or Git SHA to rollback to"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: 12-ci-cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/12-ci-cd-pipeline
+
+jobs:
+  lint-and-test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/12-ci-cd-pipeline
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: Portfolio-Automation/12-ci-cd-pipeline/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint with Ruff
+        run: ruff check app tests
+
+      - name: Check formatting with Ruff
+        run: ruff format --check app tests
+
+      - name: Type-check with Mypy
+        run: mypy app
+
+      - name: Security scan with Bandit
+        run: bandit -r app
+
+      - name: Run unit tests with coverage
+        run: pytest --timeout=60 --cov=app --cov-report=term --cov-report=xml --cov-fail-under=80
+
+      - name: Run integration tests with Testcontainers
+        run: pytest -m integration --timeout=120
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: coverage-${{ matrix.python-version }}-${{ github.run_id }}
+          path: Portfolio-Automation/12-ci-cd-pipeline/coverage.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+  build-and-scan:
+    name: Build image and scan with Trivy
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Lowercase image name (Docker tags must be lowercase)
+        run: echo "IMAGE=${REGISTRY}/${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Build Docker image locally
+        uses: docker/build-push-action@v6.11.0
+        with:
+          context: Portfolio-Automation/12-ci-cd-pipeline
+          load: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Scan image with Trivy (fails on CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL
+
+  publish:
+    name: Publish to GHCR
+    needs: build-and-scan
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/portfolio-automation')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Lowercase image name (Docker tags must be lowercase)
+        run: echo "IMAGE=${REGISTRY}/${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.11.0
+        with:
+          context: Portfolio-Automation/12-ci-cd-pipeline
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+
+  deploy:
+    name: Deploy to production via SSH
+    needs: publish
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Deploy on remote host via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/portfolio/Portfolio-Automation/12-ci-cd-pipeline
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose pull api
+            docker compose up -d --no-deps api
+            sleep 10
+            curl -sf http://127.0.0.1:8022/health || exit 1
+
+  rollback:
+    name: Manual rollback via SSH
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.image_tag != '' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate image tag
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          [[ "$IMAGE_TAG" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || { echo "Invalid image tag"; exit 1; }
+          echo "IMAGE=${REGISTRY}/${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
+      - name: Rollback on remote host via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/portfolio/Portfolio-Automation/12-ci-cd-pipeline
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ env.IMAGE }}:${{ github.event.inputs.image_tag }}
+            docker tag ${{ env.IMAGE }}:${{ github.event.inputs.image_tag }} ${{ env.IMAGE }}:latest
+            docker compose up -d --no-deps api
+            sleep 10
+            curl -sf http://127.0.0.1:8022/health || exit 1
