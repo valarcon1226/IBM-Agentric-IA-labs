@@ -1,0 +1,91 @@
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://user:${POSTGRES_PASSWORD:-change_me_db_password}@postgres:5432/invoices
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-change_me_minio_password}
+      MINIO_BUCKET: invoices-bucket
+      MINIO_SECURE: "false"
+      API_BEARER_TOKEN: ${API_BEARER_TOKEN:-change_me_bearer_token}
+      MAX_SYNC_PAGES: "1"
+      TESSERACT_CMD: tesseract
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+
+  worker:
+    build: .
+    command: ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://user:${POSTGRES_PASSWORD:-change_me_db_password}@postgres:5432/invoices
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-change_me_minio_password}
+      MINIO_BUCKET: invoices-bucket
+      MINIO_SECURE: "false"
+      API_BEARER_TOKEN: ${API_BEARER_TOKEN:-change_me_bearer_token}
+      MAX_SYNC_PAGES: "1"
+      TESSERACT_CMD: tesseract
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.core.celery_app inspect ping || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 15s
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_db_password}
+      POSTGRES_DB: invoices
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d invoices"]
+      interval: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: chainguard/minio
+    command: server /tmp/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change_me_minio_password}
+    healthcheck:
+      test: ["CMD", "/usr/bin/mc", "ready", "local"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
