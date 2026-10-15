@@ -33,6 +33,9 @@ jobs:
           - project: 04-data-cleaning-api
             src: app
             slug: 04-data-cleaning-api
+          - project: 05-invoice-processor
+            src: app
+            slug: 05-invoice-processor
           - project: 10-docker-compose-lab/backend
             src: src
             slug: 10-backend
