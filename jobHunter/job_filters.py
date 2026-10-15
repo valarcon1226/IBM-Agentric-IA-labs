@@ -115,6 +115,29 @@ NEEDS_WORK_PAPERS = re.compile(
 )
 
 
+# Tercer filtro: la descripción misma restringe a otro país. Corre aunque LinkedIn no traiga ubicación (antes
+# esas pasaban derecho: "fully remote within the United States" de Cognizant salió con 100%). Solo frases sobre
+# a quién contratan: "US-based client/team/company" o "authorized to work in their country of residence" sirven.
+_OTHER = r"(us|u\.s\.?|usa|u\.s\.a\.?|united states|uk|united kingdom|canada|eu|europe|india)(?![a-z])"
+COUNTRY_ONLY = re.compile(
+    rf"remote[^.\n]{{0,20}}?\b(with)?in (the )?{_OTHER}|"                        # fully remote within the United States
+    rf"remote\s*[-–—,:(|]\s*{_OTHER}|"                                          # Remote – US / Remote (USA)
+    rf"(must be|remote,?|only)\s+{_OTHER}[- ]?based|{_OTHER}[- ]?based (candidates|applicants|residents) only|"
+    rf"(authori[sz]ed|eligible|legally (able|permitted)) to work (in|for) (the )?{_OTHER}|"
+    rf"(?<![a-z]){_OTHER} citizens?(hip)?\b|green card|security clearance|(?<![a-z])w-?2(?![a-z0-9])|"
+    rf"must (be )?(reside|located|live|based) in (the )?{_OTHER}",
+    re.IGNORECASE,
+)
+
+
+def country_only_reason(clean_desc: str) -> str | None:
+    desc = clean_desc or ""
+    m = COUNTRY_ONLY.search(desc)
+    if m and not OPEN_TO_LATAM.search(desc):
+        return f"la descripción la limita a otro país: «{m.group(0).strip()}»"
+    return None
+
+
 def location_reason(location: str, clean_desc: str) -> str | None:
     """Motivo si la vacante está en un país donde no la pueden contratar; None si sirve."""
     country = _norm((location or "").split(",")[-1])
@@ -132,7 +155,7 @@ def rejection_reason(job: dict, clean_desc: str) -> str | None:
     title, company = job.get("title", ""), job.get("company", "")
     if os.environ.get("SCOUT_EXCLUDE_INTERNS", "1") == "1" and INTERN_PATTERN.search(title):
         return "pasantía/trainee"
-    loc = location_reason(job.get("location", ""), clean_desc)
+    loc = location_reason(job.get("location", ""), clean_desc) or country_only_reason(clean_desc)
     if loc:
         return loc
     allowed = allowed_langs()
