@@ -27,7 +27,8 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
 COPY --from=builder /install /usr/local
 
 WORKDIR /app
-COPY src/ ./src/
+COPY --chown=appuser:appuser src/ ./src/
+RUN chown appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
