@@ -1,0 +1,24 @@
+[project]
+name = "invoice-processor"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -m \"not integration\""
+markers = [
+    "integration: requires Docker stack with real OCR / Postgres / MinIO / Redis",
+]
+
+[tool.coverage.run]
+source = ["app"]
