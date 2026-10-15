@@ -1,7 +1,15 @@
 # Project: Docker Compose Production Lab
 
-> **Status (2026-09-24):** scaffolded, not yet run end to end. Known defects and their fixes are
-> tracked in [`docs/RISK-ANALYSIS.md`](docs/RISK-ANALYSIS.md) — the remaining Critical one is DL-R11 (full stack never started).
+> **Status (2026-10-15):** verified end to end on a laptop with the local override: all 10 services up
+> (the 9 with a healthcheck report `healthy`; `celery-beat` has none), Traefik routes `api.localhost`,
+> `n8n.localhost` and `grafana.localhost`, a Celery task round-trips, every Prometheus target is `up`, and
+> Traefik cannot resolve `postgres`. All known risks in [`docs/RISK-ANALYSIS.md`](docs/RISK-ANALYSIS.md)
+> (including DL-R11) are closed (`Observed → fixed`). The production TLS setup (Let's Encrypt) has not been
+> run against a real domain.
+>
+> Run it locally (plain HTTP on `127.0.0.1:8088`, no domain needed):
+> `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build`, then open
+> `http://grafana.localhost:8088`.
 
 ## 1. Problem Statement
 Deploying a complex ecosystem of microservices, databases, and background workers requires a robust, reproducible, and secure infrastructure. A single failure in a database or worker node can cascade into systemic failure. This project establishes a production-grade container orchestration setup using Docker Compose to host the entire portfolio stack—ensuring high availability, secure networking, persistent storage, and automated routing with SSL termination.
@@ -58,8 +66,12 @@ flowchart TD
 │   └── jwt_secret.txt     (git-ignored, create locally)
 ├── .env.example
 ├── docker-compose.yml
+├── docker-compose.local.yml (local development override on *.localhost:8088)
 ├── init-db.sh
 ├── prometheus.yml
+├── provisioning/
+│   └── datasources/
+│       └── prometheus.yml (provisions Prometheus datasource in Grafana)
 ├── scripts/
 │   └── sync_readme.py     (keeps README sections 6–8 in sync; `--check` runs in CI)
 ├── docs/
@@ -149,7 +161,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.11
     command:
       - "--api.insecure=false"
       - "--ping=true"
@@ -163,6 +175,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=metrics"
       - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
       - "--entrypoints.metrics.address=:8082"
     ports:
@@ -239,6 +252,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://fastapi_user:${FASTAPI_DB_PASSWORD}@postgres:5432/fastapi_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     secrets:
       - jwt_secret
@@ -302,7 +316,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: ["celery", "-A", "src.celery_app", "beat", "--loglevel=info"]
+    command: ["celery", "-A", "src.celery_app", "beat", "--loglevel=info", "-s", "/tmp/celerybeat-schedule"]
     environment:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
@@ -348,7 +362,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -359,7 +373,7 @@ services:
           memory: 1G
 
   minio:
-    image: minio/minio
+    image: chainguard/minio
     command: server /data --console-address ":9001"
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
@@ -371,7 +385,7 @@ services:
       - backend_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -390,7 +404,7 @@ services:
       - backend_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -412,6 +426,7 @@ services:
       - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD}
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
     networks:
       - frontend_net
       - backend_net
@@ -428,7 +443,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

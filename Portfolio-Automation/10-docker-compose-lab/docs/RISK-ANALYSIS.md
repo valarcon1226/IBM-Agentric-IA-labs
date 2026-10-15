@@ -20,7 +20,7 @@ Status values: **Observed, open** = defect confirmed in the code, fix pending ·
 | DL-R08 | README documents a different stack than the one deployed. | High | Medium | High | **Observed → fixed** | README said `POSTGRES_USER: admin`, `core.celery_app`, `grafana-enterprise`. Sections 6–8 are now verbatim copies; T11 adds `scripts/sync_readme.py --check` and T12 runs it in CI. | done / T11–T12 |
 | DL-R09 | Making settings mandatory breaks the Celery worker/beat. | Medium | High | High | Mitigated | `backend/src/celery_app.py` imports `Settings`; `celery-beat` has no `DATABASE_URL` and neither worker has a JWT secret. Requirements must be enforced only at API startup (`require_api_settings`), never in `Settings`. | T12 (done) |
 | DL-R10 | Nothing proves the backend works. | High | Medium | High | **Observed → fixed** | `backend/` has no tests and is not in CI. | T12 (done) |
-| DL-R11 | The full stack has never been started. | High | High | Critical | Open | No run of `docker compose up` has been recorded; see `EXECUTION_PLAN.md` sections 3–5. | after T11–T12 |
+| DL-R11 | The full stack has never been started. | High | High | Critical | **Observed → fixed** | Verified full stack execution with local override (`docker-compose.local.yml`). All 10 services up (9 healthy by healthcheck, celery-beat has none), Traefik routes api/n8n/grafana.localhost, a Celery task round-trips, all Prometheus targets up, Traefik cannot resolve postgres. TLS against a real domain not yet run. | T-10-B (done) |
 
 ## Notes for whoever fixes these
 
