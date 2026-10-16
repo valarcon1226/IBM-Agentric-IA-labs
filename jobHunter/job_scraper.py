@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 import time
 
+import job_filters
 import user_settings
 
 # JobSpy's Country enum is missing several real countries (e.g. "cambodia") that show up
@@ -224,7 +225,7 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
     all_jobs = []
     
     # 2026-10-01: con location="Remote" LinkedIn traía remotos de cualquier país (Canadá, EE.UU., India,
-    # Francia...) y ella solo puede trabajar desde Colombia. Se busca donde la puedan contratar.
+    # Francia...) y la persona solo puede trabajar desde su país. Se busca donde la puedan contratar.
     # Indeed/Glassdoor salen: con country_indeed='USA' solo traían EE.UU. y Glassdoor daba 403.
     import re
     negative_pattern = r'\b(senior|sr|sr\.|lead|principal|staff|vp|vice\s?president|director|manager|head|chief|architect)\b'
@@ -253,7 +254,8 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
                     "company": str(row.get('company', '')),
                     "url": str(row.get('job_url', '')),
                     "description": str(row.get('description', '')),
-                    "location": "" if str(row.get('location', '')) == "nan" else str(row.get('location', '')),
+                    "location": job_filters.with_search_country(
+                        "" if str(row.get('location', '')) == "nan" else str(row.get('location', '')), location),
                 })
         
     print(f"\n[DONE] Búsqueda JobSpy terminada. Quedaron {len(all_jobs)} vacantes tras el Filtro Anti-Senior.")

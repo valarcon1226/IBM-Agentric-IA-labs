@@ -55,4 +55,15 @@ for desc in [
     "Join us! Remote - flexible hours", "Remote within Uruguay and Colombia", "We use AWS EU regions",
 ]:
     assert only(desc) is None, desc
+
+# Áreas metropolitanas de LinkedIn sin país (corrida real 2026-10-15: Bogotá salía como extranjera). home_country = colombia
+from job_filters import with_search_country as tag
+assert tag("Bogotá D.C. Metropolitan Area", "Colombia") == "Bogotá D.C. Metropolitan Area, Colombia"
+assert location_reason(tag("Bogotá D.C. Metropolitan Area", "Colombia"), "Remote role") is None
+assert tag("Greater Medellín Area", "Colombia") == "Greater Medellín Area, Colombia"
+assert tag("Lima Metropolitan Area", "Latin America") == "Lima Metropolitan Area"         # otra búsqueda: no se toca
+assert location_reason(tag("Lima Metropolitan Area", "Latin America"), "Remote role")
+assert tag("United States", "Colombia") == "United States"                                 # nombra otro país: no se toca
+assert tag("Medellín, Antioquia, Colombia", "Colombia") == "Medellín, Antioquia, Colombia"
+assert tag("", "Colombia") == ""
 print("ok")
