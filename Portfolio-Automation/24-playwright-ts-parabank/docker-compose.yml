@@ -1,0 +1,18 @@
+services:
+  parabank:
+    image: parasoft/parabank:baseline
+    container_name: parabank-24
+    ports:
+      - '127.0.0.1:8640:8080'
+    healthcheck:
+      test:
+        - 'CMD'
+        - 'perl'
+        - '-MIO::Socket::INET'
+        - '-e'
+        - "$$s = IO::Socket::INET->new('127.0.0.1:8080') or exit 1; print $$s \"GET /parabank/index.htm HTTP/1.0\\r\\nHost: 127.0.0.1\\r\\n\\r\\n\"; $$r = <$$s>; exit($$r =~ /200/ ? 0 : 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 240s
+    restart: unless-stopped
