@@ -1,0 +1,4 @@
+services:
+  api:
+    volumes:
+      - ../22-web-chat-widget:/22-web-chat-widget:ro

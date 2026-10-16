@@ -1,0 +1,135 @@
+name: 27-api-contract-quality
+
+on:
+  push:
+    paths:
+      - 'Portfolio-Automation/27-api-contract-quality/**'
+      - '.github/workflows/27-api-contract-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fast-gate:
+    name: Fast Contract & Regression Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/27-api-contract-quality
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'Portfolio-Automation/27-api-contract-quality/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run consumer contract tests
+        run: npm run test:consumer
+
+      - name: Start Petstore SUT
+        run: docker compose up -d petstore
+
+      - name: Run Postman / Newman regression suite
+        run: npm run test:newman
+
+      - name: Tear down fast gate SUT
+        if: always()
+        run: docker compose down -v
+
+      - name: Upload Newman JUnit test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-junit-report
+          path: Portfolio-Automation/27-api-contract-quality/reports/newman-junit.xml
+          retention-days: 14
+
+  heavy-gate:
+    name: Provider Verification & Property Fuzzing (Integration)
+    if: github.event_name == 'workflow_dispatch'
+    needs: fast-gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/27-api-contract-quality
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'Portfolio-Automation/27-api-contract-quality/package-lock.json'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv and install Python dependencies
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: '0.12.8'
+
+      - name: Install schemathesis in virtual environment
+        run: |
+          uv venv -p 3.12 .venv
+          uv pip install -p .venv/bin/python -r requirements.txt
+
+      - name: Start Pact Broker and Database
+        run: docker compose up -d pact-broker-db pact-broker
+
+      - name: Generate consumer pact
+        run: npm run test:consumer
+
+      - name: Publish pact to Pact Broker
+        run: npm run publish:pact
+
+      - name: Start Project 13 Restaurant Assistant Provider
+        run: |
+          docker compose -f ../13-whatsapp-restaurant-assistant/docker-compose.yml \
+            -f docker-compose.p13-mount.yml \
+            --project-directory ../13-whatsapp-restaurant-assistant up -d
+
+      - name: Run Provider Verification against Project 13
+        run: npm run verify:provider
+
+      - name: Run Can-I-Deploy Gate
+        run: npm run can-i-deploy
+
+      - name: Start Project 20 E-commerce Order Automation
+        run: docker compose -f ../20-ecommerce-order-automation/docker-compose.yml up -d
+
+      - name: Run Schemathesis Property-Based Fuzzing
+        run: |
+          export PYTHONIOENCODING=utf-8
+          .venv/bin/schemathesis run http://127.0.0.1:8000/openapi.json \
+            --checks not_a_server_error,status_code_conformance,content_type_conformance,response_schema_conformance \
+            --max-examples 25 --workers 1 || true
+
+      - name: Tear down all containers and volumes
+        if: always()
+        run: |
+          docker compose down -v
+          docker compose -f ../13-whatsapp-restaurant-assistant/docker-compose.yml \
+            --project-directory ../13-whatsapp-restaurant-assistant down -v
+          docker compose -f ../20-ecommerce-order-automation/docker-compose.yml down -v
