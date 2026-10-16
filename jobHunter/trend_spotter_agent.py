@@ -45,8 +45,8 @@ def market_gigs(gigs: List[Dict]) -> List[Dict]:
             and not _BLOCKLIST.search(f"{g['title']} {g['description']}")]
 
 
-# Los 10 side hustles del video "10 Claude AI Side Hustles" (Patrick Dang). Valentina eligió growth operator,
-# youtube agency, content distribution y seo_aeo (memoria side-hustle-picks). "otro" = no encaja en ninguno.
+# Los 10 side hustles del video "10 Claude AI Side Hustles" (Patrick Dang). Los que se siguen por defecto: growth operator,
+# youtube agency, content distribution y seo_aeo. "otro" = no encaja en ninguno.
 HUSTLES = {
     "meta_ads": "Crear o gestionar campañas de anuncios pagados en Facebook/Instagram (creativos, segmentación, escalar ads)",
     "ghostwriting": "Escribir textos con la voz de una persona o marca: posts de LinkedIn/X, newsletters, discursos, copy de ventas",
