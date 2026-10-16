@@ -58,7 +58,7 @@ STUDY_MIN, STUDY_MAX = 50, 90
 def generate_study_guide(job_title: str, company: str, gap_analysis: str, job_id):
     if not gap_analysis or gap_analysis.strip() == "":
         return
-    guides_dir = profile_paths.resolve("study_guides")  # por persona; sin perfil, la raíz (homelab)
+    guides_dir = profile_paths.resolve("study_guides")  # por persona; sin perfil, la raíz
     os.makedirs(guides_dir, exist_ok=True)
     tutor_filename = os.path.join(guides_dir, f"STUDY_GUIDE_{_safe_filename(company)}_{job_id}.txt")
     if os.path.exists(tutor_filename):
@@ -70,7 +70,7 @@ def generate_study_guide(job_title: str, company: str, gap_analysis: str, job_id
             human_template=TUTOR_HUMAN_TEMPLATE,
             variables={"job_title": job_title, "gap_analysis": gap_analysis},
             temperature=0.2,
-            local_only=True,  # una guía por vacante no vale cupo de nube: la hace el modelo del homelab
+            local_only=True,  # una guía por vacante no vale cupo de nube: la hace el modelo local (Ollama) si hay
         )
     except llm_chain.AllProvidersExhausted:
         print("      [!] Los 4 proveedores LLM se quedaron sin cupo — se omite la guía de estudio para este job.")

@@ -254,7 +254,7 @@ def _openrouter():
 
 
 def _ollama():
-    # NOTA (2026-09-24): último escalón, local y SIN cupo diario — pensado para el homelab
+    # NOTA (2026-09-24): último escalón, local y SIN cupo diario — pensado para un PC o servidor con GPU
     # (GTX 1050 4GB, qwen3:4b ~22 tok/s 100% GPU). Solo se activa si OLLAMA_MODEL está en el
     # .env, así que en la laptop la cadena queda igual que antes. Con esto el daemon nunca
     # tiene que dormir esperando cupo: si las 4 APIs gratis están al tope, cae acá.

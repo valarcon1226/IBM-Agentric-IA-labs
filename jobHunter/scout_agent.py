@@ -33,35 +33,6 @@ class ViabilityReport(BaseModel):
 # (el LLM en si -- Gemini/Groq/Cerebras/OpenRouter, con fallback automatico entre los 4 -- vive en llm_chain.py)
 # ==========================================
 
-_EVALUATOR_SYSTEM_PROMPT = """You are a practical Technical Recruiter AI. You evaluate if a candidate meets the MINIMUM requirements for a job.
-CRITICAL SENIORITY RULE: The candidate's seniority profile is: "{seniority_context}".
-- MIXED SENIORITY: If the candidate has different years of experience in different roles (e.g. 4 years in QA, but only 1 year in Dev), evaluate the role appropriately! They are a Mid-Level QA, but a JUNIOR Developer. Do not average their years. If applying for a Dev role, treat them as a Junior.
-- If the job requires a SIGNIFICANTLY HIGHER level of seniority for the specific discipline (e.g. asking for 8-10 years, or Executive/VP), YOU MUST REJECT THEM (is_viable: false).
-- HOWEVER, if the job is Junior, Entry-Level, or requires LESS experience than the candidate has in that discipline, ACCEPT THEM. Being overqualified or applying to simpler roles is 100% FINE.
-
-STRICT ENGINEERING DOMAIN RULE:
-- Even though simpler roles are allowed, THEY MUST BE STRICTLY TECHNICAL ENGINEERING ROLES (Software Development, QA Automation, AI, Data, DevOps, IT Support).
-- If the role is non-technical, administrative, customer support, sales, data entry, or generic "Content Reviewer", YOU MUST REJECT IT IMMEDIATELY (is_viable: false). Do not accept clerical jobs just because they are "easy".
-
-ELIGIBILITY RULE (candidate is based in Colombia, remote-only, no visa sponsorship needed/available):
-- If the job explicitly requires "U.S. Citizens only", "must be a U.S. citizen", a Green Card, or otherwise restricts eligibility to a specific country's citizens/residents that excludes Colombia, YOU MUST REJECT IT (is_viable: false).
-- If the job requires obtaining or holding a security clearance (Confidential, Secret, Top Secret, Public Trust), even if worded as "preferred" rather than "required", YOU MUST REJECT IT (is_viable: false) — clearances require being a U.S. citizen/resident in practice, which the candidate is not.
-- If the job explicitly says it does NOT offer visa sponsorship AND also requires being physically located/based in a specific country other than where the candidate is (not simply remote), YOU MUST REJECT IT (is_viable: false).
-- Being remote, worldwide, or open to LatAm/international candidates is FINE and should be treated as a positive signal, not a rejection reason.
-
-They do NOT need 100% technical match. If they lack a specific tool, they are viable, just list the tool in 'missing_skills_to_study'.
-Analyze the job description against the Candidate's Relevant Experience.
-
-EXAMPLE OUTPUT FOR A ROLE THAT IS TOO SENIOR:
-{{
-  "is_viable": false,
-  "match_percentage": 10,
-  "missing_skills_to_study": [],
-  "reasoning": "Rejected based on Seniority. Role requires 10 years, but candidate has 4."
-}}"""
-
-_EVALUATOR_HUMAN_TEMPLATE = "JOB TITLE: {title}\n\nJOB DESCRIPTION:\n{job_desc}\n\nCANDIDATE MASTER PROFILE (JSON):\n{candidate_exp}"
-
 # Búsqueda enfocada (corrida puntual, no el loop 24/7): p. ej. solo QA Automation mid-level
 #   SCOUT_QUERIES="QA Automation Engineer|SDET"  -> estas búsquedas fijas, una sola pasada
 #   SCOUT_FAMILY=qa_automation                   -> solo esa familia de rol
@@ -86,7 +57,7 @@ def in_focus(facts) -> bool:
 
 def evaluate_viability_and_gaps(job_title: str, clean_job_desc: str, candidate_context: str, seniority_context: str) -> ViabilityReport:
     """Evalúa en dos pasos (job_scoring.py): el LLM solo extrae hechos de la JD y Python calcula el match
-    contra master_profile.json. El match holístico del LLM (_EVALUATOR_SYSTEM_PROMPT) daba 85% a casi todo.
+    contra master_profile.json. Pedirle al LLM un match holístico daba 85% a casi todo.
     Si todos los proveedores fallan por cuota, AllProvidersExhausted sube hasta run_scout_agent()."""
     # Solo modelo local por defecto: es el 90%+ de las llamadas del proyecto y agotaba la nube antes del mediodía.
     # SCOUT_LOCAL_ONLY=0 vuelve a probar la nube primero.

@@ -46,12 +46,10 @@ Esperado: el `pip install` termina con `Successfully installed …` y código de
 Si falla por un conflicto de `numpy` con `python-jobspy`: `PY -m pip install --no-deps python-jobspy` y repite el
 `pip install -r requirements.txt`.
 
-**Verificar** (sin red ni llaves; cada uno imprime `ok`):
+**Verificar** (sin red ni llaves; imprime `ok`):
 
 ```
 PY test_location_filter.py
-PY test_trend_grouping.py
-PY test_freelance_scoring.py
 ```
 
 ## Paso 3 · Carpeta de la persona y su CV

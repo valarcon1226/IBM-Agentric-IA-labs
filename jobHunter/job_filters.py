@@ -4,7 +4,7 @@ en cosas que igual se van a descartar:
   - duplicados: misma empresa + mismo título ya guardados (aunque la URL sea distinta)
   - pasantías / trainee
   - vacantes escritas en un idioma que no está en SCOUT_ALLOWED_LANGS (default "en,es")
-  - vacantes ubicadas fuera de Colombia que no dicen contratar desde LATAM
+  - vacantes ubicadas fuera del país de la persona que no dicen contratar desde LATAM
 Cada filtro devuelve un motivo (str) si hay que descartar, o None si la vacante pasa.
 """
 import os
@@ -85,8 +85,8 @@ def is_duplicate(title: str, company: str, url: str) -> bool:
     return any((_norm(t), _norm(c)) == key for t, c in rows)
 
 
-# Solo puede trabajar desde Colombia (sin permiso en EE.UU. ni la UE). Una vacante ubicada en otro país pasa
-# únicamente si la descripción dice que contratan en LATAM / Colombia / desde cualquier lugar.
+# La persona solo puede trabajar desde su país (sin permiso en EE.UU. ni la UE). Una vacante ubicada en otro país pasa
+# únicamente si la descripción dice que contratan en LATAM / desde cualquier lugar.
 # Solo frases sobre A QUIÉN contratan: "worldwide"/"anywhere" sueltos salían en el texto corporativo
 # ("customers worldwide", "work from anywhere in India") y dejaban pasar vacantes de India o Reino Unido.
 _LATAM = r"(latam|latin america|latinoam[eé]rica|south america|colombia|the americas)"
@@ -99,7 +99,7 @@ OPEN_TO_LATAM = re.compile(
 )
 
 
-# Contractor internacional: la empresa paga por servicios, sin visa ni permiso de trabajo (le sirve desde Colombia).
+# Contractor internacional: la empresa paga por servicios, sin visa ni permiso de trabajo (le sirve desde su país).
 CONTRACTOR_INTL = re.compile(
     r"\b(deel|oyster|remote\.com|employer of record|eor)\b|nearshore|international contractors?|"
     r"hire (globally|internationally)|contractors?[^.\n]{0,60}(international|global|worldwide|anywhere|outside|countries|time ?zones?)|"
@@ -136,6 +136,15 @@ def country_only_reason(clean_desc: str) -> str | None:
     if m and not OPEN_TO_LATAM.search(desc):
         return f"la descripción la limita a otro país: «{m.group(0).strip()}»"
     return None
+
+
+def with_search_country(location: str, searched: str) -> str:
+    """LinkedIn nombra sus áreas metropolitanas sin el país ("Bogotá D.C. Metropolitan Area") y location_reason las
+    tomaba por extranjeras. Si se buscó en el país de la persona, LinkedIn ya filtró por país: se lo agrega."""
+    if (_norm(searched) == _norm(user_settings.get("home_country")) and re.search(r"\barea$", _norm(location))
+            and _norm(searched) not in _norm(location)):
+        return f"{location}, {searched}"
+    return location
 
 
 def location_reason(location: str, clean_desc: str) -> str | None:

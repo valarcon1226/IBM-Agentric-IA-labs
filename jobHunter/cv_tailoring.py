@@ -52,7 +52,7 @@ Responde ÚNICAMENTE con un JSON con esta forma exacta, sin texto adicional ni e
 {{"target_role_title": "...", "professional_summary": "...", "experience": [{{"company_name": "...", "current_role": "...", "time_period_worked": "...", "achievements": ["...", "..."]}}]}}
 Incluye TODAS las experiencias del perfil original, en el mismo orden, cada una con su lista de achievements reescrita."""
 
-# Amigos (main.py): el CV sale en el idioma de la vacante; Valentina (default "en"): siempre en inglés
+# cv_language "auto" (main.py): el CV sale en el idioma de la vacante; "en" (default): siempre en inglés
 RULE6_EN = "6. IDIOMA: Todo el texto que generes (professional_summary, target_role_title y cada achievement) debe estar en INGLÉS, sin importar en qué idioma esté la descripción de la vacante. El perfil original ya está en inglés, mantén esa consistencia."
 RULE6_AUTO = ("6. IDIOMA: Escribe todo el texto (professional_summary, target_role_title y cada achievement) en el MISMO "
               "idioma de la descripción de la vacante: si la vacante está en español, tradúcelo todo al español; si está "
