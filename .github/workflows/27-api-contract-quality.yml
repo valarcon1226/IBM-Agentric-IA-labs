@@ -41,7 +41,7 @@ jobs:
         run: npm run test:consumer
 
       - name: Start Petstore SUT
-        run: docker compose up -d petstore
+        run: docker compose up -d --wait petstore
 
       - name: Run Postman / Newman regression suite
         run: npm run test:newman
@@ -96,7 +96,7 @@ jobs:
           uv pip install -p .venv/bin/python -r requirements.txt
 
       - name: Start Pact Broker and Database
-        run: docker compose up -d pact-broker-db pact-broker
+        run: docker compose up -d --wait pact-broker-db pact-broker
 
       - name: Generate consumer pact
         run: npm run test:consumer
@@ -108,7 +108,7 @@ jobs:
         run: |
           docker compose -f ../13-whatsapp-restaurant-assistant/docker-compose.yml \
             -f docker-compose.p13-mount.yml \
-            --project-directory ../13-whatsapp-restaurant-assistant up -d
+            --project-directory ../13-whatsapp-restaurant-assistant up -d --wait
 
       - name: Run Provider Verification against Project 13
         run: npm run verify:provider
@@ -117,7 +117,7 @@ jobs:
         run: npm run can-i-deploy
 
       - name: Start Project 20 E-commerce Order Automation
-        run: docker compose -f ../20-ecommerce-order-automation/docker-compose.yml up -d
+        run: docker compose -f ../20-ecommerce-order-automation/docker-compose.yml up -d --wait
 
       - name: Run Schemathesis Property-Based Fuzzing
         run: |

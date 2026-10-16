@@ -10,9 +10,9 @@ services:
         - 'perl'
         - '-MIO::Socket::INET'
         - '-e'
-        - "$$s = IO::Socket::INET->new('127.0.0.1:8080') or exit 1; print $$s \"GET /parabank/index.htm HTTP/1.0\\r\\nHost: 127.0.0.1\\r\\n\\r\\n\"; $$r = <$$s>; exit($$r =~ /200/ ? 0 : 1)"
+        - "$$s = IO::Socket::INET->new('127.0.0.1:8080') or exit 1; print $$s \"GET /parabank/index.htm HTTP/1.0\\r\\nHost: 127.0.0.1\\r\\n\\r\\n\"; $$r = <$$s>; exit($$r =~ / (200|302) / ? 0 : 1)"
       interval: 10s
       timeout: 5s
       retries: 20
-      start_period: 240s
+      start_period: 30s
     restart: unless-stopped
