@@ -1,14 +1,15 @@
 # Automation & Backend Engineering Portfolio
 
-Twenty-three automation, backend, AI and QA projects: twelve core services (data intake, cleaning,
+Twenty-six automation, backend, AI and QA projects: twelve core services (data intake, cleaning,
 notifications, scheduling, OCR, scraping, observability, CI/CD) designed to run together as one
-self-hosted stack, plus eleven client-facing builds for restaurants, e-commerce, AI agents and QA.
+self-hosted stack, eleven client-facing builds for restaurants, e-commerce, AI agents and QA, and
+three QA automation suites (24, 26, 27).
 
 Every row below has code and tests. The *Evidence* column says where the tests ran: **CI** means
 the GitHub Actions workflow runs them on every push to `main`; otherwise they were run locally
 (or in Docker) during review. Each project README lists its limits.
 
-## Current status (2026-10-15)
+## Current status (2026-10-16)
 
 ### Core services (01–12)
 
@@ -42,6 +43,15 @@ the GitHub Actions workflow runs them on every push to `main`; otherwise they we
 | 21 | [SEO & AEO Audit](21-seo-aeo-audit/) | Technical SEO, headings, schema, broken links, Lighthouse and answer-engine readiness, as an HTML or PDF report | FastAPI, BeautifulSoup, Lighthouse | 28 tests |
 | 22 | [Web Chat Widget](22-web-chat-widget/) | One-line embeddable chat that talks to the project 13 assistant | JavaScript, FastAPI, Playwright | 4 tests |
 | 23 | [Video Repurposing Kit](23-video-repurposing-kit/) | Transcribes a long video locally, picks the best moments and renders 9:16 clips with captions plus a YouTube pack | faster-whisper, FFmpeg, Ollama, FastAPI | 24 tests + a real 1080×1920 clip |
+
+### QA automation suites (24–27)
+
+| #  | Project | What it does | Stack | Evidence |
+| -- | ------- | ------------ | ----- | -------- |
+| 24 | [Playwright + TypeScript on ParaBank](24-playwright-ts-parabank/) | Banking UI tests checked against the REST API (transfers verified by balance), page objects as fixtures, one visual test | Playwright, TypeScript, Docker | 25 tests (10 API + 15 Edge) · CI ([workflow](../.github/workflows/24-playwright-ts-parabank.yml)); Firefox and WebKit on manual runs · 3 bugs |
+| 26 | [Cypress + TypeScript on OWASP Juice Shop](26-cypress-juice-shop/) | Login, catalog, basket, checkout, API and network-failure tests, with security defects written up | Cypress, TypeScript, Docker | 23 tests on Edge · CI ([workflow](../.github/workflows/26-cypress-juice-shop.yml)) · 4 bugs |
+| 27 | [API Contract Quality](27-api-contract-quality/) | Pact consumer contracts for the project 22 → 13 chat API, Schemathesis fuzzing of project 20's OpenAPI, Newman regression on Petstore | Pact, Pact Broker, Schemathesis, Newman | 3 contract tests + 17 Newman requests (49 assertions) · CI ([workflow](../.github/workflows/27-api-contract-quality.yml)); provider verification and fuzzing on manual runs · 3 bugs found in projects 13 and 20 |
+
 ## Target architecture
 
 This diagram is the **target** wiring between the core services; project 10 runs the shared
@@ -69,11 +79,11 @@ flowchart TD
 
 ## Quality approach
 
-Borrowed from risk-based quality engineering practice; applied to 04 and 10 so far:
+Borrowed from risk-based quality engineering practice; applied to 04, 10, 24, 26 and 27 so far:
 
-1. **Risk analysis first.** A `docs/RISK-ANALYSIS.md` (04, 10) rates what
+1. **Risk analysis first.** A `docs/RISK-ANALYSIS.md` (04, 10, 24, 26, 27) rates what
    could hurt a user (probability × impact), including defects found in its own code.
-2. **Traceability.** `docs/TRACEABILITY-MATRIX.md` (04) maps every risk → scenario → test file.
+2. **Traceability.** `docs/TRACEABILITY-MATRIX.md` (04, 24, 26, 27) maps every risk → scenario → test file.
    Scenarios without a test stay listed as `Not Implemented` rather than disappearing.
 3. **Test the real artifact.** API tests import the production app object, so a route missing
    from the deployed service fails CI (this caught a real defect in project 04).
@@ -92,7 +102,9 @@ Borrowed from risk-based quality engineering practice; applied to 04 and 10 so f
 | 4     | Build 01 → 03 → 06 → 05 → 02 → 08 → 07 → 09 (order in [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md)) | Done |
 | 5     | Monitoring (11), full CI/CD with security scans (12), shared stack (10)  | Done        |
 | 6     | Client-facing builds 13–23 (restaurant, e-commerce, AI agents, QA)       | Done        |
-| 7     | Add the remaining Python services to the shared CI workflow              | Next        |
+| 7     | QA automation suites 24, 26, 27 (Playwright, Cypress, contracts)         | Done        |
+| 8     | QA projects on production open-source systems (Saleor, Paperless-ngx, Debezium, Keycloak, LiteLLM) | Planned     |
+| 9     | Add the remaining Python services to the shared CI workflow              | Next        |
 
 ## Repository layout
 
