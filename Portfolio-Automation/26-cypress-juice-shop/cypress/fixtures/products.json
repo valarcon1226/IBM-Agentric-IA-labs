@@ -1,0 +1,10 @@
+{
+  "search": {
+    "validKeyword": "apple",
+    "invalidKeyword": "xyznonexistentproduct999"
+  },
+  "mockedErrorResponse": {
+    "status": "error",
+    "message": "Simulated internal server error (500) for resilience verification"
+  }
+}

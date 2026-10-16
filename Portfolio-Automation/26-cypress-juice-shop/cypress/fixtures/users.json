@@ -1,0 +1,11 @@
+{
+  "admin": {
+    "email": "admin@juice-sh.op",
+    "password": "admin123"
+  },
+  "defaultSecurityQuestion": {
+    "id": 1,
+    "question": "Your eldest siblings middle name?",
+    "answer": "MiddleNameTest"
+  }
+}

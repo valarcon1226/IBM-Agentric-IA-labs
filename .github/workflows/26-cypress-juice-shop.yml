@@ -1,0 +1,97 @@
+name: 26 - Cypress + Juice Shop E2E
+
+on:
+  push:
+    paths:
+      - 'Portfolio-Automation/26-cypress-juice-shop/**'
+      - '.github/workflows/26-cypress-juice-shop.yml'
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser engine to execute tests against'
+        required: true
+        default: 'edge'
+        type: choice
+        options:
+          - edge
+          - firefox
+      test_suite:
+        description: 'Suite filter tag'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - regression
+          - all
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Cypress E2E Quality Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/26-cypress-juice-shop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: Portfolio-Automation/26-cypress-juice-shop/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Check code formatting
+        run: npm run format:check
+
+      - name: Start SUT (Juice Shop container)
+        run: docker compose up -d --wait
+
+      - name: Run Cypress tests
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.test_suite }}" = "smoke" ]; then
+              npx cypress run --browser "${{ inputs.browser }}" --env grepTags=@smoke
+            elif [ "${{ inputs.test_suite }}" = "regression" ]; then
+              npx cypress run --browser "${{ inputs.browser }}" --env grepTags=@regression
+            else
+              npx cypress run --browser "${{ inputs.browser }}"
+            fi
+          else
+            npx cypress run --browser edge --env grepTags=@smoke
+          fi
+
+      - name: Upload Cypress screenshots artifact
+        uses: actions/upload-artifact@v4.6.0
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: Portfolio-Automation/26-cypress-juice-shop/cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos artifact
+        uses: actions/upload-artifact@v4.6.0
+        if: always()
+        with:
+          name: cypress-videos
+          path: Portfolio-Automation/26-cypress-juice-shop/cypress/videos
+          retention-days: 7
+
+      - name: Teardown SUT container
+        if: always()
+        run: docker compose down -v
