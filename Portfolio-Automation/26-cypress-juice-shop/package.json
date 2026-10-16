@@ -1,0 +1,29 @@
+{
+  "name": "26-cypress-juice-shop",
+  "version": "1.0.0",
+  "description": "Cypress + TypeScript E2E and API testing suite over OWASP Juice Shop",
+  "private": true,
+  "scripts": {
+    "lint": "eslint \"cypress/**/*.ts\" \"cypress.config.ts\"",
+    "lint:fix": "eslint \"cypress/**/*.ts\" \"cypress.config.ts\" --fix",
+    "format:check": "prettier --check \"**/*.{ts,json,md,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{ts,json,md,yml,yaml}\"",
+    "typecheck": "tsc --noEmit",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run --browser edge",
+    "cy:run:smoke": "cypress run --browser edge --env grepTags=@smoke",
+    "cy:run:regression": "cypress run --browser edge --env grepTags=@regression",
+    "cy:run:firefox": "cypress run --browser firefox"
+  },
+  "devDependencies": {
+    "@cypress/grep": "4.1.0",
+    "@types/node": "20.17.0",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "cypress": "13.17.0",
+    "eslint": "8.57.1",
+    "eslint-plugin-cypress": "3.5.0",
+    "prettier": "3.3.3",
+    "typescript": "5.5.4"
+  }
+}
