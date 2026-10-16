@@ -1,0 +1,71 @@
+name: 24-playwright-ts-parabank
+
+on:
+  push:
+    paths:
+      - 'Portfolio-Automation/24-playwright-ts-parabank/**'
+      - '.github/workflows/24-playwright-ts-parabank.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/24-playwright-ts-parabank
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'Portfolio-Automation/24-playwright-ts-parabank/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code formatting
+        run: npm run format:check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Start ParaBank SUT
+        run: docker compose up -d --wait
+
+      - name: Run API tests
+        run: npm run test:api
+
+      - name: Install Microsoft Edge browser
+        run: npx playwright install --with-deps msedge
+
+      - name: Run UI tests (Edge)
+        run: npm run test:ui
+
+      - name: Run Cross-Browser tests (Firefox & WebKit)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npx playwright install --with-deps firefox webkit
+          npx playwright test --project=firefox --project=webkit
+
+      - name: Tear down SUT
+        if: always()
+        run: docker compose down -v
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: Portfolio-Automation/24-playwright-ts-parabank/playwright-report/
+          retention-days: 14
