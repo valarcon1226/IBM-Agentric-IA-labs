@@ -5,8 +5,9 @@ Usage:
     py coursera.py cursos                         # list your enrolled courses (slugs)
     py coursera.py <course-url-or-slug> [--modulo N]
     py coursera.py https://www.coursera.org/specializations/<slug>   # every course, in order
+    py coursera.py <course> --destino "C:/.../Certificaciones/<tema>"   # save there instead of courses/
 
-Output: courses/<slug>/<NN module>/<NN lesson>/<NN item>.{mp4,en.vtt,en.txt,md} + course.json
+Output: <destino or courses/>/<slug>/<NN module>/<NN lesson>/<NN item>.{mp4,en.vtt,en.txt,md} + course.json
 Labs and quizzes are saved as a .md stub with their link (labs run in IBM's JupyterLab, not downloadable here).
 """
 import argparse
@@ -25,8 +26,14 @@ from playwright.sync_api import sync_playwright
 
 HERE = Path(__file__).parent
 PROFILE = HERE / "edge_profile"
-# \\?\ lifts Windows' 260-char path limit: project dir + module/lesson/item names easily exceed it
-OUT = Path("\\\\?\\" + str((HERE / "courses").resolve())) if os.name == "nt" else HERE / "courses"
+
+
+def long_path(p):
+    # \\?\ lifts Windows' 260-char path limit: base dir + module/lesson/item names easily exceed it
+    return Path("\\\\?\\" + str(Path(p).resolve())) if os.name == "nt" else Path(p)
+
+
+OUT = long_path(HERE / "courses")
 BASE = "https://www.coursera.org"
 EDGE_PATHS = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -210,7 +217,11 @@ def main():
     ap = argparse.ArgumentParser(usage=__doc__)
     ap.add_argument("curso", help="login | cursos | URL o slug del curso")
     ap.add_argument("--modulo", type=int, help="solo este módulo (1, 2, ...)")
+    ap.add_argument("--destino", help="carpeta donde guardar (por defecto courses/)")
     args = ap.parse_args()
+    if args.destino:
+        global OUT
+        OUT = long_path(args.destino)
     if args.curso == "login":
         manual_login()
     with sync_playwright() as p:
