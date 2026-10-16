@@ -1,0 +1,52 @@
+services:
+  pact-broker-db:
+    image: postgres:15-alpine
+    container_name: qa_27_pact_broker_db
+    environment:
+      POSTGRES_USER: pact_broker
+      POSTGRES_PASSWORD: pact_broker_password
+      POSTGRES_DB: pact_broker
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pact_broker -d pact_broker']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  pact-broker:
+    image: pactfoundation/pact-broker:2.107.0.1
+    container_name: qa_27_pact_broker
+    ports:
+      - '127.0.0.1:8642:9292'
+    environment:
+      PACT_BROKER_DATABASE_URL: postgres://pact_broker:pact_broker_password@pact-broker-db:5432/pact_broker
+      PACT_BROKER_DATABASE_CONNECT_MAX_RETRIES: '15'
+      PACT_BROKER_BASIC_AUTH_USERNAME: pact_user
+      PACT_BROKER_BASIC_AUTH_PASSWORD: pact_password
+      PACT_BROKER_BASIC_AUTH_READ_ONLY_USERNAME: readonly_user
+      PACT_BROKER_BASIC_AUTH_READ_ONLY_PASSWORD: readonly_password
+    depends_on:
+      pact-broker-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "wget -q --header='Authorization: Basic cGFjdF91c2VyOnBhY3RfcGFzc3dvcmQ=' -O - http://localhost:9292/diagnostic/status/heartbeat | grep -q 'ok' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  petstore:
+    image: swaggerapi/petstore3:1.0.19
+    container_name: qa_27_petstore
+    ports:
+      - '127.0.0.1:8643:8080'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8080/api/v3/openapi.json || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped

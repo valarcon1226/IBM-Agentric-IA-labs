@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+reports/
+.coverage
+.pytest_cache/
+.hypothesis/
+pacts/
+.env
+.schemathesis/
