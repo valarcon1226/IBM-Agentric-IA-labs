@@ -4,7 +4,7 @@ Evaluación de vacantes en dos pasos (2026-09-25):
      skills obligatorias/deseables, restricciones de país, presencialidad, idiomas.
   2. Python calcula el match de forma determinística contra master_profile.json.
 
-Por qué: pedirle a un modelo chico (qwen3:4b en el homelab) un "match %" holístico daba 85% a
+Por qué: pedirle a un modelo chico (qwen3:4b local) un "match %" holístico daba 85% a
 casi todo (75 de 97 vacantes), incluso roles de marketing. Extraer hechos es algo que los modelos
 chicos hacen bien, y el puntaje queda igual sin importar qué proveedor de llm_chain respondió.
 """

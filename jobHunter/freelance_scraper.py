@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 # ==========================================
 # NOTA (2026-09-24): se reemplazaron los feeds RSS. Upwork retiró el suyo (HTTP 410) y el RSS de
 # Freelancer ignoraba el keyword (traía marketing/cripto/telemarketing). Fuentes actuales, las dos
-# públicas y sin login, verificadas desde el homelab:
+# públicas y sin login, verificadas desde un servidor:
 #   - API de Freelancer.com: trae presupuesto, moneda (con tipo de cambio a USD), tipo
 #     fixed/hourly y cantidad de propuestas -> se puede filtrar sin gastar LLM.
 #   - Bounties de GitHub (label de Algora "💎 Bounty"): issues open source pagados. Un PR

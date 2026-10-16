@@ -1,5 +1,5 @@
 """Preferencias de búsqueda por persona: Profiles/<nombre>/search_settings.json (las crea main.py).
-Sin perfil activo o sin archivo se usan los valores de Valentina, así el homelab sigue igual."""
+Sin perfil activo o sin archivo se usan los DEFAULTS de abajo."""
 import json
 import os
 

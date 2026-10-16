@@ -1,5 +1,5 @@
 {
-  "_nota": "Solo herramientas que Valentina ya usa a diario: aplican igual a cualquier rol y no necesitan estudio, sino agregarlas al perfil. Todo lo demás lo genera learning_plan.py por skill + tipo de rol a partir de las descripciones de las vacantes.",
+  "_nota": "Solo herramientas que la persona ya usa a diario: aplican igual a cualquier rol y no necesitan estudio, sino agregarlas al perfil. Todo lo demás lo genera learning_plan.py por skill + tipo de rol a partir de las descripciones de las vacantes.",
   "claude code": {
     "hours_to_mvp": 0,
     "what_to_learn": ["Ya lo usas a diario: agrégalo a tu perfil y CV", "Prepara 2 ejemplos concretos de cómo lo usas (skills, hooks, subagentes, MCP)"],
