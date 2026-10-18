@@ -1,15 +1,15 @@
 # Automation & Backend Engineering Portfolio
 
-Twenty-six automation, backend, AI and QA projects: twelve core services (data intake, cleaning,
+Twenty-seven automation, backend, AI and QA projects: twelve core services (data intake, cleaning,
 notifications, scheduling, OCR, scraping, observability, CI/CD) designed to run together as one
 self-hosted stack, eleven client-facing builds for restaurants, e-commerce, AI agents and QA, and
-three QA automation suites (24, 26, 27).
+three QA automation suites (24, 26, 27), and QA on production open-source systems (34).
 
 Every row below has code and tests. The *Evidence* column says where the tests ran: **CI** means
 the GitHub Actions workflow runs them on every push to `main`; otherwise they were run locally
 (or in Docker) during review. Each project README lists its limits.
 
-## Current status (2026-10-16)
+## Current status (2026-10-18)
 
 ### Core services (01–12)
 
@@ -51,6 +51,12 @@ the GitHub Actions workflow runs them on every push to `main`; otherwise they we
 | 24 | [Playwright + TypeScript on ParaBank](24-playwright-ts-parabank/) | Banking UI tests checked against the REST API (transfers verified by balance), page objects as fixtures, one visual test | Playwright, TypeScript, Docker | 25 tests (10 API + 15 Edge) · CI ([workflow](../.github/workflows/24-playwright-ts-parabank.yml)); Firefox and WebKit on manual runs · 3 bugs |
 | 26 | [Cypress + TypeScript on OWASP Juice Shop](26-cypress-juice-shop/) | Login, catalog, basket, checkout, API and network-failure tests, with security defects written up | Cypress, TypeScript, Docker | 23 tests on Edge · CI ([workflow](../.github/workflows/26-cypress-juice-shop.yml)) · 4 bugs |
 | 27 | [API Contract Quality](27-api-contract-quality/) | Pact consumer contracts for the project 22 → 13 chat API, Schemathesis fuzzing of project 20's OpenAPI, Newman regression on Petstore | Pact, Pact Broker, Schemathesis, Newman | 3 contract tests + 17 Newman requests (49 assertions) · CI ([workflow](../.github/workflows/27-api-contract-quality.yml)); provider verification and fuzzing on manual runs · 3 bugs found in projects 13 and 20 |
+
+### QA on production open-source systems (34–38)
+
+| #  | Project | What it does | Stack | Evidence |
+| -- | ------- | ------------ | ----- | -------- |
+| 34 | [Saleor Order Integrity](34-commerce-order-integrity/) | Order, stock and payment data on Saleor 3.20: cursor pagination, checkout retries through Toxiproxy, 50 buyers racing for 5 units, 500 webhooks to a slow and a failing receiver, bulk import with bad rows, a real 3.19 → 3.20 upgrade with checksums and rollback, 5 dashboard UI tests | Python, pytest, Playwright, Hypothesis, Locust, Toxiproxy, Docker | 17 tests (+ 9 in the shared qa_common package) · CI PR gate + nightly ([workflow](../.github/workflows/34-commerce-order-integrity.yml)) · 2 Saleor bugs, one of them stock overselling |
 
 ## Target architecture
 
@@ -103,7 +109,7 @@ Borrowed from risk-based quality engineering practice; applied to 04, 10, 24, 26
 | 5     | Monitoring (11), full CI/CD with security scans (12), shared stack (10)  | Done        |
 | 6     | Client-facing builds 13–23 (restaurant, e-commerce, AI agents, QA)       | Done        |
 | 7     | QA automation suites 24, 26, 27 (Playwright, Cypress, contracts)         | Done        |
-| 8     | QA projects on production open-source systems (Saleor, Paperless-ngx, Debezium, Keycloak, LiteLLM) | Planned     |
+| 8     | QA projects on production open-source systems (Saleor, Paperless-ngx, Debezium, Keycloak, LiteLLM) | In progress |
 | 9     | Add the remaining Python services to the shared CI workflow              | Next        |
 
 ## Repository layout

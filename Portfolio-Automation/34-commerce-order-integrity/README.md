@@ -35,20 +35,20 @@ Every production concern is evaluated against real open-source software:
 
 ## 3. Numerical Targets & Measured SLA Performance
 
-> **Note:** Numbers below come from local runs on a Windows 11 laptop on **2026-10-17**. The targets are set for a 4 vCPU GitHub runner; CI run links will be added once the workflow has run.
+> **Where the numbers come from:** GitHub Actions on `ubuntu-latest` (4 vCPU, 16 GB), the hardware the targets assume. PR gate: [run 39147961900](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147961900). Nightly (resilience, migration, perf): [run 39147962708](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147962708), whose `nightly-metrics` artifact holds `results/metrics.json`. Rows marked *local* were measured on the laptop on 2026-10-17 because the CI log does not print them.
 
-| Target SLA Metric | Target Value (`targets.toml`) | Measured Value (Local 2026-10-17) | Result |
+| Target | Target value (`targets.toml`) | Measured | Result |
 |---|---|---|---|
-| **Checkout create → complete (p95, 10 users, 5 min)** | ≤ 1,500 ms | **150 ms** (p50: 120 ms, avg: 121.28 ms, 704 checkouts) | PASS |
-| **`products(first: 100)` query (p95, 5 min)** | ≤ 400 ms | **38 ms** (p50: 28 ms, avg: 29.93 ms, 2,114 queries) | PASS |
-| **Oversells across 20 race runs** | 0 | **18 oversells in 10/20 runs** and, in a second run, **11 in 8/20** (inventory down to -3) | DEFECT (`FINDING-001`, `xfail`) |
+| **Checkout create → complete, p95 at 10 users for 5 min** | ≤ 1,500 ms | **200 ms** (p50 140 ms, 702 checkouts, 0 errors) | PASS |
+| **`products(first: 100)` query, p95** | ≤ 400 ms | **50 ms** (p50 32 ms, 2,107 queries, 0 errors) | PASS |
+| **Oversells across 20 race runs** | 0 | Defect reproduced in CI (`xfail` held). *Local:* 18 oversells in 10/20 runs, then 11 in 8/20 (stock down to -3) | DEFECT (`FINDING-001`) |
 | **Duplicate orders across 50 retry runs** | 0 | **0** | PASS |
 | **Webhook delivery p95, healthy receiver** | ≤ 5 s | Not measured | — |
-| Webhook delivery lag, slow receiver (2 s per call), informational | no target | p50 15.21 s, p95 27.49 s, 50/50 delivered (50 orders, not the planned 500: see Known limits) | — |
-| **Events delivered within 10 min under 30% HTTP 500** | 100% | **100%** (50/50 orders, 14 failures retried, average retry gap 10.03 s) | PASS |
-| **Checksum differences after 3.19 → 3.20 upgrade** | 0 | **0** across 6 checksums (41 migrations applied in 12.54 s) | PASS |
-| **Large order pagination walk (2,000 orders)** | 2,000 orders | **2,000 traversed, 0 duplicates** (4.47 s with `-n 4`) | PASS |
-| **PR gate / nightly wall clock** | ≤ 12 min / ≤ 60 min | Not measured yet (needs the first CI runs) | — |
+| Webhook lag, slow receiver (2 s per call), 500 orders | no target | p50 139 s, p95 262 s, 500/500 delivered: the queue grows but loses nothing | — |
+| **Events delivered within 10 min under 30% HTTP 500** | 100% | **100%** (500/500; 199 failed attempts retried, average retry gap 10.03 s, matching Saleor's 10 s backoff) | PASS |
+| **Checksum differences after 3.19 → 3.20 upgrade** | 0 | **0** across 6 checksums (41 migrations in 13.14 s) | PASS |
+| Order pagination walk | every ID once | 2,000 orders, 0 duplicates | PASS |
+| **PR gate / nightly wall clock** | ≤ 12 min / ≤ 60 min | **5.0 min / 34.3 min** | PASS |
 
 ---
 
@@ -89,10 +89,10 @@ Executed with `--repeat-each 3` (15 test executions per engine) across **Microso
 
 ## 6. Known Limits
 
-- **Webhook burst:** the plan calls for 500 orders. With the worker capped at `mem_limit: 512m` on the laptop, it reached 511.5 MiB at 500 orders, so the recorded run used 50 (`WEBHOOK_BURST_COUNT=50`). The default in the code stays at 500 for CI.
+- **Webhook burst on the laptop:** with the worker capped at `mem_limit: 512m` it reached 511.5 MiB at 500 orders, so local runs use `WEBHOOK_BURST_COUNT=50`. CI runs the full 500.
+- **Local numbers:** the oversell counts come from the laptop; CI only records that the `xfail` held.
 - **Locust:** the load test turns off inventory tracking for its one variant, so 704 checkouts do not run out of stock. It measures checkout latency, not stock contention. The stock race test covers contention.
 - **Migration test is destructive:** it runs `docker compose down -v` and rebuilds the stack, so it runs in its own nightly step.
-- **Local numbers:** measured on a laptop, not on the 4 vCPU runner the targets assume.
 
 ## 7. How to Run
 
