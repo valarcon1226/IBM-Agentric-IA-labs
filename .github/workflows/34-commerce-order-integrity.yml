@@ -140,10 +140,12 @@ jobs:
           uv run pytest -m "resilience" -v
 
       - name: Run Schema Migration upgrade test
+        if: ${{ !cancelled() }}
         run: |
           uv run pytest -m "migration" -v -s
 
       - name: Run Headless Locust load test
+        if: ${{ !cancelled() }}
         run: |
           uv run locust -f tests/perf/locustfile.py --headless -u 10 -r 2 --run-time 5m --host http://127.0.0.1:8000
 
