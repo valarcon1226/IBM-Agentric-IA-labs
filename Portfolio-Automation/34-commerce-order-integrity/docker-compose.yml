@@ -1,0 +1,143 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: saleor
+      POSTGRES_PASSWORD: saleor_password
+      POSTGRES_DB: saleor
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saleor -d saleor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:7.4-alpine
+    mem_limit: 256m
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  api:
+    image: ghcr.io/saleor/saleor:${SALEOR_TAG:-3.20}
+    mem_limit: 1024m
+    command:
+      - "sh"
+      - "-c"
+      - "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class saleor.asgi.gunicorn_worker.UvicornWorker saleor.asgi:application"
+    expose:
+      - "8000"
+    ports:
+      - "127.0.0.1:8002:8000"
+    environment:
+      - DATABASE_URL=postgres://saleor:saleor_password@postgres:5432/saleor
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - SECRET_KEY=saleor_secret_test_key_34_commerce
+      - ALLOWED_HOSTS=*
+      - ALLOWED_CLIENT_HOSTS=*
+      - DEFAULT_COUNTRY=US
+      - DEFAULT_CURRENCY=USD
+      - DEFAULT_CHANNEL_SLUG=default-channel
+      - STATIC_URL=/static/
+      - MEDIA_URL=/media/
+      - ENABLE_ACCOUNT_CONFIRMATION_BY_EMAIL=False
+      - HTTP_IP_FILTER_ENABLED=False
+    volumes:
+      - saleor-media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/.well-known/jwks.json\")'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  worker:
+    image: ghcr.io/saleor/saleor:${SALEOR_TAG:-3.20}
+    mem_limit: 512m
+    command:
+      - "celery"
+      - "-A"
+      - "saleor.celeryconf:app"
+      - "worker"
+      - "--loglevel=info"
+      - "--concurrency=2"
+    environment:
+      - DATABASE_URL=postgres://saleor:saleor_password@postgres:5432/saleor
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - SECRET_KEY=saleor_secret_test_key_34_commerce
+      - ALLOWED_HOSTS=*
+      - DEFAULT_COUNTRY=US
+      - DEFAULT_CURRENCY=USD
+      - DEFAULT_CHANNEL_SLUG=default-channel
+      - HTTP_IP_FILTER_ENABLED=False
+    volumes:
+      - saleor-media:/app/media
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'from saleor.celeryconf import app; res = app.control.ping(timeout=3); exit(0 if res else 1)'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.11.0
+    mem_limit: 64m
+    command:
+      - "-host=0.0.0.0"
+      - "-config=/etc/toxiproxy.json"
+    volumes:
+      - "./toxiproxy.json:/etc/toxiproxy.json:ro"
+    ports:
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8474:8474"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  dashboard:
+    image: ghcr.io/saleor/saleor-dashboard:3.20
+    mem_limit: 128m
+    environment:
+      - API_URL=http://127.0.0.1:8000/graphql/
+    ports:
+      - "127.0.0.1:9000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  saleor-media:
+
