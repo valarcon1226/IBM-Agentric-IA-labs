@@ -29,6 +29,9 @@ services:
 
   api:
     image: ghcr.io/saleor/saleor:${SALEOR_TAG:-3.20}
+    # Docker Desktop defines this name; Linux (CI) needs it mapped to reach the test webhook receiver.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     mem_limit: 1024m
     command:
       - "sh"
@@ -68,6 +71,9 @@ services:
 
   worker:
     image: ghcr.io/saleor/saleor:${SALEOR_TAG:-3.20}
+    # Docker Desktop defines this name; Linux (CI) needs it mapped to reach the test webhook receiver.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     mem_limit: 512m
     command:
       - "celery"
