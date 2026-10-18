@@ -1,0 +1,80 @@
+version: "1.0"
+requirements:
+  - id: "REQ-STK-001"
+    title: "Stock Race Isolation Under High Concurrency"
+    tier: "High"
+    area: "Stock"
+    criteria:
+      - "Given a product variant with exactly 5 available units in stock."
+      - "When 50 concurrent buyers attempt to complete checkout simultaneously."
+      - "Then exactly 5 orders are successfully created."
+      - "And exactly 45 requests return clean insufficient stock error codes."
+      - "And final stock in database is exactly 0 with zero overselling."
+
+  - id: "REQ-CHK-001"
+    title: "Checkout Idempotency on Client Connection Drop"
+    tier: "High"
+    area: "Checkout"
+    criteria:
+      - "When a checkoutComplete mutation reaches the server and downstream network cuts connection."
+      - "And the client retries the completion mutation with the same idempotency parameters."
+      - "Then exactly 1 order exists for that checkout in the database."
+      - "And duplicate order count across 50 retry runs is strictly 0."
+
+  - id: "REQ-WHK-001"
+    title: "Webhook Delivery Under Slow Consumer Backpressure"
+    tier: "High"
+    area: "Webhooks"
+    criteria:
+      - "When 500 order creation events hit a webhook receiver introducing 2s latency per call."
+      - "Then the queue buffers events without dropping any webhook notification."
+      - "And 100% of events are delivered with p95 delivery lag measured and recorded."
+
+  - id: "REQ-WHK-002"
+    title: "Webhook Fault Tolerance and Exponential Backoff Retries"
+    tier: "High"
+    area: "Webhooks"
+    criteria:
+      - "When a webhook receiver fails 30% of requests with HTTP 500 Internal Server Error."
+      - "Then Celery retry workers re-dispatch failed tasks according to Saleor retry policy."
+      - "And 100% of events successfully arrive within 10 minutes."
+
+  - id: "REQ-CAT-001"
+    title: "Cursor Pagination Completeness and Boundary Validation"
+    tier: "Medium"
+    area: "Catalog Listing"
+    criteria:
+      - "When walking product catalog pagination with random page sizes from 1 to 100."
+      - "Then every product ID in the database is visited exactly once with zero duplicates or omissions."
+      - "And concurrent product insertions during the walk do not skip any pre-existing product."
+      - "And requesting a page size exceeding the maximum supported limit returns the documented GraphQL error."
+
+  - id: "REQ-BLK-001"
+    title: "Atomic and Row-Isolated Bulk Product Creation"
+    tier: "Medium"
+    area: "Bulk Import"
+    criteria:
+      - "When productBulkCreate receives 100 rows containing 10 invalid rows."
+      - "Then the 90 valid product rows are successfully created in the catalog."
+      - "And the 10 errors each specify the exact row index and validation error code."
+      - "And no partial product, variant, or channel listing records exist for failed rows."
+
+  - id: "REQ-MIG-001"
+    title: "Data and Financial Checksum Preservation Across Upgrades"
+    tier: "Medium"
+    area: "Upgrade"
+    criteria:
+      - "Given a populated Saleor database at version N-1 with 50 completed orders and payments."
+      - "When the stack is upgraded to version N and database migrations are executed."
+      - "Then SQL checksums for orders, order lines, totals, stock, and transactions remain identical."
+      - "And post-upgrade API smoke tests pass with zero regressions."
+
+  - id: "REQ-UI-001"
+    title: "Staff Dashboard Order Lifecycle and Refund Management"
+    tier: "Medium"
+    area: "Payment Transactions"
+    criteria:
+      - "Staff member logs into Saleor Dashboard using valid credentials."
+      - "Staff locates an existing unfulfilled order and performs full fulfillment."
+      - "Staff issues a partial refund through the dashboard interface."
+      - "The refund is accurately reflected in order history and confirmed via backend API."

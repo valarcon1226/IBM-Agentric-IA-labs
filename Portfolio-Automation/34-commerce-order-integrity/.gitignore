@@ -1,0 +1,17 @@
+# Cache and virtual environments
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.venv/
+results/
+__pycache__/
+*.pyc
+*.pyo
+
+# Test artifacts and browser traces
+playwright-report/
+test-results/
+
+# Local environment
+.env

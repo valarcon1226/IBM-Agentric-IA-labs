@@ -1,0 +1,13 @@
+# Numerical Quality and Performance Targets for Project 1 (Saleor)
+# Hardware reference: GitHub Runner (4 vCPU, 16 GB RAM)
+
+[targets]
+checkout_p95_ms = 1500
+products_query_p95_ms = 400
+oversells_race = 0
+duplicate_orders_retry = 0
+webhook_delivery_p95_s = 5
+webhook_recovery_percent = 100
+checksum_differences_upgrade = 0
+pr_gate_wall_clock_min = 12
+nightly_wall_clock_min = 60
