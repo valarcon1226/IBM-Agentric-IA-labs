@@ -1,0 +1,114 @@
+# requirements.yaml — CDC Replication Specification & Acceptance Criteria
+system: cdc-data-replication
+version: 1.0.0
+
+requirements:
+  - id: REQ-CDC-001
+    title: Exactly-Once Final State via At-Least-Once Delivery and Idempotent Upserts
+    tier: P1
+    risk_id: RISK-DATA-LOSS
+    description: >
+      The replication pipeline provides an at-least-once transport guarantee.
+      Any duplicate message delivery caused by retries, network reconnects, or worker
+      restarts must be absorbed idempotently by primary key upserts in the warehouse,
+      guaranteeing an identical final state between source and warehouse (0 differences).
+    acceptance_criteria:
+      - Reconciler reports 0 missing, 0 extra, and 0 changed rows after steady-state replication.
+      - Repeated message keys update in place without throwing constraint violations.
+
+  - id: REQ-CDC-002
+    title: End-to-End Replication Lag SLA under Load
+    tier: P1
+    risk_id: RISK-LAG
+    description: >
+      Replication pipeline maintains low latency end-to-end between source commit
+      and warehouse ingestion under continuous production-like workload.
+    acceptance_criteria:
+      - End-to-end lag p95 <= 5.0s at 500 rows/s.
+      - End-to-end lag p95 <= 10.0s at 1,000 rows/s.
+      - No buffer exhaustion or connection pool starvation.
+
+  - id: REQ-CDC-003
+    title: Sink Backpressure and Recovery Time
+    tier: P1
+    risk_id: RISK-BACKPRESSURE
+    description: >
+      When downstream warehouse latency increases (200ms injection via Toxiproxy for 2 min),
+      consumer group lag accumulates in the Redpanda broker without data loss.
+      Once the fault is cleared, the sink connector must catch up to baseline within SLA.
+    acceptance_criteria:
+      - Catch-up time after 2 min slowdown at 500 rows/s <= 3 min (180s).
+      - Reconciler confirms 0 differences after catch-up.
+
+  - id: REQ-CDC-004
+    title: Crash Fault Tolerance and Redelivery Absorption
+    tier: P1
+    risk_id: RISK-DUPLICATES
+    description: >
+      Abrupt termination of the Kafka Connect worker or source database during active
+      workload must not result in data loss or unabsorbed duplication.
+    acceptance_criteria:
+      - docker kill on Connect container followed by restart recovers cleanly to RUNNING.
+      - Restart of source PostgreSQL mid-workload resumes logical decoding without offset corruption.
+      - Reconciler confirms 0 differences and absorbed redeliveries are verified.
+
+  - id: REQ-CDC-005
+    title: Poison Record Isolation and Dead Letter Queue Routing
+    tier: P1
+    risk_id: RISK-POISON
+    description: >
+      Records violating warehouse schema constraints (e.g., CHECK constraints) must not
+      block the connector or silently disappear. They must be routed to the DLQ topic
+      with diagnostic error headers while healthy records continue processing.
+    acceptance_criteria:
+      - In a batch with 3 poison rows out of 1,000, exactly 997 rows reach the warehouse.
+      - Exactly 3 poison records land in the DLQ topic with matching keys.
+      - DLQ records contain __connect.errors.* headers identifying the exception class.
+      - Connector remains in RUNNING state throughout.
+
+  - id: REQ-CDC-006
+    title: Safe Schema Evolution under Live Workload
+    tier: P1
+    risk_id: RISK-SCHEMA-DRIFT
+    description: >
+      Schema migrations executed under live writes must have well-defined, documented outcomes:
+      either safe automatic evolution in the warehouse or explicit error routing to DLQ.
+    acceptance_criteria:
+      - Nullable column addition + backfill + SET NOT NULL tested under load.
+      - Column rename (add, copy, switch writers, drop) tested under load.
+      - Type widening (INT to BIGINT) tested under load.
+      - Adding column with DEFAULT tested under load.
+      - Documented matrix in docs/SCHEMA-CHANGES.md with safe deployment patterns.
+
+  - id: REQ-CDC-007
+    title: Complete Initial Snapshot of Historical Data
+    tier: P1
+    risk_id: RISK-SNAPSHOT-GAP
+    description: >
+      Initial bootstrapping of an existing 1M row table must replicate all rows
+      without gaps, duplicate records, or unbounded memory usage.
+    acceptance_criteria:
+      - Initial snapshot of 1,000,000 rows reconciles to 0 differences.
+      - Rows lost or repeated in initial snapshot = 0.
+
+  - id: REQ-CDC-008
+    title: Connector Upgrade Without Data Loss or Re-snapshot
+    tier: P1
+    risk_id: RISK-CONNECTOR-UPGRADE
+    description: >
+      Upgrading Debezium Connect image from N-1 to N must retain consumer offsets,
+      resuming CDC streaming seamlessly without triggering a redundant full snapshot.
+    acceptance_criteria:
+      - Source offsets preserved across connector container replacement.
+      - No gap or unabsorbed duplicates, 0 differences upon post-upgrade reconciliation.
+
+  - id: REQ-CDC-009
+    title: Fast and Deterministic Keyset Reconciler
+    tier: P1
+    risk_id: RISK-RECONCILER
+    description: >
+      Reconciler scans source and warehouse tables using keyset pagination in chunks of 10,000
+      under REPEATABLE READ snapshot isolation.
+    acceptance_criteria:
+      - Reconciles 1,000,000 rows in <= 120.0s.
+      - Accurately reports missing, extra, and changed keys with 0 false positives during concurrent writes.

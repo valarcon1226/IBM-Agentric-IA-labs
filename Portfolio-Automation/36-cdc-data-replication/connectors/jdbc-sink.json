@@ -1,0 +1,22 @@
+{
+  "name": "jdbc-sink",
+  "config": {
+    "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "connection.url": "jdbc:postgresql://toxiproxy:5432/warehouse_db",
+    "connection.username": "postgres",
+    "connection.password": "postgres_password",
+    "insert.mode": "upsert",
+    "primary.key.mode": "record_key",
+    "delete.enabled": "true",
+    "schema.evolution": "basic",
+    "topics": "cdc.public.ledger",
+    "table.name.format": "ledger",
+    "internal.enable.sces": "true",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "dlq_ledger",
+    "errors.deadletterqueue.topic.replication.factor": "1",
+    "errors.deadletterqueue.context.headers.enable": "true",
+    "batch.size": "5000"
+  }
+}
