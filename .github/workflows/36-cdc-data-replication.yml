@@ -67,9 +67,10 @@ jobs:
           docker compose up -d --wait
 
       # The reconciler tests write to both databases themselves, so they run
-      # before the connectors start replicating.
+      # after the tables exist but before the connectors start replicating.
       - name: Run reconciler and workload unit tests
         run: |
+          uv run python -c "from scripts.register import init_source_db, init_warehouse_db; init_source_db(); init_warehouse_db()"
           uv run pytest tests/unit -v
 
       - name: Register CDC connectors
