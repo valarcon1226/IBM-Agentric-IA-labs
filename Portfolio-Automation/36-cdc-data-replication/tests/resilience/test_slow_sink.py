@@ -161,8 +161,9 @@ def test_slow_sink_backpressure_and_recovery() -> None:
     # Assert against targets.toml (catch_up_time <= 180s)
     assert_target("catch_up_time_slowdown_seconds", catch_up_time)
 
-    # Wait until all remaining lag drains to 0
-    wait_for_consumer_lag_zero(timeout=60.0)
+    # Wait until all remaining lag drains to 0. The catch-up target is asserted
+    # above; this only drains the rest, which takes longer on a 2-core CI runner.
+    wait_for_consumer_lag_zero(timeout=180.0)
 
     # Reconcile tables
     logger.info("Reconciling tables post-backpressure test...")

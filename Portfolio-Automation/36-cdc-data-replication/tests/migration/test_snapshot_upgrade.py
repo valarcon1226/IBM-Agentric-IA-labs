@@ -418,10 +418,12 @@ def test_connector_upgrade_n_minus_1_to_n() -> None:
         workload_thread.join(timeout=30.0)
         logger.info("Workload finished writing to PostgreSQL source.")
 
-        # 7. Wait for post-upgrade offset to advance and assert no re-snapshot occurred
+        # 7. Wait for post-upgrade offset to advance and assert no re-snapshot occurred.
+        # The reconcile in step 8 is what proves no events were lost; 300 s leaves room
+        # for the source to work through the 1M-row WAL backlog on a CI runner.
         start_wait = time.monotonic()
         post_upgrade_offset = pre_upgrade_offset
-        while time.monotonic() - start_wait < 60.0:
+        while time.monotonic() - start_wait < 300.0:
             post_upgrade_offset = _get_topic_end_offset("cdc.public.ledger")
             if post_upgrade_offset > pre_upgrade_offset:
                 break
@@ -431,7 +433,7 @@ def test_connector_upgrade_n_minus_1_to_n() -> None:
             "Post-upgrade topic end offset: %d (pre: %d)", post_upgrade_offset, pre_upgrade_offset
         )
         assert post_upgrade_offset > pre_upgrade_offset, (
-            f"Offsets did not advance within 60s post-upgrade "
+            f"Offsets did not advance within 300s post-upgrade "
             f"(pre={pre_upgrade_offset}, post={post_upgrade_offset})"
         )
         # If a re-snapshot occurred, the offset would jump by 1,000,000+.
