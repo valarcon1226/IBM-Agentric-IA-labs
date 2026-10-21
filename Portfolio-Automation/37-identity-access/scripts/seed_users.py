@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 
 import httpx
 
@@ -99,7 +100,17 @@ def seed_users(
             "Content-Type": "application/json",
         }
 
-        resp = httpx.post(import_url, headers=headers, json=payload, timeout=60.0)
+        # A fresh Keycloak on a CI runner can drop the first big import; the batch is
+        # safe to resend because ifResourceExists=SKIP makes it idempotent.
+        for attempt in range(1, 6):
+            try:
+                resp = httpx.post(import_url, headers=headers, json=payload, timeout=60.0)
+                break
+            except httpx.TransportError as exc:
+                if attempt == 5:
+                    raise
+                print(f"Batch {start_idx}..{end_idx}: attempt {attempt} failed ({exc}), retrying")
+                time.sleep(5.0 * attempt)
         resp.raise_for_status()
         batch_res = resp.json()
         added = batch_res.get("added", 0)
