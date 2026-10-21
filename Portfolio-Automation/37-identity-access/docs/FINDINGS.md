@@ -15,6 +15,7 @@ This document formalizes the security and operational resilience findings identi
 | **FIND-005** | Master Realm Administrative Token Short Expiration | ASVS V13.2.3, V3.2.1 | **Low** | Operational / Handled |
 | **FIND-006** | Atomicity and Rollback in Partial Import Collisions | ASVS V13.2.1 | **Medium** | Atomic / All-or-Nothing |
 | **FIND-007** | Major Schema Upgrade Credential & Secret Continuity | ASVS V14.2.3 | **Critical** | Zero Regression |
+| **FIND-008** | Admin user list repeats users when users are created mid-walk | — | **Low** | Offset pagination; dedupe by ID |
 
 ---
 
@@ -65,3 +66,8 @@ This document formalizes the security and operational resilience findings identi
 - **Specification:** OWASP ASVS v4.0.3 V14.2.3.
 - **Observation:** An automated major version upgrade from Keycloak 25.0.6 (N-1) to Keycloak 26.0.5 (N) over 10,000 seeded users executed 10 Liquibase change sets in **15.06 seconds** (SLA $\le$ 300s). All 20 enrolled TOTP secrets and Argon2 password hashes remained fully functional, authenticating 20 out of 20 users without credential invalidation or re-enrollment. Confidential client secrets remained identical (`confidential-secret-1234`).
 - **Remediation / Configuration:** Maintain database backup snapshots (`results/snapshot_n1.sql`) before production upgrades.
+
+### FIND-008: Admin user list repeats users when users are created mid-walk
+- **Severity:** Low
+- **Observation:** `GET /admin/realms/{realm}/users` pages with `first`/`max`, an offset into the list sorted by username. In CI run [39540623713](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39540623713), 300 users named `conc_user_p8_*` were imported while a walk of 10,000 users was past that point in the alphabet. Every later page shifted by 300, and the walk returned exactly 300 baseline users twice. No user was missed. On the laptop the import landed ahead of the cursor, so the same test saw 0 repeats; the result depends on timing.
+- **Remediation / Configuration:** Clients that export or sync users must deduplicate by user ID, or page by a stable key (for example a username range with `search`) instead of an offset. Deleting users during a walk would shift the list the other way and skip users; that case is not tested here.
