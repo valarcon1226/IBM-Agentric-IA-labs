@@ -1,0 +1,52 @@
+version: "1.0"
+title: "Document Intake Pipeline Requirements (Paperless-ngx)"
+requirements:
+  - id: "REQ-ING-001"
+    title: "Asynchronous Burst Ingestion and End-to-End Accounting"
+    description: "The system must accept a burst of 500 documents under concurrent uploads (semaphore 50). Every task must reach a deterministic final state (SUCCESS or FAILURE). Successes and failures must sum to exactly 500. Queue drain time must be <= 20 min, throughput >= 25 docs/min, and webserver memory peak <= 1.5 GB under a 2 GB container limit."
+    target_metric: "uploads_accounted_ratio"
+
+  - id: "REQ-ING-002"
+    title: "Broker Fault Resiliency and Celery Task Recovery"
+    description: "When Redis is restarted or severed for 30 seconds via Toxiproxy during active ingestion, all queued tasks must eventually reach a terminal state (SUCCESS or FAILURE). Zero tasks may remain stuck in PENDING or STARTED."
+    target_metric: "tasks_stuck_after_fault"
+
+  - id: "REQ-ING-003"
+    title: "Checksum Deduplication and Retry Idempotency"
+    description: "When a client retries uploading an identical file byte payload (simulating transient network error or 5xx retry), Paperless must identify the existing document by sha256 checksum and ensure exactly 1 document record exists."
+
+  - id: "REQ-ING-004"
+    title: "Partial Failure Isolation and File Sanitization"
+    description: "Corrupt or truncated PDF files must fail ingestion with a descriptive task failure message. No dangling document database records or orphan files in media/documents/originals may persist."
+
+  - id: "REQ-ING-005"
+    title: "Bulk Edit Object Contract and Deletion Resilience"
+    description: "Calling the bulk_edit endpoint with a list containing both valid document IDs and deleted/non-existent IDs must handle the request deterministically without unhandled 500 server crashes."
+
+  - id: "REQ-ING-006"
+    title: "Encrypted and Password-Protected PDF Rejection"
+    description: "Attempting to ingest password-protected PDFs without a passphrase must be rejected gracefully with a task failure message identifying the encryption constraint."
+
+  - id: "REQ-ING-007"
+    title: "Deterministic Pagination under Sort Key Ties"
+    description: "Walking /api/documents/ ordered by created date across 300 documents with identical created timestamps using page_size 1, 7, and 100 must return the exact set of IDs matching SQL queries, with 0 omissions and 0 duplicate IDs."
+    target_metric: "documents_listing_p95_ms"
+
+  - id: "REQ-ING-008"
+    title: "Full-Text Search Accuracy and Latency Under Load"
+    description: "Full-text search querying a distinct verification token present in exactly 120 documents must retrieve all 120 unique records across pages with p95 latency <= 800 ms."
+    target_metric: "search_p95_ms"
+
+  - id: "REQ-ING-009"
+    title: "Machine Learning Document-Type Classification Evaluation"
+    description: "The scikit-learn document classifier must achieve Macro-F1 >= 0.90 and recall >= 0.80 for every document type on a pre-registered stratified 500/100 train/test split across 3 distinct seeds."
+    target_metric: "classifier_macro_f1_rate"
+
+  - id: "REQ-ING-010"
+    title: "Major Version Schema and Storage Upgrade Integrity"
+    description: "Upgrading Paperless-ngx from N-1 (2.14.6) to N (2.14.7) with 500 ingested documents must preserve exact document counts, tags, document types, custom fields, notes, and archive file checksums, maintaining full-text searchability. Pre-upgrade database and media snapshots must enable clean rollback."
+    target_metric: "upgrade_duration_seconds"
+
+  - id: "REQ-ING-011"
+    title: "Web UI Document Workflow and Accessibility Standard"
+    description: "The web UI must enable end-to-end document upload, asynchronous task tracking, search retrieval, and tag modification on Microsoft Edge. The documents page must pass automated axe-core WCAG 2.1 AA accessibility checks with 0 critical or serious violations."

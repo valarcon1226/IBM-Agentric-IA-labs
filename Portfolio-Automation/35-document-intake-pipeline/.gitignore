@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+results/
+corpus/generated/
+data/
+media/
+export/
+pgdata/
+.token
+scratch/
+tests/ui/test_ui_TOKEN-*.pdf
