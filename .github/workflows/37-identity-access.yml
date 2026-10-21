@@ -152,9 +152,8 @@ jobs:
         run: |
           uv run pytest tests/api/test_partial_import.py -v
 
-      - name: Run Major Version Schema Upgrade tests (N-1 to N migration)
-        run: |
-          uv run pytest tests/migration/test_upgrade.py -v
+      # The 25 -> 26 upgrade test is not here yet: it read files from a manual run on a
+      # laptop instead of upgrading the stack itself. It comes back once it does.
 
       - name: Tear down SUT stack
         if: always()
