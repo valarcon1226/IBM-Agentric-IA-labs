@@ -39,6 +39,7 @@ Numbers from the nightly run [39543095736](https://github.com/valarcon1226/IBM-A
 Other load numbers from the same run (p95): `client_credentials` 10.99 ms at 10 rps and 6.76 ms at 100 rps (~94 rps reached). A password login takes about 40 ms, so with one request in flight the loop tops out near 26 rps: the 50 and 100 rps login steps reached ~26 and ~27 rps (p95 45.36 ms and 42.08 ms). They show latency, not capacity at those rates.
 
 On CI the 10,000-user seed needed two retries: Keycloak (memory limit 1.5 GB) dropped the connection during the first import batch. The seed script retries dropped batches, and `ifResourceExists=SKIP` makes the retry safe.
+
 ---
 
 ## ASVS Coverage & Scope Boundaries
