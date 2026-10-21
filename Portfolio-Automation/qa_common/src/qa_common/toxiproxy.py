@@ -53,6 +53,13 @@ class ToxiproxyClient:
             if resp.status_code != 404:
                 resp.raise_for_status()
 
+    def set_enabled(self, name: str, enabled: bool) -> dict[str, Any]:
+        """Enable or disable an existing proxy."""
+        with httpx.Client(base_url=self.base_url, timeout=10.0) as client:
+            resp = client.post(f"/proxies/{name}", json={"enabled": enabled})
+            resp.raise_for_status()
+            return resp.json()
+
     def add_toxic(
         self,
         proxy_name: str,
