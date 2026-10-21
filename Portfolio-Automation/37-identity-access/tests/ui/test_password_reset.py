@@ -195,7 +195,9 @@ def test_password_reset_happy_path_and_replay_and_expiration(
         # Wait until lifespan expires using condition without sleep
         start_time = time.monotonic()
         _wait_until_condition(
-            lambda: time.monotonic() - start_time > token_lifespan_seconds + 0.5,
+            # Keycloak stores token expiry in whole seconds, so allow a full extra second
+            # plus margin; 0.5 s let a still-valid link through on CI.
+            lambda: time.monotonic() - start_time > token_lifespan_seconds + 2.0,
             timeout_s=10.0,
             interval_s=0.2,
             description=f"action token lifespan ({token_lifespan_seconds}s) to elapse",

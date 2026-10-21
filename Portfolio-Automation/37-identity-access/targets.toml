@@ -17,8 +17,9 @@ reused_token_success_count = 0
 # Number of failed login attempts required to trigger account lockout
 lockout_failure_threshold = 3
 
-# Number of users missed or repeated during 10,000-user pagination walk
-pagination_missed_or_repeated_count = 0
+# Number of users missed during a 10,000-user pagination walk (repeats under
+# concurrent creation are expected with offset pagination, see FIND-008)
+pagination_missed_count = 0
 
 # Maximum allowed duration for database schema and server upgrade with 10k users (5 minutes)
 upgrade_duration_seconds = 300.0
