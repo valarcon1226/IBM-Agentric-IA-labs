@@ -1,7 +1,8 @@
-gradio
-langchain
+langchain-core
 langchain-google-genai
+langchain-groq
+langchain-openai
+python-dotenv
 youtube-transcript-api
 yt-dlp
-langchain-core
 pydantic

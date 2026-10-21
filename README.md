@@ -33,8 +33,8 @@ Projects utilizing multimodal AI capabilities. Includes an **AI Storyteller** th
 * **Tech Stack:** Multimodal LLMs, Image Generation APIs.
 
 ### 8. ?? YouTube RAG Analyzer (`YouTube-RAG-Analyzer`)
-An intelligent tool that extracts transcripts from YouTube videos and uses RAG to allow users to ask questions, generate summaries, and extract specific information directly from video content.
-* **Tech Stack:** YouTube Transcript API, LangChain, RAG.
+Turns YouTube videos into fact-checked Markdown reference documents through a 4-phase LLM pipeline (chunked extraction, deduplication, synthesis, anti-hallucination validation), files them by topic, and serves them in a local dashboard with a crash-safe batch queue. Runs on free LLM tiers through a multi-provider fallback chain.
+* **Tech Stack:** Python, LangChain Core, Pydantic, yt-dlp, youtube-transcript-api, Gemini / Groq / NVIDIA / Mistral / OpenRouter.
 
 ### 9. ?? Advanced RAG Techniques (`Advanced-RAG-Techniques`)
 Implementations of advanced retrieval techniques to improve RAG performance, including custom retrievers using **LlamaIndex** and **FAISS**, as well as context-aware retrieval optimization.
