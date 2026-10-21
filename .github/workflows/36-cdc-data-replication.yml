@@ -144,6 +144,11 @@ jobs:
         run: |
           uv run pytest tests/migration -v -s
 
+      - name: Save container logs
+        if: always()
+        run: |
+          docker compose logs --no-color > results/compose-logs.txt 2>&1 || true
+
       - name: Tear down SUT stack
         if: always()
         run: |
