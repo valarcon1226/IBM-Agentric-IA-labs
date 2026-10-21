@@ -1,0 +1,47 @@
+version: "1.0"
+standard: "OWASP ASVS v4.0.3 (modeled on, non-compliant statement)"
+requirements:
+  - id: "REQ-IAM-001"
+    title: "Brute-Force and Credential Stuffing Mitigation"
+    asvs_section: "V2.2.1, V2.2.2 (modeled on OWASP ASVS v4.0.3)"
+    description: "The authentication system must trigger account lockout after exactly N (3) consecutive failed credentials attempts, enforce exponential or progressive backoff delays, and support administrative unlocking via REST API."
+    target_metric: "lockout_failure_threshold"
+
+  - id: "REQ-IAM-002"
+    title: "Authorization Code and Refresh Token Replay Protection"
+    asvs_section: "V3.5.2, V3.5.3 (modeled on OWASP ASVS v4.0.3)"
+    description: "Authorization codes must be single-use (RFC 6749 §4.1.2). Refresh tokens must be rotated upon exchange; reuse of a previous refresh token must fail with invalid_grant and revoke the entire active session."
+    target_metric: "reused_token_success_count"
+
+  - id: "REQ-IAM-003"
+    title: "Strict OIDC Protocol and Cryptographic Token Validation"
+    asvs_section: "V3.2.1, V3.2.3 (modeled on OWASP ASVS v4.0.3)"
+    description: "The system must enforce PKCE with S256 for confidential and public clients (RFC 7636). ID tokens must validate cryptographic RS256 signature against JWKS, issuer (iss), audience (aud), expiration (exp) and nonce matching."
+
+  - id: "REQ-IAM-004"
+    title: "Secure Password Reset and Anti-Enumeration"
+    asvs_section: "V2.5.2, V2.5.6 (modeled on OWASP ASVS v4.0.3)"
+    description: "Password reset links must expire after configured lifespan and be invalid for second use. When SMTP downstream fails, the user-facing response must remain generic without disclosing account existence."
+
+  - id: "REQ-IAM-005"
+    title: "Backpressure and Overload Load Shedding"
+    asvs_section: "V13.1.5 (modeled on OWASP ASVS v4.0.3)"
+    description: "Under severe concurrency bursts exceeding configured queued request capacity (http-max-queued-requests), the server must reject excess requests with HTTP 503 Service Unavailable and 0 HTTP 500 errors, recovering immediately."
+    target_metric: "burst_5xx_errors"
+
+  - id: "REQ-IAM-006"
+    title: "Deterministic Admin User Pagination"
+    asvs_section: "V13.2.3 (modeled on OWASP ASVS v4.0.3)"
+    description: "Walking 10,000 users via admin REST API using first and max page sizes must yield the exact set of user IDs without omissions or duplicate occurrences, matching the total count endpoint."
+    target_metric: "pagination_missed_or_repeated_count"
+
+  - id: "REQ-IAM-007"
+    title: "Partial Import Deterministic Conflict Resolution"
+    asvs_section: "V13.2.1 (modeled on OWASP ASVS v4.0.3)"
+    description: "The partialImport administrative endpoint must deterministically apply SKIP, OVERWRITE, and FAIL collision policies, accurately returning itemized counts and preserving atomic database consistency."
+
+  - id: "REQ-IAM-008"
+    title: "Seamless Major Version Schema Upgrade Integrity"
+    asvs_section: "V14.2.3 (modeled on OWASP ASVS v4.0.3)"
+    description: "Upgrading the Keycloak schema and binary from N-1 to N must retain all 10,000 users, preserve password hashes, maintain TOTP MFA credentials, keep OAuth client secrets unchanged, and finish within SLA."
+    target_metric: "upgrade_duration_seconds"
