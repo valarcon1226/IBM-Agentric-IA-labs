@@ -71,19 +71,21 @@ flowchart LR
 
 ## 4. Numerical Targets & Measured SLA Performance
 
-> **Where the numbers come from:** Measurements collected on the SUT stack running on the test host. Test runs save raw metrics in [`results/`](results/) (`metrics.json`, `slow_sink_lag_samples.json`, `snapshot_1m_metrics.json`, `upgrade_metrics.json`) and update the requirements matrix in [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md).
+> **Where the numbers come from:** GitHub Actions on `ubuntu-latest`. PR gate: [run 39506590337](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39506590337); full nightly suite: [run 39535851349](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39535851349). Test runs save raw metrics in `results/` (uploaded as the run's `nightly-metrics` artifact) and update the requirements matrix in [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md). The figures in section 3 come from the earlier laptop runs.
 
-| Metric / Target | Target Value (`targets.toml`) | Measured Value | Result |
+| Metric / Target | Target Value (`targets.toml`) | Measured Value (CI) | Result |
 |---|---|---|---|
-| **End-to-end lag p95 at 500 rows/s** | $\le$ 5.0 s | **0.949 s** (p50: 0.671 s, p99: 1.367 s, 18,200 samples) | PASS |
-| **End-to-end lag p95 at 1,000 rows/s** | $\le$ 10.0 s | **0.877 s** (p50: 0.497 s, p99: 0.959 s, 18,200 samples) | PASS |
-| **Catch-up time after 2 min slowdown at 500 rows/s** | $\le$ 180.0 s | **62.33 s** (lag peak: 22,535 msgs) | PASS |
-| **Rows differing after fault tests (1M rows reconcile)** | 0 | **0 differences** (1,178,501 rows checked) | PASS |
-| **Reconciler time for 1,000,000 rows** | $\le$ 120.0 s | **3.08 s** (324k rows/s throughput) | PASS |
-| **Rows lost or repeated in initial snapshot (1M rows)** | 0 | **0 lost, 0 repeated** (Duration: 285.28 s) | PASS |
-| **Debezium upgrade downtime (2.6.2 $\rightarrow$ 2.7.3)** | No re-snapshot | **13.48 s downtime, 0 re-snapshots, 0 diffs** | PASS |
-| **PR Gate CI wall clock** | $\le$ 25 min | **~2.5 min** | PASS |
-| **Nightly CI wall clock** | $\le$ 60 min | **~22 min** | PASS |
+| **End-to-end lag p95 at 500 rows/s** | $\le$ 5.0 s | **0.786 s** (p50: 0.622 s, p99: 0.812 s, 18,200 samples) | PASS |
+| **End-to-end lag p95 at 1,000 rows/s** | $\le$ 10.0 s | **0.940 s** (p50: 0.704 s, p99: 1.004 s, 18,200 samples) | PASS |
+| **Catch-up time after 2 min slowdown at 500 rows/s** | $\le$ 180.0 s | **60.89 s** (lag peak: 24,120 msgs) | PASS |
+| **Rows differing after each fault test** | 0 | **0 differences** in every reconcile (lag, crash, slow sink, schema changes) | PASS |
+| **Reconciler time for 1,000,000 rows** | $\le$ 120.0 s | **6.86 s** | PASS |
+| **Rows lost or repeated in initial snapshot (1M rows)** | 0 | **0 lost, 0 repeated** (snapshot: 241.63 s) | PASS |
+| **Debezium upgrade (2.6.2 $\rightarrow$ 2.7.3)** | No re-snapshot, 0 diffs | **13.63 s downtime, offset +264 (no re-snapshot), 0 diffs on 1,001,653 rows** | PASS |
+| **PR Gate CI wall clock** | $\le$ 25 min | **2 min 3 s** | PASS |
+| **Nightly CI wall clock** | $\le$ 60 min | **33 min 17 s** | PASS |
+
+On the CI runner the source connector took about 90 s after the upgrade to publish new events (on the laptop it was immediate). Nothing was lost (the reconcile is clean), but the first wait of 60 s was too short. That is why the test now waits up to 300 s before reconciling.
 
 ---
 

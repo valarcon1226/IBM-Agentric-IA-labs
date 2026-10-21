@@ -57,6 +57,7 @@ the GitHub Actions workflow runs them on every push to `main`; otherwise they we
 | #  | Project | What it does | Stack | Evidence |
 | -- | ------- | ------------ | ----- | -------- |
 | 34 | [Saleor Order Integrity](34-commerce-order-integrity/) | Order, stock and payment data on Saleor 3.20: cursor pagination, checkout retries through Toxiproxy, 50 buyers racing for 5 units, 500 webhooks to a slow and a failing receiver, bulk import with bad rows, a real 3.19 → 3.20 upgrade with checksums and rollback, 5 dashboard UI tests | Python, pytest, Playwright, Hypothesis, Locust, Toxiproxy, Docker | 17 tests (+ 9 in the shared qa_common package) · CI PR gate + nightly ([workflow](../.github/workflows/34-commerce-order-integrity.yml)) · 2 Saleor bugs, one of them stock overselling |
+| 36 | [CDC Data Replication](36-cdc-data-replication/) | Postgres → Debezium → Redpanda → Postgres warehouse under load: end-to-end lag at 100/500/1,000 rows/s, a slow sink through Toxiproxy, a killed Connect worker, poison records to a DLQ, 4 live schema changes, a 1M-row snapshot and a live 2.6 → 2.7 Debezium upgrade, each checked by a keyset reconciler | Python, pytest, Debezium, Redpanda, Toxiproxy, Docker | 13 tests · CI PR gate + nightly ([workflow](../.github/workflows/36-cdc-data-replication.yml)) · lag p95 0.94 s at 1,000 rows/s, 0 rows lost · 1 sink limitation (DBZ-7877: constraint errors stop the task instead of going to the DLQ) |
 
 ## Target architecture
 
