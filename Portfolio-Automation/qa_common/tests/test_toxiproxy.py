@@ -28,6 +28,8 @@ def test_toxiproxy_methods() -> None:
             and request.method == "DELETE"
         ):
             return httpx.Response(204)
+        if request.url.path == "/proxies/test_p" and request.method == "POST":
+            return httpx.Response(200, json={"name": "test_p", "enabled": False})
         if request.url.path == "/proxies/test_p" and request.method == "DELETE":
             return httpx.Response(204)
         return httpx.Response(404)
@@ -46,11 +48,15 @@ def test_toxiproxy_methods() -> None:
     p = client.create_proxy("test_p", "0.0.0.0:8000", "upstream:8000")
     assert p["name"] == "test_p"
 
+    res = client.set_enabled("test_p", False)
+    assert res["enabled"] is False
+
     with client.toxic_context(
         "test_p", "latency_toxic", "latency", attributes={"latency": 100}
     ) as t:
         assert t["name"] == "latency_toxic"
 
     assert "POST /proxies" in calls
+    assert "POST /proxies/test_p" in calls
     assert "POST /proxies/test_p/toxics" in calls
     assert "DELETE /proxies/test_p/toxics/latency_toxic" in calls
