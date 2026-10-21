@@ -1,0 +1,24 @@
+# Targets for Keycloak Identity and Access (Project 4)
+# Hardware baseline: GitHub-hosted runner (4 vCPU, 16 GB RAM) or local workstation (32 GB RAM)
+
+[targets]
+# Latency of token endpoint (client_credentials) at 50 rps (p95)
+token_p95_at_50rps_ms = 300.0
+
+# Latency of password login at 10 rps (p95, PBKDF2 / Argon2 password hashing dominates)
+login_p95_at_10rps_ms = 800.0
+
+# Number of unhandled 5xx (500) internal server errors during 300-request burst (503 is allowed)
+burst_5xx_errors = 0
+
+# Number of successful reuses of an authorization code or rotated refresh token
+reused_token_success_count = 0
+
+# Number of failed login attempts required to trigger account lockout
+lockout_failure_threshold = 3
+
+# Number of users missed or repeated during 10,000-user pagination walk
+pagination_missed_or_repeated_count = 0
+
+# Maximum allowed duration for database schema and server upgrade with 10k users (5 minutes)
+upgrade_duration_seconds = 300.0
