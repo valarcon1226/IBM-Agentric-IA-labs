@@ -34,6 +34,7 @@ momento se decide agregar la tarjeta igual, con solo poner CEREBRAS_API_KEY en e
 activa solo, sin tocar este archivo.
 """
 import os
+import re
 import sqlite3
 import time
 from typing import Type, TypeVar, Optional
@@ -98,6 +99,9 @@ DAILY_BUDGETS = {
     "Groq-oss-20b":    (None, 180_000),
     "Cerebras":   (4, None),
     "OpenRouter": (45, None),
+    "NVIDIA-ultra": (9_500, None),  # 10,000 req/dia por modelo (build.nvidia.com, 2026-10)
+    "NVIDIA-super": (9_500, None),
+    # Mistral sin entrada: su cupo es $10/mes de credito, no un tope diario; el 429 salta al siguiente
 }
 
 
@@ -149,7 +153,15 @@ def _get_window_usage(provider: str) -> tuple:
         conn.close()
 
 
+# Proveedor que respondió "sin cupo" en esta corrida: no se le vuelve a llamar por un rato. Antes cada llamada
+# reintentaba los 4 Gemini agotados (~30 s de espera por pregunta antes de llegar a uno con cupo).
+QUOTA_COOLDOWN_SECONDS = 15 * 60
+_cooldown_until: dict = {}
+
+
 def _budget_available(provider: str) -> bool:
+    if time.time() < _cooldown_until.get(provider, 0):
+        return False
     caps = DAILY_BUDGETS.get(provider)
     if not caps:
         return True
@@ -225,7 +237,7 @@ def _gemini(model="gemini-3.6-flash"):
     if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip():
         return None  # sin llave (p. ej. un amigo que solo sacó la de Groq): se salta en silencio
     # sin esto, langchain reintenta un 429 con backoff por minutos y deja colgada la cadena
-    return ChatGoogleGenerativeAI(model=model, temperature=0.1, max_retries=1, timeout=90)
+    return ChatGoogleGenerativeAI(model=model, temperature=0.1, max_retries=1, timeout=45)
 
 
 def _groq(model="openai/gpt-oss-120b"):
@@ -241,6 +253,28 @@ def _cerebras():
     return ChatOpenAI(model="gpt-oss-120b", base_url="https://api.cerebras.ai/v1", api_key=key, temperature=0.1)
 
 
+def _logged_ok() -> bool:
+    # NVIDIA registra los prompts y Mistral free entrena con ellos: solo para llamadores que lo
+    # piden (YouTube-RAG-Analyzer, transcripciones publicas), nunca para el CV de jobHunter.
+    return os.environ.get("LLM_ALLOW_LOGGED_PROVIDERS") == "1"
+
+
+def _nvidia(model="nvidia/nemotron-3-ultra-550b-a55b"):
+    key = os.environ.get("NVIDIA_API_KEY", "").strip()
+    if not key or not _logged_ok():
+        return None
+    return ChatOpenAI(model=model, base_url="https://integrate.api.nvidia.com/v1", api_key=key,
+                      temperature=0.1, timeout=120)
+
+
+def _mistral():
+    key = os.environ.get("MISTRAL_API_KEY", "").strip()
+    if not key or not _logged_ok():
+        return None
+    return ChatOpenAI(model="mistral-large-latest", base_url="https://api.mistral.ai/v1", api_key=key,
+                      temperature=0.1, timeout=120)
+
+
 def _openrouter():
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not key:
@@ -249,7 +283,8 @@ def _openrouter():
     # (OpenRouter devolvía 404 sugiriendo la versión paga). Cambiado a un modelo gratis vigente
     # verificado contra GET https://openrouter.ai/api/v1/models — revisar esa lista si este
     # también deja de estar disponible.
-    return ChatOpenAI(model="google/gemma-4-31b-it:free", base_url="https://openrouter.ai/api/v1",
+    # 2026-10-19: gemma-4-31b daba 429 upstream; nemotron-3-ultra-550b (mas grande) respondio JSON en 6s.
+    return ChatOpenAI(model="nvidia/nemotron-3-ultra-550b-a55b:free", base_url="https://openrouter.ai/api/v1",
                        api_key=key, temperature=0.1)
 
 
@@ -278,6 +313,11 @@ def _ollama():
 # Solo Gemini probó ser confiable con structured_output en este proyecto; el resto usa
 # PydanticOutputParser + JSON forzado por prompt (mismo patron que ya usan scout/tailor).
 _CHAIN = [
+    # Primero: el cupo mas grande (10k req/dia por modelo) y deja Gemini/Groq libres para jobHunter.
+    # Sin NVIDIA_API_KEY / MISTRAL_API_KEY o sin LLM_ALLOW_LOGGED_PROVIDERS=1 se saltan solos.
+    ("NVIDIA-ultra", _nvidia, False),
+    ("NVIDIA-super", lambda: _nvidia("nvidia/nemotron-3-super-120b-a12b"), False),
+    ("Mistral", _mistral, False),
     ("Gemini", _gemini, True),
     ("Gemini-3.8", lambda: _gemini("gemini-3.8-flash"), True),
     ("Gemini-3.7", lambda: _gemini("gemini-3.7-flash"), True),
@@ -294,7 +334,7 @@ _CHAIN = [
 # Limites de requests/minuto conocidos (None = no se ha documentado un tope estricto en este
 # proyecto). Cerebras es el unico con un RPM realmente bajo (5) pese a tener el pool de tokens
 # mas grande, asi que se espacían las llamadas para no chocar ese techo innecesariamente.
-_RPM_LIMITS = {"Gemini": 15, "Gemini-3.8": 15, "Gemini-3.7": 15, "Gemini-3.5": 15, "Gemini-3.5-lite": 15, "Groq": None, "Cerebras": 5, "OpenRouter": 20}
+_RPM_LIMITS = {"Gemini": 15, "Gemini-3.8": 15, "Gemini-3.7": 15, "Gemini-3.5": 15, "Gemini-3.5-lite": 15, "Groq": None, "Cerebras": 5, "OpenRouter": 20, "NVIDIA-ultra": 38, "NVIDIA-super": 38, "Mistral": 50}
 _last_call_time = {}
 
 
@@ -373,6 +413,8 @@ def invoke_structured(system_prompt: str, human_template: str, variables: dict,
                     time.sleep(12)
                     continue
                 reason = "sin cuota/rate-limited" if _is_quota_error(e) else f"{type(e).__name__}: {str(e)[:120]}"
+                if _is_quota_error(e) or re.search(r"deadline|timed out|unavailable|50[34]", str(e).lower()):
+                    _cooldown_until[name] = time.time() + QUOTA_COOLDOWN_SECONDS  # sin cupo o saturado (504)
                 print(f"   [FALLBACK] {name} falló ({reason}). Probando el siguiente proveedor...")
                 break
 
@@ -428,6 +470,8 @@ def invoke_text(system_prompt: str, human_template: str, variables: dict, temper
                     time.sleep(12)
                     continue
                 reason = "sin cuota/rate-limited" if _is_quota_error(e) else f"{type(e).__name__}: {str(e)[:120]}"
+                if _is_quota_error(e) or re.search(r"deadline|timed out|unavailable|50[34]", str(e).lower()):
+                    _cooldown_until[name] = time.time() + QUOTA_COOLDOWN_SECONDS  # sin cupo o saturado (504)
                 print(f"   [FALLBACK] {name} falló ({reason}). Probando el siguiente proveedor...")
                 break
 

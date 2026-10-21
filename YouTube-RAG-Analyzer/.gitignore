@@ -1,0 +1,5 @@
+.cache/
+Results/
+__pycache__/
+cola.json
+cola.tmp
