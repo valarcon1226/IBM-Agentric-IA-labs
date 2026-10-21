@@ -1,0 +1,39 @@
+# Targets for Document Intake Pipeline (Paperless-ngx, Project 2)
+# Hardware baseline: GitHub-hosted runner (4 vCPU, 16 GB RAM) or local workstation
+
+[targets]
+# Uploads accounted for (done or failed with a reason): ratio 1.0 = 500/500
+uploads_accounted_ratio = 1.0
+
+# Maximum allowed queue drain time for 500 documents with OCR skipped (20 minutes = 1200 seconds)
+queue_drain_time_seconds = 1200.0
+
+# Minimum required ingestion throughput while draining the queue (docs / minute)
+throughput_docs_per_min_rate = 25.0
+
+# Maximum allowed peak webserver memory during 500-upload burst (in MB, limit 2048 MB)
+peak_webserver_memory_mb = 1536.0
+
+# Maximum allowed latency for documents API listing (page_size=100) at p95 (in milliseconds)
+documents_listing_p95_ms = 500.0
+
+# Maximum allowed latency for full-text search with 500 docs in index at p95 (in milliseconds)
+search_p95_ms = 800.0
+
+# Number of tasks remaining stuck in PENDING or STARTED state after Redis fault injection
+tasks_stuck_after_fault = 0
+
+# Machine learning classifier evaluation: minimum Macro-F1 across held-out test split
+classifier_macro_f1_rate = 0.90
+
+# Machine learning classifier evaluation: minimum recall across any single document type
+classifier_min_recall_rate = 0.80
+
+# Maximum allowed duration for database schema and application upgrade (5 minutes = 300 seconds)
+upgrade_duration_seconds = 300.0
+
+# Maximum allowed critical/serious accessibility violations on document detail view
+a11y_violations_critical_count = 0
+
+# Maximum allowed wall clock time for nightly suite run (in minutes)
+nightly_wall_clock_minutes = 50.0

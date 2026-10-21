@@ -1,0 +1,107 @@
+name: 35-document-intake-pipeline
+
+services:
+  postgres:
+    image: postgres:16.8-alpine3.21
+    container_name: paperless-postgres
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless_password
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperless -d paperless"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4.2-alpine
+    container_name: paperless-redis
+    restart: unless-stopped
+    mem_limit: 256m
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6378:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.11.0
+    container_name: paperless-toxiproxy
+    restart: unless-stopped
+    mem_limit: 128m
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./toxiproxy.json:/config/toxiproxy.json:ro
+    ports:
+      - "127.0.0.1:8474:8474"
+      - "127.0.0.1:6379:6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "list"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  webserver:
+    image: ${PAPERLESS_IMAGE:-ghcr.io/paperless-ngx/paperless-ngx:2.14.7}
+    container_name: paperless-webserver
+    restart: unless-stopped
+    mem_limit: 2g
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      PAPERLESS_REDIS: redis://toxiproxy:6379
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBPORT: 5432
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: paperless_password
+      PAPERLESS_URL: http://127.0.0.1:8000
+      PAPERLESS_SECRET_KEY: secret-paperless-pipeline-test-token-key-2026
+      PAPERLESS_OCR_MODE: skip
+      PAPERLESS_TASK_WORKERS: 2
+      PAPERLESS_TIME_ZONE: UTC
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER:-admin}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD:-admin}
+      PAPERLESS_ADMIN_EMAIL: ${PAPERLESS_ADMIN_EMAIL:-admin@example.com}
+      PAPERLESS_IGNORE_HASH_COLLISIONS: "false"
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+      - paperless_consume:/usr/src/paperless/consume
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8000/api/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 25s
+
+volumes:
+  postgres_data:
+  redis_data:
+  paperless_data:
+  paperless_media:
+  paperless_export:
+  paperless_consume:
