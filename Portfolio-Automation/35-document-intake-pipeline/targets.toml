@@ -20,6 +20,9 @@ documents_listing_p95_ms = 500.0
 # Maximum allowed latency for full-text search with 500 docs in index at p95 (in milliseconds)
 search_p95_ms = 800.0
 
+# Maximum allowed latency from task SUCCESS to full-text search availability (in seconds)
+index_freshness_seconds = 5.0
+
 # Number of tasks remaining stuck in PENDING or STARTED state after Redis fault injection
 tasks_stuck_after_fault = 0
 

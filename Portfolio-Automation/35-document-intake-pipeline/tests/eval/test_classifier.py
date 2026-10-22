@@ -99,16 +99,19 @@ async def _poll_tasks_until_done(
     last_print = time.time()
 
     while time.time() < deadline:
-        resp = await client.get(tasks_url, headers=headers, timeout=15.0)
-        assert resp.status_code == 200
-        for t in resp.json():
-            tid = t.get("task_id")
-            if tid in target_task_ids and t.get("status") in ("SUCCESS", "FAILURE"):
-                final_tasks[tid] = t
+        try:
+            resp = await client.get(tasks_url, headers=headers, timeout=15.0)
+            if resp.status_code == 200:
+                for t in resp.json():
+                    tid = t.get("task_id")
+                    if tid in target_task_ids and t.get("status") in ("SUCCESS", "FAILURE"):
+                        final_tasks[tid] = t
 
-        if len(final_tasks) == len(target_task_ids):
-            print(f" [Tasks Drained] {len(final_tasks)}/{len(target_task_ids)} in {timeout_s - (deadline - time.time()):.1f}s")
-            return final_tasks
+            if len(final_tasks) == len(target_task_ids):
+                print(f" [Tasks Drained] {len(final_tasks)}/{len(target_task_ids)} in {timeout_s - (deadline - time.time()):.1f}s")
+                return final_tasks
+        except (httpx.HTTPError, OSError):
+            pass
 
         if time.time() - last_print >= 15.0:
             print(f" [Polling] {len(final_tasks)}/{len(target_task_ids)} tasks drained...")
