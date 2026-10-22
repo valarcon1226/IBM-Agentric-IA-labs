@@ -5,9 +5,11 @@ Generated automatically by qa_common pytest plugin.
 | Requirement | Test | Outcome |
 |-------------|------|---------|
 | REQ-ING-001 | `tests/resilience/test_burst.py::test_burst_500_upload_accounting` | PASSED |
-| REQ-ING-002 | `tests/resilience/test_faults.py::test_fault_redis_restart` | PASSED |
+| REQ-ING-002 | `tests/resilience/test_faults.py::test_fault_redis_restart` | XFAIL |
 | REQ-ING-002 | `tests/resilience/test_faults.py::test_fault_toxiproxy_connection_cut` | PASSED |
+| REQ-ING-002 | `tests/resilience/test_faults.py::test_fault_toxiproxy_timeout_toxic` | PASSED |
 | REQ-ING-003 | `tests/resilience/test_faults.py::test_retry_idempotency_10_completed_tasks` | PASSED |
+| REQ-ING-003 | `tests/resilience/test_faults.py::test_retry_idempotency_single_file` | PASSED |
 | REQ-ING-004 | `tests/api/test_partial.py::test_corrupt_file_isolated_failure` | PASSED |
 | REQ-ING-005 | `tests/api/test_partial.py::test_bulk_edit_partial_missing_ids` | PASSED |
 | REQ-ING-006 | `tests/api/test_partial.py::test_password_protected_pdf_rejection` | PASSED |

@@ -155,24 +155,22 @@ async def test_bulk_edit_partial_missing_ids(
         }
         bulk_resp = await client.post(bulk_url, headers=auth_headers, json=bulk_payload)
 
-        # Assert exact API response verified in src/documents/bulk_edit.py
-        # Requirement: response is 200 or 400 with structured error (never 500)
-        assert bulk_resp.status_code in (200, 400), f"bulk_edit failed with unexpected status: {bulk_resp.status_code} - {bulk_resp.text}"
-        if bulk_resp.status_code == 400:
-            err_data = bulk_resp.json()
-            assert "documents" in err_data or "detail" in err_data, f"Structured error missing: {err_data}"
+        # Assert exact API response verified in src/documents/serialisers.py:BulkEditSerializer
+        # PrimaryKeyRelatedField rejects non-existent/deleted IDs with HTTP 400 and structured error
+        assert bulk_resp.status_code == 400, f"bulk_edit failed with unexpected status: {bulk_resp.status_code} - {bulk_resp.text}"
+        assert bulk_resp.json() == {
+            "documents": ["Some documents in documents don't exist or were specified twice."]
+        }
 
-            # Apply tag to surviving valid documents to verify database consistency
-            valid_payload = {
-                "documents": surviving_ids,
-                "method": "add_tag",
-                "parameters": {"tag": tag_id},
-            }
-            valid_resp = await client.post(bulk_url, headers=auth_headers, json=valid_payload)
-            assert valid_resp.status_code == 200, f"bulk_edit on valid IDs failed: {valid_resp.text}"
-            assert valid_resp.json() == {"result": "OK"}
-        else:
-            assert bulk_resp.json() == {"result": "OK"}, f"Unexpected response: {bulk_resp.json()}"
+        # Apply tag to surviving valid documents to verify database consistency
+        valid_payload = {
+            "documents": surviving_ids,
+            "method": "add_tag",
+            "parameters": {"tag": tag_id},
+        }
+        valid_resp = await client.post(bulk_url, headers=auth_headers, json=valid_payload)
+        assert valid_resp.status_code == 200, f"bulk_edit on valid IDs failed: {valid_resp.text}"
+        assert valid_resp.json() == {"result": "OK"}
 
         # Verify exactly 17 surviving documents received the tag
         for sid in surviving_ids:

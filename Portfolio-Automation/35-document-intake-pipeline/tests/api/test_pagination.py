@@ -16,7 +16,7 @@ import httpx
 import psycopg
 import pytest
 from qa_common.metrics import MetricsRecorder
-from qa_common.targets import assert_target
+from qa_common.targets import assert_target, load_targets
 
 
 @pytest.fixture(scope="module")
@@ -61,9 +61,9 @@ def test_pagination_sort_ties_consistency(
         sql_ids = {row[0] for row in cur.fetchall()}
         assert len(sql_ids) == 300
 
-    # Walk with page_size 25 (per Prompt 7 spec) and 100
+    # Walk with page_size 1, 7, and 100 per Prompt 7 spec
     with httpx.Client(timeout=30.0) as client:
-        for page_size in (25, 100):
+        for page_size in (1, 7, 100):
             collected_ids: list[int] = []
             page = 1
             while True:
@@ -264,5 +264,6 @@ def test_index_freshness(
 
         assert hit_time is not None, f"Search hit for {fresh_token} not found"
         freshness_latency_s = hit_time - success_time
-        print(f"\n[INDEX FRESHNESS] Latency from SUCCESS to search hit: {freshness_latency_s:.2f} s (Target <= 5.0 s)")
-        assert freshness_latency_s <= 5.0, f"Index freshness latency {freshness_latency_s:.2f}s exceeded 5s target"
+        target_limit_s = float(load_targets()["targets"]["index_freshness_seconds"])
+        print(f"\n[INDEX FRESHNESS] Latency from SUCCESS to search hit: {freshness_latency_s:.2f} s (Target <= {target_limit_s:.1f} s)")
+        assert_target("index_freshness_seconds", freshness_latency_s)
