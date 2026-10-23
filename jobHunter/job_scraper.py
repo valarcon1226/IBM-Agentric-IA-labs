@@ -213,6 +213,52 @@ def search_jobbers(target_role: str) -> List[Dict]:
     print(f"[Scraper] [WARN] Intentando Jobbers.io...")
     return []
 
+def search_jobright(page: int = 0) -> List[Dict]:
+    """Jobright.ai: las vacantes que su IA ya emparejó con tu perfil (20 por página). Usa la sesión guardada en
+    Profiles/<nombre>/edge_jobright (se crea iniciando sesión una vez en ese perfil de Edge). Sin sesión, vacío."""
+    import os
+    import profile_paths
+    profile = profile_paths.resolve("edge_jobright")
+    if not os.path.isdir(profile):
+        return []
+    url = f"https://jobright.ai/swan/recommend/list/jobs?refresh=false&sortCondition=0&position={page * 20}&count=20&syncRerank=false"
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            ctx = p.chromium.launch_persistent_context(profile, channel="msedge", headless=True)
+            try:
+                data = ctx.request.get(url).json()
+            finally:
+                ctx.close()
+    except Exception as e:
+        print(f"[ERROR] Jobright falló: {e}")
+        return []
+    if not data.get("success"):  # sesión vencida: hay que volver a iniciar sesión en ese perfil de Edge
+        print(f"[WARN] Jobright no devolvió vacantes ({data.get('errorMsg') or data.get('errorCode')}); ¿sesión vencida?")
+        return []
+    jobs = []
+    for item in data["result"].get("jobList", []):
+        j, c = item.get("jobResult", {}), item.get("companyResult") or {}
+        q = j.get("qualifications") or {}
+        desc = "\n\n".join(filter(None, [
+            j.get("jobSummary", ""),
+            "Responsibilities:\n- " + "\n- ".join(j["coreResponsibilities"]) if j.get("coreResponsibilities") else "",
+            "Requirements:\n- " + "\n- ".join(q["mustHave"]) if q.get("mustHave") else "",
+            "Nice to have:\n- " + "\n- ".join(q["preferredHave"]) if q.get("preferredHave") else "",
+            f"Seniority: {j.get('jobSeniority', '')}. Work model: {j.get('workModel', '')}. "
+            f"Employment: {j.get('employmentType', '')}." + (" US citizens only." if j.get("isCitizenOnly") else ""),
+        ]))
+        jobs.append({
+            "title": j.get("jobTitle", ""),
+            "company": c.get("companyName", ""),
+            "url": j.get("originalUrl") or f"https://jobright.ai/jobs/info/{j.get('jobId')}",
+            "description": desc,
+            "location": j.get("jobLocation", ""),
+            "apply_url": j.get("applyLink"),
+        })
+    print(f"[Jobright] Página {page + 1}: {len(jobs)} vacantes emparejadas con tu perfil.")
+    return jobs
+
 # ==========================================
 # ORQUESTADOR DE BÚSQUEDA
 # ==========================================
@@ -249,6 +295,8 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
         for _, row in jobs_df.iterrows():
             title = str(row.get('title', ''))
             if not re.search(negative_pattern, title.lower()):
+                job_url_direct = row.get('job_url_direct')
+                apply_url = str(job_url_direct).strip() if job_url_direct and str(job_url_direct).lower() not in ('nan', 'none', '') else None
                 all_jobs.append({
                     "title": title,
                     "company": str(row.get('company', '')),
@@ -256,6 +304,7 @@ def autonomous_job_search(target_role: str) -> List[Dict]:
                     "description": str(row.get('description', '')),
                     "location": job_filters.with_search_country(
                         "" if str(row.get('location', '')) == "nan" else str(row.get('location', '')), location),
+                    "apply_url": apply_url,
                 })
         
     print(f"\n[DONE] Búsqueda JobSpy terminada. Quedaron {len(all_jobs)} vacantes tras el Filtro Anti-Senior.")

@@ -9,7 +9,7 @@ if hasattr(sys.stdout, "reconfigure"):
 import time
 from typing import List
 from pydantic import BaseModel, Field
-from job_scraper import autonomous_job_search, clean_job_description
+from job_scraper import autonomous_job_search, search_jobright, clean_job_description
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -157,12 +157,19 @@ def run_scout_agent():
             return
         print(f"[TARGET] Nuevas Palabras Clave: {smart_queries}\n")
 
-        for query in smart_queries:
+        # Jobright primero: ya vienen emparejadas con el perfil (una página nueva por iteración)
+        for query in ["Jobright", "Correo"] + list(smart_queries):
             if total_viables >= target_count:
                 break
 
             print(f"\n>> RASTREANDO: '{query}'")
-            raw_jobs = autonomous_job_search(query)
+            if query == "Jobright":
+                raw_jobs = search_jobright(iteration - 1)
+            elif query == "Correo":
+                from mail_triage import alert_jobs
+                raw_jobs = alert_jobs()
+            else:
+                raw_jobs = autonomous_job_search(query)
 
             if not raw_jobs:
                 print(f"[INFO] Cero resultados. Pasando a la siguiente...")
