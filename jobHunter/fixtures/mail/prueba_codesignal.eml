@@ -1,0 +1,19 @@
+Content-Type: multipart/mixed; boundary="===============7398547967022177270=="
+MIME-Version: 1.0
+From: CodeSignal Evaluations <invitations@codesignal.com>
+To: candidate@example.com
+Subject: Acme Corp Technical Assessment on CodeSignal
+Date: Fri, 17 Oct 2026 11:00:00 +0000
+Message-ID: <prueba-cs-402@codesignal.com>
+
+--===============7398547967022177270==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+SGkgVmFsZW50aW5hLAoKUGxlYXNlIGNvbXBsZXRlIHRoZSBnZW5lcmFsIGNvZGluZyBhc3Nlc3Nt
+ZW50IGZvciB5b3VyIFNlbmlvciBRQSBFbmdpbmVlciBhcHBsaWNhdGlvbiBhdCBBY21lIENvcnAu
+CgpMaW5rOiBodHRwczovL2FwcC5jb2Rlc2lnbmFsLmNvbS90ZXN0L3h5ejEyMwpQbGVhc2UgY29t
+cGxldGUgdGhlIGNoYWxsZW5nZSB3aXRoaW4gNzIgaG91cnMuCgpDb2RlU2lnbmFsIFRlYW0=
+
+--===============7398547967022177270==--

@@ -1,0 +1,19 @@
+Content-Type: multipart/mixed; boundary="===============6477473375318706287=="
+MIME-Version: 1.0
+From: GitHub Security <noreply@github.com>
+To: candidate@example.com
+Subject: [GitHub] Security alert: personal access token generated
+Date: Thu, 23 Oct 2026 11:30:00 +0000
+Message-ID: <otro-sec-702@github.com>
+
+--===============6477473375318706287==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+SGkgdmFsYXJjb25ldXIsCgpBIG5ldyBwZXJzb25hbCBhY2Nlc3MgdG9rZW4gd2FzIGdlbmVyYXRl
+ZCBvbiB5b3VyIGFjY291bnQuClRva2VuIG5hbWU6IGhvbWVsYWItc3luYwpJZiB5b3UgZGlkIG5v
+dCBnZW5lcmF0ZSB0aGlzIHRva2VuLCBwbGVhc2UgdmlzaXQgeW91ciBzZWN1cml0eSBzZXR0aW5n
+cyBpbW1lZGlhdGVseS4KCkdpdEh1YiBTdXBwb3J0IFRlYW0=
+
+--===============6477473375318706287==--

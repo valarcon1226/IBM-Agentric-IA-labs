@@ -1,0 +1,37 @@
+Content-Type: multipart/mixed; boundary="===============0904211846078731955=="
+MIME-Version: 1.0
+From: David Miller <dmiller@globex.com>
+To: candidate@example.com
+Subject: Invitation: Technical Interview with Globex @ Thu Oct 29,
+ 2026 3pm - 4pm (UTC)
+Date: Tue, 14 Oct 2026 16:00:00 +0000
+Message-ID: <entrevista-ics-302@globex.com>
+
+--===============0904211846078731955==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+SGkgVmFsZW50aW5hLAoKWW91IGFyZSBpbnZpdGVkIHRvIGEgdGVjaG5pY2FsIGludGVydmlldyBm
+b3IgRnJvbnRlbmQgRGV2ZWxvcGVyIHdpdGggb3VyIEVuZ2luZWVyaW5nIHRlYW0uCgpEYXRlOiAy
+MDI2LTEwLTI5IDE1OjAwIFVUQwpNZWV0aW5nIExpbms6IGh0dHBzOi8vem9vbS51cy9qLzk4NzY1
+NDMyMTAKClBsZWFzZSBmaW5kIHRoZSBjYWxlbmRhciBpbnZpdGF0aW9uIGF0dGFjaGVkLgoKQmVz
+dCwKRGF2aWQgTWlsbGVy
+
+--===============0904211846078731955==
+Content-Type: text/calendar; method="REQUEST"; name="invite.ics"
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="invite.ics"
+
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+DTSTART:20261029T150000Z
+DTEND:20261029T160000Z
+SUMMARY:Technical Interview - Globex
+URL:https://zoom.us/j/9876543210
+DESCRIPTION:Join Zoom Meeting: https://zoom.us/j/9876543210
+END:VEVENT
+END:VCALENDAR
+
+--===============0904211846078731955==--
