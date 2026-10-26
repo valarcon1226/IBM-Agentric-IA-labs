@@ -672,8 +672,9 @@ def _bank_holes(bank: Any, prefix: str = "") -> List[str]:
     return holes
 
 
-# lo llena otro agente o se infiere solo (no se le pregunta a la persona), o ya lo pregunta el banco
-_SCHEMA_SKIP = {"soft_skills", "portfolio_projects", "writer_instructions", "stories",
+# campo viejo (writer_instructions pasó a personalidad), historias (las pide la CHECKLIST por tema) o ya lo pregunta
+# el banco (visa, reubicación)
+_SCHEMA_SKIP = {"writer_instructions", "stories",
                 "personal_info.visa_sponsorship_needed", "personal_info.willing_to_relocate"}
 
 
@@ -1116,7 +1117,13 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
 
     distinct_temas += [g["tema"] for g in quality_gaps if g["tema"] not in distinct_temas]
     asked_temas = set()
-    answered = set()
+    # lo ya contestado no se vuelve a preguntar, tampoco en otra entrevista (ej. "no tengo certificaciones")
+    answered_path = profile_paths.resolve("entrevista_respondidas.json")
+    try:
+        with open(answered_path, encoding="utf-8") as f:
+            answered = set(json.load(f))
+    except (OSError, ValueError, TypeError):
+        answered = set()
     round_count = 0
     qa_chat = ""
 
@@ -1162,13 +1169,15 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             "2. Pregunta amablemente por los aspectos faltantes indicados.\n"
             "3. Máximo 3 preguntas breves en un solo párrafo o texto bien estructurado."
         )
-        human_template = "Aspectos a consultar:\n{pistas}"
+        system_prompt += ("\n4. NUNCA repitas algo que ya se preguntó o que la persona ya contó en la conversación de "
+                          "abajo; si ya lo dijo, no lo preguntes.")
+        human_template = "Aspectos a consultar:\n{pistas}\n\nConversación hasta ahora:\n{chat}"
 
         try:
             questions_text = llm_chain.invoke_text(
                 system_prompt=system_prompt,
                 human_template=human_template,
-                variables={"pistas": pistas_str},
+                variables={"pistas": pistas_str, "chat": qa_chat[-4000:] or "(ninguna)"},
                 temperature=0.6,
             )
         except llm_chain.AllProvidersExhausted:
@@ -1212,14 +1221,15 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
 
         # Extraer hechos
         print("[Sistema] Extrayendo datos estructurados de tu respuesta...")
-        extracted = extract_facts(user_response, gaps_for_topic)
+        # contra TODOS los huecos, no solo los del tema: si de paso contó su ciudad o una fortaleza, ya no se pregunta
+        extracted = extract_facts(user_response, current_gaps)
 
         # Distribuir historias y campos de profile
         for k, v in list(extracted.items()):
             if k.startswith("stories."):
                 story_tema = k.split(".", 1)[1]
                 _upsert_story(profile, story_tema, str(v))
-            elif any(g["clave"] == k and g["archivo"] == "profile" for g in gaps_for_topic):
+            elif any(g["clave"] == k and g["archivo"] == "profile" for g in current_gaps):
                 _update_profile_field(profile, k, v)
         # lo contestado no se repite aunque no quepa en un campo (ej. certificaciones: las arma el LLM al final)
         answered |= set(extracted)
@@ -1248,9 +1258,9 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             profile.stories, profile.personalidad = stories, personalidad
         except Exception as e:
             print(f"[Sistema] No se pudo re-armar el perfil con la entrevista ({e}); se guarda el anterior.")
+    # las que dijo la persona se quedan; las inferidas del chat se suman sin repetir
     soft_skills = evaluate_soft_skills_from_chat(chat_history + qa_chat)
-    if soft_skills:
-        profile.soft_skills = soft_skills
+    profile.soft_skills += [s for s in soft_skills if s.lower() not in {x.lower() for x in profile.soft_skills}]
 
     export_final_candidate_json(profile)
 
@@ -1258,7 +1268,9 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         yaml.safe_dump(bank, f, allow_unicode=True, sort_keys=False)
     print(f"[Sistema] Banco guardado en: {answers_path}")
 
-    final_gaps = find_gaps(profile, bank, check_quality=False)
+    final_gaps = [g for g in find_gaps(profile, bank, check_quality=False) if g["clave"] not in answered]
+    with open(answered_path, "w", encoding="utf-8") as f:
+        json.dump(sorted(answered), f, indent=1, ensure_ascii=False)
     gaps_path = profile_paths.resolve("gaps_pendientes.json")
     pending_records = [
         {"tema": g["tema"], "clave": g["clave"], "para": g["para"]}
