@@ -1,0 +1,40 @@
+# Frozen Numerical Quality and Performance Targets for Project 5 (LLM Platform Evals)
+# Hardware reference: Homelab (Debian 13, Intel i5-8300H 8 vCPU, 7.6 GB RAM, GTX 1050 4 GB)
+
+[targets]
+# Proxy overhead: difference in p95 latency between LiteLLM proxy and direct upstream (fake upstream, 0ms delay)
+proxy_overhead_p95_ms = 50.0
+
+# Rate limiting and backpressure
+rate_limit_rpm = 10
+max_parallel_requests = 2
+
+# Retries and fallbacks
+max_retries = 2
+retry_after_s = 2
+
+# Cost accounting: spend logged in LiteLLM vs (prompt_tokens * price + completion_tokens * price)
+spend_accuracy_tolerance_pct = 1.0
+
+# Budget cap overspend: maximum extra requests permitted past max_budget 0.05 USD
+budget_overspend_max_requests = 1
+
+# RAG Eval Metrics (Test Split, 120 items: 96 answerable, 24 unanswerable)
+eval_retrieval_hit5_min = 0.85
+eval_key_fact_correctness_min = 0.75
+eval_refusal_rate_min = 0.90
+eval_false_refusal_max = 0.10
+eval_citation_validity = 1.00
+
+# Eval protocol parameters
+eval_runs_count = 3
+eval_temperature = 0.0
+eval_seed = 42
+eval_max_regression = 0.03
+eval_judge_min_cohen_kappa = 0.60
+
+# Cost and duration targets
+cost_eval_run_local_usd = 0.00
+cost_hosted_judge_max_usd = 0.50
+nightly_eval_wall_clock_max_min = 90
+migration_upgrade_differences = 0

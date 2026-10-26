@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llm-platform-evals"
+version = "0.1.0"
+description = "LLM platform gateway reliability, cost control and RAG evaluation test suite"
+requires-python = ">=3.12"
+dependencies = [
+    "qa-common",
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pytest>=8.0.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-playwright>=0.5.0",
+    "openai>=1.50.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+qa-common = { path = "../qa_common", editable = true }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-ra"
+markers = [
+    "api: API endpoint tests for LiteLLM gateway",
+    "migration: Schema and version migration tests",
+    "resilience: Fault tolerance and resilience tests",
+    "perf: Performance and latency overhead tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
