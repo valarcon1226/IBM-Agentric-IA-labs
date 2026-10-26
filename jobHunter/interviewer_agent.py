@@ -767,6 +767,63 @@ def find_gaps(profile: Any = None, bank: Any = None, check_quality: bool = False
 # 5. EXTRACT FACTS Y MERGE BANK / PROFILE
 # ==========================================
 
+def _parse_json_obj(raw: str) -> dict:
+    """El objeto JSON de una respuesta del LLM (con o sin ```json, con texto alrededor); {} si no hay."""
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", (raw or "").strip())
+    for candidate in (text, (re.search(r"\{.*\}", text, re.DOTALL) or [None])[0]):
+        try:
+            data = json.loads(candidate) if candidate else None
+        except ValueError:
+            continue
+        if isinstance(data, dict):
+            return data
+    return {}
+
+
+def plan_questions(profile: Any, bank: dict, gaps: List[dict]) -> tuple:
+    """El LLM revisa cada campo pendiente contra TODO el perfil y el banco, y decide como lo haría un reclutador:
+    preguntar, deducir (el dato ya está en el perfil/banco con otro nombre) u omitir (no aplica a esta persona).
+    Devuelve (deducidos {clave: valor}, omitidos {clave: motivo}). Si el LLM falla, todo se pregunta."""
+    if not gaps:
+        return {}, {}
+    profile_json = profile.model_dump_json() if hasattr(profile, "model_dump_json") else json.dumps(profile or {})
+    campos = "\n".join(f"- {g['clave']}: {g.get('pista', '')}" for g in gaps)
+    system_prompt = (
+        "Eres un reclutador senior preparando la entrevista de onboarding de un candidato para que un agente postule "
+        "por él a vacantes. Piensa campo por campo, mirando el perfil y el banco COMPLETOS, y decide qué hacer con "
+        "cada campo pendiente:\n"
+        "- 'preguntar': el dato solo lo puede dar la persona y sirve para postular o escribir por ella.\n"
+        "- 'deducir': el dato YA está en el perfil o el banco (con otro nombre o en otro campo). 'valor' es ese dato "
+        "copiado tal cual. NUNCA inventes ni supongas: si no está escrito, es 'preguntar'.\n"
+        "- 'omitir': no aplica a esta persona según su perfil (ej. una cuenta o plataforma que su perfil no muestra "
+        "y que es opcional, algo que contradice lo que ya contó). 'motivo' explica por qué en una frase.\n"
+        "Ante la duda entre omitir y preguntar, pregunta.\n"
+        "Devuelve SOLO un JSON: {\"clave\": {\"accion\": \"preguntar|deducir|omitir\", \"valor\": ..., "
+        "\"motivo\": \"...\"}} con TODAS las claves listadas."
+    )
+    try:
+        raw = llm_chain.invoke_text(
+            system_prompt=system_prompt,
+            human_template="Campos pendientes:\n{campos}\n\nPerfil:\n{perfil}\n\nBanco:\n{banco}",
+            variables={"campos": campos, "perfil": profile_json[:12000],
+                       "banco": json.dumps(bank or {}, ensure_ascii=False, default=str)[:6000]},
+            temperature=0.1,
+        )
+    except Exception as e:  # sin cupo o error: se pregunta todo, como antes
+        print(f"  -> No se pudo revisar qué preguntar ({e.__class__.__name__}); se pregunta todo.")
+        return {}, {}
+    keys = {g["clave"] for g in gaps}
+    deducidos, omitidos = {}, {}
+    for k, d in _parse_json_obj(raw).items():
+        if k not in keys or not isinstance(d, dict):
+            continue
+        if d.get("accion") == "deducir" and not _is_empty_or_placeholder(d.get("valor")):
+            deducidos[k] = d["valor"]
+        elif d.get("accion") == "omitir":
+            omitidos[k] = str(d.get("motivo") or "no aplica")
+    return deducidos, omitidos
+
+
 def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
     """Pide a la IA un JSON {clave: valor} SOLO con claves de esos gaps.
     Descarta claves que no estén en la CHECKLIST."""
@@ -808,26 +865,7 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
         print(f"  -> Error llamando a LLM para extraer hechos: {e}")
         return {}
 
-    clean_text = raw_out.strip()
-    if clean_text.startswith("```"):
-        clean_text = re.sub(r"^```(?:json)?\s*", "", clean_text)
-        clean_text = re.sub(r"\s*```$", "", clean_text)
-
-    try:
-        data = json.loads(clean_text)
-    except Exception:
-        match = re.search(r"\{.*\}", clean_text, re.DOTALL)
-        if match:
-            try:
-                data = json.loads(match.group(0))
-            except Exception:
-                return {}
-        else:
-            return {}
-
-    if not isinstance(data, dict):
-        return {}
-
+    data = _parse_json_obj(raw_out)
     asked = {g["clave"] for g in gaps_preguntados}  # incluye campos del esquema y huecos '???' del banco
     facts = {}
     for k, v in data.items():
@@ -1006,6 +1044,16 @@ def export_final_candidate_json(completed_profile: MasterProfile):
 # 6. FLUJO PRINCIPAL DE ENTREVISTA
 # ==========================================
 
+def _apply_facts(profile: Any, bank: dict, facts: dict, gaps: List[dict]):
+    """Cada dato a su sitio: historias, campos del perfil (master_profile.json) o el banco (answers.yaml)."""
+    for k, v in facts.items():
+        if k.startswith("stories."):
+            _upsert_story(profile, k.split(".", 1)[1], str(v))
+        elif any(g["clave"] == k and g["archivo"] == "profile" for g in gaps):
+            _update_profile_field(profile, k, v)
+    merge_bank(bank, facts)
+
+
 _LLM_NOISE = re.compile(r"^\s*\[(PRESUPUESTO|FALLBACK|ESPERA)\]")
 
 
@@ -1157,6 +1205,18 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             answered = set(json.load(f))
     except (OSError, ValueError, TypeError):
         answered = set()
+
+    # antes de preguntar, el modelo revisa cada campo pendiente contra el perfil: lo que ya sabe o no aplica, no sale
+    pending = [g for g in initial_gaps + quality_gaps if g["clave"] not in answered]
+    deducidos, omitidos = _quiet(plan_questions, profile, bank, pending)
+    _apply_facts(profile, bank, deducidos, pending)
+    answered |= set(deducidos) | set(omitidos)
+    print(f"  -> Revisé {len(pending)} campos: {len(pending) - len(deducidos) - len(omitidos)} por preguntar, "
+          f"{len(deducidos)} deducidos del perfil, {len(omitidos)} no aplican.")
+    for k, v in deducidos.items():
+        print(f"     deducido  {k} = {str(v)[:70]}")
+    for k, motivo in omitidos.items():
+        print(f"     omitido   {k}: {motivo[:90]}")
     round_count = 0
     qa_chat = ""
 
@@ -1260,18 +1320,9 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         extracted = _quiet(extract_facts, user_response, current_gaps)
         print(f"  -> {len(extracted)} dato(s) guardado(s).")
 
-        # Distribuir historias y campos de profile
-        for k, v in list(extracted.items()):
-            if k.startswith("stories."):
-                story_tema = k.split(".", 1)[1]
-                _upsert_story(profile, story_tema, str(v))
-            elif any(g["clave"] == k and g["archivo"] == "profile" for g in current_gaps):
-                _update_profile_field(profile, k, v)
+        _apply_facts(profile, bank, extracted, current_gaps)
         # lo contestado no se repite aunque no quepa en un campo (ej. certificaciones: las arma el LLM al final)
         answered |= set(extracted)
-
-        # Merge en bank
-        merge_bank(bank, extracted)
         if stop:
             print("  -> Entendido. Guardando perfil y respuestas...")
             break

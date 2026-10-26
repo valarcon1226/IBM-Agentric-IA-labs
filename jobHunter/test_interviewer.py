@@ -405,6 +405,27 @@ def test_schema_gaps():
     assert merge_bank({"eeo": {"genero": "???"}}, {"eeo.genero": "Mujer", "eeo.x": "y"}) == {"eeo": {"genero": "Mujer"}}
 
 
+def test_plan_questions():
+    """6. Antes de preguntar, el modelo decide por campo: preguntar, deducir del perfil u omitir. Claves que no
+    estaban pendientes o deducciones vacías se descartan (esas se preguntan); si el LLM falla, se pregunta todo."""
+    from interviewer_agent import plan_questions
+    gaps = [{"clave": c, "pista": c} for c in (
+        "datos_personales.gitlab", "idiomas.ingles", "salario.expectativa_mensual_cop", "personalidad.tono")]
+    raw = json.dumps({
+        "datos_personales.gitlab": {"accion": "omitir", "motivo": "solo usa GitHub"},
+        "idiomas.ingles": {"accion": "deducir", "valor": "C1"},
+        "personalidad.tono": {"accion": "deducir", "valor": ""},  # deducir sin valor -> se pregunta
+        "salario.expectativa_mensual_cop": {"accion": "preguntar"},
+        "clave.inventada": {"accion": "deducir", "valor": "x"},
+    })
+    with patch.object(llm_chain, "invoke_text", return_value="```json\n" + raw + "\n```"):
+        deducidos, omitidos = plan_questions(MasterProfile(), {}, gaps)
+    assert deducidos == {"idiomas.ingles": "C1"}, deducidos
+    assert omitidos == {"datos_personales.gitlab": "solo usa GitHub"}, omitidos
+    with patch.object(llm_chain, "invoke_text", side_effect=llm_chain.AllProvidersExhausted("sin cupo")):
+        assert plan_questions(MasterProfile(), {}, gaps) == ({}, {})
+
+
 if __name__ == "__main__":
     print("Corriendo pruebas de interviewer_agent...")
     test_find_gaps()
@@ -417,4 +438,6 @@ if __name__ == "__main__":
     print("ok - estilo_y_campos")
     test_schema_gaps()
     print("ok - schema_gaps")
+    test_plan_questions()
+    print("ok - plan_questions")
     print("ok")
