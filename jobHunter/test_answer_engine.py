@@ -776,7 +776,8 @@ with tempfile.TemporaryDirectory() as td:
     _full["idiomas"] = {"espanol": "Nativo", "ingles": "B2", "frances": "no"}
     yaml.safe_dump(_full, open(_bank_path, "w", encoding="utf-8"), allow_unicode=True)
     _prof_path = os.path.join(td, "master_profile.json")
-    json.dump({"education": [{"institution": "Universidad Nacional de Colombia, Bogota"}]}, open(_prof_path, "w"))
+    json.dump({"education": [{"institution": "Universidad Nacional de Colombia, Bogota"}],
+               "personalidad": {"tono": "calmada", "motivaciones": "resolver problemas reales"}}, open(_prof_path, "w"))
 
     def _c(label, kind="radio", opts=_yn):
         return answer(Field(key="q", kind=kind, label=label, options=opts, required=True), job=JOB_FIXTURE,
@@ -811,4 +812,13 @@ with tempfile.TemporaryDirectory() as td:
         llm_chain.invoke_text = _orig
     assert "armé el bot en dos tardes" in _seen.get("style", "") and "directa y cercana" in _seen["style"], _seen.get("style")
     assert "apasionada" in _seen["style"] and "estilo_escritura" not in _seen["bank"] and "jefe" not in _seen["bank"]
+    # con la personalidad ya en master_profile.json, esa manda sobre el estilo viejo del banco
+    llm_chain.invoke_text = lambda s, h, v, *a, **k: _seen.update(v) or "Dear Supermove team, I like real problems."
+    try:
+        answer(Field(key="cover_letter_text", kind="textarea", label="Cover letter (personalidad test)", required=True),
+               job={**JOB_FIXTURE, "cover_letter": None}, answers_path=_bank_path, master_profile_path=_prof_path,
+               llm_classifier_fn=lambda *a, **k: None)
+    finally:
+        llm_chain.invoke_text = _orig
+    assert "resolver problemas reales" in _seen["style"] and "armé" not in _seen["style"], _seen["style"]
 print("ok - IN-2")
