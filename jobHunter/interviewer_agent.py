@@ -767,6 +767,12 @@ def find_gaps(profile: Any = None, bank: Any = None, check_quality: bool = False
 # 5. EXTRACT FACTS Y MERGE BANK / PROFILE
 # ==========================================
 
+def _literal(text: str) -> str:
+    """llm_chain arma el prompt con ChatPromptTemplate: las llaves de un ejemplo JSON (o de una pista) son variables
+    para LangChain y rompen la llamada en TODOS los proveedores. Se escapan para que lleguen tal cual."""
+    return text.replace("{", "{{").replace("}", "}}")
+
+
 def _parse_json_obj(raw: str) -> dict:
     """El objeto JSON de una respuesta del LLM (con o sin ```json, con texto alrededor); {} si no hay."""
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", (raw or "").strip())
@@ -786,36 +792,51 @@ def plan_questions(profile: Any, bank: dict, gaps: List[dict]) -> tuple:
     Devuelve (deducidos {clave: valor}, omitidos {clave: motivo}). Si el LLM falla, todo se pregunta."""
     if not gaps:
         return {}, {}
-    profile_json = profile.model_dump_json() if hasattr(profile, "model_dump_json") else json.dumps(profile or {})
+    profile_json = (profile.model_dump_json() if hasattr(profile, "model_dump_json")
+                    else json.dumps(profile or {}, ensure_ascii=False))
+    bank_json = json.dumps(bank or {}, ensure_ascii=False, default=str)
     campos = "\n".join(f"- {g['clave']}: {g.get('pista', '')}" for g in gaps)
     system_prompt = (
         "Eres un reclutador senior preparando la entrevista de onboarding de un candidato para que un agente postule "
-        "por él a vacantes. Piensa campo por campo, mirando el perfil y el banco COMPLETOS, y decide qué hacer con "
-        "cada campo pendiente:\n"
-        "- 'preguntar': el dato solo lo puede dar la persona y sirve para postular o escribir por ella.\n"
-        "- 'deducir': el dato YA está en el perfil o el banco (con otro nombre o en otro campo). 'valor' es ese dato "
-        "copiado tal cual. NUNCA inventes ni supongas: si no está escrito, es 'preguntar'.\n"
-        "- 'omitir': no aplica a esta persona según su perfil (ej. una cuenta o plataforma que su perfil no muestra "
-        "y que es opcional, algo que contradice lo que ya contó). 'motivo' explica por qué en una frase.\n"
-        "Ante la duda entre omitir y preguntar, pregunta.\n"
-        "Devuelve SOLO un JSON: {\"clave\": {\"accion\": \"preguntar|deducir|omitir\", \"valor\": ..., "
-        "\"motivo\": \"...\"}} con TODAS las claves listadas."
+        "por él a vacantes. La entrevista debe ser corta, pero sin suponer nada. Razona campo por campo, cruzando el "
+        "perfil y el banco COMPLETOS. Por defecto, cada campo se PREGUNTA. Solo hay dos excepciones:\n"
+        "- 'deducir': el dato está ESCRITO en el perfil o el banco, aunque sea en otro campo o con otro nombre. Ej.: "
+        "la lista de empresas donde trabajó sale de su experiencia; si está empleada hoy sale de una experiencia que "
+        "dice 'Present'/'Actual'. 'valor' es el dato. Vivir en un país NO dice su ciudadanía ni su permiso de "
+        "trabajo; no tener algo escrito NO es un 'no'.\n"
+        "- 'omitir': el perfil MUESTRA algo que hace que el campo no le aplique. Ej.: pide una cuenta de una "
+        "plataforma opcional y el perfil muestra que usa otra equivalente. 'motivo' en máximo 12 palabras.\n"
+        "Que falte el dato NO es razón para omitir: eso es exactamente lo que hay que preguntar. Decisiones, "
+        "preferencias, consentimientos, su forma de escribir, personalidad, historias y respuestas modelo siempre "
+        "se preguntan.\n"
+        "Para deducir u omitir, 'evidencia' es un fragmento COPIADO LITERALMENTE del perfil o del banco (máx. 80 "
+        "caracteres) que lo prueba. Sin evidencia literal, se pregunta.\n"
+        "Devuelve SOLO un JSON con las claves que deduces u omites (las que se preguntan NO van): "
+        "{\"clave\": {\"accion\": \"deducir\", \"valor\": ..., \"evidencia\": \"...\"}, "
+        "\"clave2\": {\"accion\": \"omitir\", \"motivo\": \"...\", \"evidencia\": \"...\"}}. "
+        "Si todo hay que preguntarlo, devuelve {}."
     )
     try:
         raw = llm_chain.invoke_text(
-            system_prompt=system_prompt,
+            system_prompt=_literal(system_prompt),
             human_template="Campos pendientes:\n{campos}\n\nPerfil:\n{perfil}\n\nBanco:\n{banco}",
-            variables={"campos": campos, "perfil": profile_json[:12000],
-                       "banco": json.dumps(bank or {}, ensure_ascii=False, default=str)[:6000]},
+            variables={"campos": campos, "perfil": profile_json[:12000], "banco": bank_json[:6000]},
             temperature=0.1,
         )
     except Exception as e:  # sin cupo o error: se pregunta todo, como antes
         print(f"  -> No se pudo revisar qué preguntar ({e.__class__.__name__}); se pregunta todo.")
         return {}, {}
+
+    def norm(s: str) -> str:
+        return re.sub(r"\s+", " ", str(s).replace('\\"', '"')).strip(" \"'").lower()
+    source = norm(profile_json + " " + bank_json)
     keys = {g["clave"] for g in gaps}
     deducidos, omitidos = {}, {}
     for k, d in _parse_json_obj(raw).items():
-        if k not in keys or not isinstance(d, dict):
+        # la decisión vale solo si la cita existe de verdad en el perfil o el banco: si no, se pregunta
+        # (varias citas separadas por '|' o '...': todas deben existir)
+        quotes = [norm(q) for q in re.split(r"\||\.\.\.|…", str(d.get("evidencia", "") if isinstance(d, dict) else ""))]
+        if k not in keys or not isinstance(d, dict) or any(len(q) < 3 or q not in source for q in quotes):
             continue
         if d.get("accion") == "deducir" and not _is_empty_or_placeholder(d.get("valor")):
             deducidos[k] = d["valor"]
@@ -853,7 +874,7 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
 
     try:
         raw_out = llm_chain.invoke_text(
-            system_prompt=system_prompt,
+            system_prompt=_literal(system_prompt),
             human_template=human_template,
             variables={"respuesta": respuesta},
             temperature=0.1,
