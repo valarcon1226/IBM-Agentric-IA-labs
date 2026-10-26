@@ -795,11 +795,13 @@ def _generate_open_text(
         public_bank = {k: v for k, v in (bank or {}).items()
                        if k not in ("datos_personales", "eeo_voluntario", "respuestas_modelo", "salario", "reglas",
                                     "aprendidas", "estilo_escritura", "situacion_laboral")}
-        # cómo escribe la persona (de la entrevista): la carta y las respuestas abiertas deben sonar a ella
-        style = {k: v for k, v in ((bank or {}).get("estilo_escritura") or {}).items()
-                 if v and str(v).strip() not in ("???", "no aplica")}
-        if style.get("muestra"):
-            style["muestra"] = str(style["muestra"])[:1500]
+        # personalidad y estilo (master_profile.json, de la entrevista): la carta y las respuestas abiertas suenan a
+        # la persona. estilo_escritura del banco: perfiles que aún no repiten la entrevista (ahí se migra)
+        style = {k: v for k, v in ((profile or {}).get("personalidad") or (bank or {}).get("estilo_escritura")
+                                   or {}).items() if v and str(v).strip() not in ("???", "no aplica")}
+        for k in ("muestra_escritura", "muestra"):
+            if style.get(k):
+                style[k] = str(style[k])[:1500]
         if isinstance(bank, dict) and isinstance(bank.get("salario"), dict):
             public_bank["salario"] = {k: v for k, v in bank["salario"].items() if k != "minimo_aceptable"}
         name = (profile or {}).get("personal_info", {}).get("full_name") or "the candidate"
@@ -836,7 +838,9 @@ def _generate_open_text(
             "Candidate profile:\n{profile_summary}\n"
             "Answer bank: {bank}\n"
             "Candidate voice examples (match this tone): {guides}\n"
-            "Candidate writing style (write like the sample, follow the tone, never use the 'evitar' words): {style}\n\n"
+            "Candidate personality and writing style (write like the sample, follow the tone, never use the 'evitar' "
+            "words; use how they work, strengths, motivations and values for 'about you', 'why us' and behavioral "
+            "questions, and for answers not covered elsewhere): {style}\n\n"
             "Job:\n{job_info}\n\n"
             "{final_instruction}"
         )
