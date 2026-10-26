@@ -411,15 +411,18 @@ def test_plan_questions():
     from interviewer_agent import plan_questions
     gaps = [{"clave": c, "pista": c} for c in (
         "datos_personales.gitlab", "idiomas.ingles", "salario.expectativa_mensual_cop", "personalidad.tono")]
+    bank = {"datos_personales": {"github": "https://github.com/ana"}, "nivel_ingles": "C1"}
     raw = json.dumps({
-        "datos_personales.gitlab": {"accion": "omitir", "motivo": "solo usa GitHub"},
-        "idiomas.ingles": {"accion": "deducir", "valor": "C1"},
-        "personalidad.tono": {"accion": "deducir", "valor": ""},  # deducir sin valor -> se pregunta
-        "salario.expectativa_mensual_cop": {"accion": "preguntar"},
-        "clave.inventada": {"accion": "deducir", "valor": "x"},
+        "datos_personales.gitlab": {"accion": "omitir", "motivo": "solo usa GitHub",
+                                    "evidencia": '"github": "https://github.com/ana"'},
+        "idiomas.ingles": {"accion": "deducir", "valor": "C1", "evidencia": "\"nivel_ingles\": \"C1\""},
+        "personalidad.tono": {"accion": "deducir", "valor": "", "evidencia": "C1"},  # sin valor -> se pregunta
+        # "falta el dato" sin cita literal (lo que hizo un modelo real): se pregunta, no se omite
+        "salario.expectativa_mensual_cop": {"accion": "omitir", "motivo": "no hay salario", "evidencia": "salario: ???"},
+        "clave.inventada": {"accion": "deducir", "valor": "x", "evidencia": "C1"},
     })
     with patch.object(llm_chain, "invoke_text", return_value="```json\n" + raw + "\n```"):
-        deducidos, omitidos = plan_questions(MasterProfile(), {}, gaps)
+        deducidos, omitidos = plan_questions(MasterProfile(), bank, gaps)
     assert deducidos == {"idiomas.ingles": "C1"}, deducidos
     assert omitidos == {"datos_personales.gitlab": "solo usa GitHub"}, omitidos
     with patch.object(llm_chain, "invoke_text", side_effect=llm_chain.AllProvidersExhausted("sin cupo")):
