@@ -730,3 +730,51 @@ print("ok")
 assert _f("It is important to us to create an accessible and inclusive interview experience. Please let us know if there "
           "are any accommodations we can make", "text").value == "No, thank you."
 print("ok")
+
+# IN-2: lo que la entrevista guarda (situación laboral, políticas, clearance, estilo) lo usa el aplicador sin preguntar
+import answer_engine
+import llm_chain
+with tempfile.TemporaryDirectory() as td:
+    _bank_path = os.path.join(td, "answers.yaml")
+    yaml.safe_dump({
+        "datos_personales": {"ciudad": "Bogota", "pais": "Colombia"},
+        "preguntas_frecuentes": {"tiene_familiares_en_la_empresa": False},
+        "situacion_laboral": {"jefe_sabe_que_busca": False, "acuerdos_no_competencia": False,
+                              "negocios_externos": False, "nombre_jefe_actual": "no aplica"},
+        "autorizacion_de_trabajo": {"tiene_security_clearance": False, "puede_obtener_security_clearance": False},
+        "politicas": {"acepta_grabacion_ia": True, "acepta_compartir_cv_con_socios": False},
+        "estilo_escritura": {"muestra": "Hola equipo, les cuento rapido: armé el bot en dos tardes.",
+                             "tono": "directa y cercana", "evitar": "apasionada"},
+    }, open(_bank_path, "w", encoding="utf-8"), allow_unicode=True)
+    _yn = ["Yes", "No"]
+
+    def _b(label, kind="radio", opts=_yn, **kw):
+        return answer(Field(key="q", kind=kind, label=label, options=opts, required=True), job=JOB_FIXTURE,
+                      answers_path=_bank_path, master_profile_path="no_existe.json", **NO_LLM, **kw)
+
+    assert _b("Do you have any family or personal connection with current or former employees at PayJoy?").value == "No"
+    assert _b("Have you notified your current manager that you are applying to this role?").value == "No"
+    assert _b("Are you subject to any employment agreements and/or post-employment restrictions with your current employer?").value == "No"
+    assert _b("Do you have any outside business activity(ies) (advisory, consulting, or board roles)?").value == "No"
+    assert _b("Do you currently hold an active US security clearance?").value == "No"
+    assert _b("Are you eligible to obtain the security clearance specified in the job description?").value == "No"
+    assert _b("What is the name of your current manager?", kind="text", opts=None).value == "N/A"
+    assert _b("Are you a resident of California?").value == "No"
+    # consentimientos ya decididos en la entrevista; firmas e iniciales siguen siendo de la persona
+    assert _b("As part of our interview process, we may use AI notetakers to transcribe conversations. Do you consent?").value == "Yes"
+    assert _b("Please share my resume and contact information with external Palantir partners", kind="checkbox", opts=None).value == ""
+    assert _b("Certification: by initialing below, you hereby agree that all information is true", kind="text", opts=None).needs_human
+
+    # la carta y las respuestas abiertas reciben la muestra, el tono y lo que hay que evitar
+    _seen = {}
+    _orig = llm_chain.invoke_text
+    llm_chain.invoke_text = lambda s, h, v, *a, **k: _seen.update(v) or "Dear Supermove team, I built the bot in two afternoons."
+    try:
+        answer(Field(key="cover_letter_text", kind="textarea", label="Cover letter (IN-2 style test)", required=True),
+               job={**JOB_FIXTURE, "cover_letter": None}, answers_path=_bank_path, master_profile_path="no_existe.json",
+               llm_classifier_fn=lambda *a, **k: None)
+    finally:
+        llm_chain.invoke_text = _orig
+    assert "armé el bot en dos tardes" in _seen.get("style", "") and "directa y cercana" in _seen["style"], _seen.get("style")
+    assert "apasionada" in _seen["style"] and "estilo_escritura" not in _seen["bank"] and "jefe" not in _seen["bank"]
+print("ok - IN-2")

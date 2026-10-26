@@ -314,6 +314,34 @@ _RAW_SYNONYMS: Dict[str, str] = {
     "are you 18 or older": "preguntas_frecuentes.mayor_de_18",
     "are you at least 18 years old": "preguntas_frecuentes.mayor_de_18",
     "mayor de 18": "preguntas_frecuentes.mayor_de_18",
+    "family or personal connection": "preguntas_frecuentes.tiene_familiares_en_la_empresa",
+    "family members relatives or personal relationships": "preguntas_frecuentes.tiene_familiares_en_la_empresa",
+    "worked at or consulted for": "preguntas_frecuentes.trabajo_antes_en_esta_empresa",
+    "have you been employed by": "preguntas_frecuentes.trabajo_antes_en_esta_empresa",
+
+    # Situación laboral (las pregunta la entrevista; antes frenaban el aplicador)
+    "are you currently employed": "situacion_laboral.empleada_actualmente",
+    "trabajas actualmente": "situacion_laboral.empleada_actualmente",
+    "name of your current manager": "situacion_laboral.nombre_jefe_actual",
+    "notified your current manager": "situacion_laboral.jefe_sabe_que_busca",
+    "does your current employer know": "situacion_laboral.jefe_sabe_que_busca",
+    "employment agreements and or post employment restrictions": "situacion_laboral.acuerdos_no_competencia",
+    "non compete": "situacion_laboral.acuerdos_no_competencia",
+    "acuerdo de no competencia": "situacion_laboral.acuerdos_no_competencia",
+    "outside business activity": "situacion_laboral.negocios_externos",
+    "outside business activities": "situacion_laboral.negocios_externos",
+    "active us security clearance": "autorizacion_de_trabajo.tiene_security_clearance",
+    "active uk security clearance": "autorizacion_de_trabajo.tiene_security_clearance",
+    "hold an active security clearance": "autorizacion_de_trabajo.tiene_security_clearance",
+    "eligible to obtain the security clearance": "autorizacion_de_trabajo.puede_obtener_security_clearance",
+    "eligible to obtain a security clearance": "autorizacion_de_trabajo.puede_obtener_security_clearance",
+
+    # Políticas: consentimientos que la persona ya decidió en la entrevista
+    "ai notetakers": "politicas.acepta_grabacion_ia",
+    "record the interview": "politicas.acepta_grabacion_ia",
+    "share my resume and contact information with external": "politicas.acepta_compartir_cv_con_socios",
+    "contact you about future opportunities": "politicas.acepta_contacto_futuro",
+    "considered for future opportunities": "politicas.acepta_contacto_futuro",
 
     # EEO / Diversidad
     "gender": "eeo_voluntario.genero",
@@ -399,6 +427,13 @@ CLOSED_BANK_KEYS: List[str] = [
     "preguntas_frecuentes.tiene_familiares_en_la_empresa",
     "preguntas_frecuentes.acepta_verificacion_de_antecedentes",
     "preguntas_frecuentes.mayor_de_18",
+    "situacion_laboral.empleada_actualmente",
+    "situacion_laboral.jefe_sabe_que_busca",
+    "situacion_laboral.acuerdos_no_competencia",
+    "situacion_laboral.negocios_externos",
+    "situacion_laboral.nombre_jefe_actual",
+    "autorizacion_de_trabajo.tiene_security_clearance",
+    "autorizacion_de_trabajo.puede_obtener_security_clearance",
     "eeo_voluntario.genero",
     "eeo_voluntario.raza_etnicidad",
     "eeo_voluntario.veterano",
@@ -759,7 +794,12 @@ def _generate_open_text(
         # salario mínimo (nunca sale), sin reglas internas.
         public_bank = {k: v for k, v in (bank or {}).items()
                        if k not in ("datos_personales", "eeo_voluntario", "respuestas_modelo", "salario", "reglas",
-                                    "aprendidas")}
+                                    "aprendidas", "estilo_escritura", "situacion_laboral")}
+        # cómo escribe la persona (de la entrevista): la carta y las respuestas abiertas deben sonar a ella
+        style = {k: v for k, v in ((bank or {}).get("estilo_escritura") or {}).items()
+                 if v and str(v).strip() not in ("???", "no aplica")}
+        if style.get("muestra"):
+            style["muestra"] = str(style["muestra"])[:1500]
         if isinstance(bank, dict) and isinstance(bank.get("salario"), dict):
             public_bank["salario"] = {k: v for k, v in bank["salario"].items() if k != "minimo_aceptable"}
         name = (profile or {}).get("personal_info", {}).get("full_name") or "the candidate"
@@ -795,7 +835,8 @@ def _generate_open_text(
             "Field type: {kind}. Options: {options}\n\n"
             "Candidate profile:\n{profile_summary}\n"
             "Answer bank: {bank}\n"
-            "Candidate voice examples (match this tone): {guides}\n\n"
+            "Candidate voice examples (match this tone): {guides}\n"
+            "Candidate writing style (write like the sample, follow the tone, never use the 'evitar' words): {style}\n\n"
             "Job:\n{job_info}\n\n"
             "{final_instruction}"
         )
@@ -807,7 +848,9 @@ def _generate_open_text(
                 f"Experience: {json.dumps(profile.get('experience', []), ensure_ascii=False)[:3000]}\n"
                 f"Projects: {json.dumps(profile.get('portfolio_projects', []), ensure_ascii=False)[:1500]}\n"
                 # sin esto contestó "no degree" a "What was your bachelor's degree result?"
-                f"Education: {json.dumps(profile.get('education', []), ensure_ascii=False)[:800]}"
+                f"Education: {json.dumps(profile.get('education', []), ensure_ascii=False)[:800]}\n"
+                # historias de la entrevista (proyecto favorito, en qué es excelente...): material para preguntas abiertas
+                f"Stories: {json.dumps(profile.get('stories', []), ensure_ascii=False)[:2500]}"
             )
         job_info = ""
         if job:
@@ -827,6 +870,7 @@ def _generate_open_text(
             # van como variables (no dentro del prompt): sus llaves {} romperían la plantilla
             "bank": json.dumps(public_bank, ensure_ascii=False, default=str)[:2000],
             "guides": json.dumps(valid_guides, ensure_ascii=False) if valid_guides else "none",
+            "style": json.dumps(style, ensure_ascii=False) if style else "none",
             "job_info": job_info,
             "final_instruction": ("Responde solo en español." if lang == "Spanish"
                                   else "Answer only in English."),
@@ -1047,7 +1091,8 @@ _LOCATION = re.compile(r"(current )?location|where are you (based|located)|ubica
 _COVER = re.compile(r"cover (letter|note)|carta de (presentacion|motivacion)|motivation letter|message to (the )?hiring")
 # Valores del banco en español -> inglés cuando el formulario está en inglés y no trae opciones
 _ES_TO_EN = {"mujer": "Female", "hombre": "Male", "prefiero no decir": "I don't wish to answer",
-             "no soy veterana": "I am not a protected veteran", "no soy veterano": "I am not a protected veteran"}
+             "no soy veterana": "I am not a protected veteran", "no soy veterano": "I am not a protected veteran",
+             "no aplica": "N/A"}  # lo que guarda la entrevista cuando algo no aplica (ej. sin jefe actual)
 
 
 def _is_spanish(text: str) -> bool:
@@ -1135,7 +1180,7 @@ _OFFICE = re.compile(r"on ?site|in (the )?office|from (the |our )?offices?|out o
                      r"anchor days|presencial|hibrid|oficina")
 _RELOCATE = re.compile(r"relocat|mudar(te|se)?\b|reubicar")
 _NOTICE_DAYS = re.compile(r"(\d+)[ -]?days? (of )?notice")
-_BASED_IN = re.compile(r"^are you (currently )?based (in|out of) (.+)")
+_BASED_IN = re.compile(r"^are you (currently )?(based (in|out of)|an? resident of|residing in|living in) (.+)")
 _TZ = re.compile(r"\b(us|eu|europe\w*)\b.*time ?zone")
 _US_WORDS = re.compile(r"\b(us|usa|united states|new york|san francisco|california|seattle|austin|boston|chicago)\b")
 
@@ -1180,7 +1225,7 @@ def _from_preferences(field: Field, norm_label: str, job: dict, bank: dict) -> O
     based = _BASED_IN.match(norm_label)
     home = {normalize_label(str(datos.get(k) or "")) for k in ("ciudad", "pais")} - {""}
     # "based in {location}" (plantilla rota de Dialpad): el lugar es el de la vacante
-    where = normalize_label(str(job.get("location") or "")) if "{" in field.label else based and based.group(3)
+    where = normalize_label(str(job.get("location") or "")) if "{" in field.label else based and based.group(4)
     if based and where and home:
         return _yes_no(field, any(h in where for h in home))
     return None
@@ -1260,6 +1305,12 @@ def _answer_rules(
             and ((_load_bank(answers_path).get("politicas") or {}).get("acepta_avisos_privacidad")) is not False):
         return Answer(field.options[0] if len(field.options or []) == 1 else "Yes", "bank", False)
     if field.kind != "file" and _CONSENT.search(norm_label):
+        # consentimiento que la persona ya contestó en la entrevista (politicas.*: sí/no); firmas e iniciales, nunca
+        key = _find_synonym_key(norm_label)
+        decided = (_load_bank(answers_path).get("politicas") or {}).get(key.split(".", 1)[1]) if (
+            key or "").startswith("politicas.") else None
+        if isinstance(decided, bool) and not re.search(r"initial|signature|firma|certify|attest", norm_label):
+            return _yes_no(field, decided)
         return Answer(value=None, source="none", needs_human=True)
     if (field.kind != "file" and _SALARY.search(norm_label)
             and not re.search(r"\b(current|actual|present|minimo|minimum|lowest)\b", norm_label)):
