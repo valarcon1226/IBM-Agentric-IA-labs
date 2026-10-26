@@ -495,19 +495,19 @@ def extract_text_from_document() -> str:
 
     if pdf_targets:
         for pdf_target in pdf_targets:
-            print(f"\n[Sistema] Leyendo CV: {pdf_target} ...")
+            print(f"  -> Leyendo CV: {pdf_target} ...")
             try:
                 pages = "\n".join(doc.page_content for doc in PyPDFLoader(pdf_target).load())
                 cv_text += f"\n\n===== {os.path.basename(pdf_target)} =====\n{pages}"
             except Exception as e:
-                print(f"[Sistema] Error cargando PDF {pdf_target}: {e}")
+                print(f"  -> Error cargando PDF {pdf_target}: {e}")
         cv_text = re.sub(r"\s*\[cite: \d+\]", "", cv_text)
     elif os.path.exists(os.path.join(search_dir, "cv.txt")):
-        print("\n[Sistema] Leyendo cv.txt ...")
+        print("  -> Leyendo cv.txt ...")
         with open(os.path.join(search_dir, "cv.txt"), "r", encoding="utf-8") as f:
             cv_text = f.read()
     else:
-        print(f"\n[Sistema] No se encontró CV base en PDF ni cv.txt dentro de {search_dir}.")
+        print(f"  -> No se encontró CV base en PDF ni cv.txt dentro de {search_dir}.")
     return cv_text
 
 
@@ -534,23 +534,23 @@ def read_additional_info_files() -> str:
         ext = os.path.splitext(filepath)[1].lower()
         fname = os.path.basename(filepath)
         if ext in [".txt", ".md"]:
-            print(f"\n[Sistema] Leyendo archivo de info adicional: {fname} ...")
+            print(f"  -> Leyendo archivo de info adicional: {fname} ...")
             try:
                 with open(filepath, "r", encoding="utf-8") as f:
                     text = f.read().strip()
                 if text:
                     contents.append(f"===== {fname} =====\n{text}")
             except Exception as e:
-                print(f"[Sistema] Error leyendo {fname}: {e}")
+                print(f"  -> Error leyendo {fname}: {e}")
         elif ext == ".pdf":
-            print(f"\n[Sistema] Leyendo PDF de info adicional: {fname} ...")
+            print(f"  -> Leyendo PDF de info adicional: {fname} ...")
             try:
                 pages = "\n".join(doc.page_content for doc in PyPDFLoader(filepath).load())
                 pages = re.sub(r"\s*\[cite: \d+\]", "", pages).strip()
                 if pages:
                     contents.append(f"===== {fname} =====\n{pages}")
             except Exception as e:
-                print(f"[Sistema] Error leyendo PDF {fname}: {e}")
+                print(f"  -> Error leyendo PDF {fname}: {e}")
 
     return "\n\n".join(contents)
 
@@ -653,7 +653,7 @@ def find_quality_gaps(profile: Any) -> List[dict]:
     except llm_chain.AllProvidersExhausted:
         pass
     except Exception as e:
-        print(f"[Sistema] Error evaluando calidad de logros con IA: {e}")
+        print(f"  -> Error evaluando calidad de logros con IA: {e}")
 
     return []
 
@@ -805,7 +805,7 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
         print("\n[CUOTA AGOTADA] Sin cupo para extraer hechos. Se continuará con los datos disponibles.")
         return {}
     except Exception as e:
-        print(f"[Sistema] Error llamando a LLM para extraer hechos: {e}")
+        print(f"  -> Error llamando a LLM para extraer hechos: {e}")
         return {}
 
     clean_text = raw_out.strip()
@@ -977,14 +977,14 @@ def evaluate_soft_skills_from_chat(chat_history: str) -> List[str]:
         print("\n[CUOTA AGOTADA] Sin cupo para evaluar soft skills. Se omite este paso.")
         return []
     except Exception as e:
-        print(f"[Sistema] Error evaluando soft skills: {e}")
+        print(f"  -> Error evaluando soft skills: {e}")
         return []
     return [s.strip() for s in text.split(',') if s.strip()]
 
 
 def export_final_candidate_json(completed_profile: MasterProfile):
     """Guarda master_profile.json y una copia de respaldo con timestamp."""
-    print("\n[Sistema] Guardando master_profile.json...")
+    print("  -> Guardando master_profile.json...")
     final_json_str = completed_profile.model_dump_json(indent=4)
     target_path = profile_paths.resolve("master_profile.json")
 
@@ -999,17 +999,48 @@ def export_final_candidate_json(completed_profile: MasterProfile):
     with open(backup_path, "w", encoding="utf-8") as f:
         f.write(final_json_str)
 
-    print(f"Perfil guardado con éxito! (Copia en: {backup_path})\n")
+    print(f"  -> Perfil guardado (Copia en: {backup_path})\n")
 
 
 # ==========================================
 # 6. FLUJO PRINCIPAL DE ENTREVISTA
 # ==========================================
 
+_LLM_NOISE = re.compile(r"^\s*\[(PRESUPUESTO|FALLBACK|ESPERA)\]")
+
+
+def _quiet(fn, *args, **kwargs):
+    """Llama fn sin los avisos de proveedores de llm_chain ([FALLBACK], [PRESUPUESTO]...): ensucian la entrevista.
+    El resto de lo que imprime (errores, cuota agotada) sí se muestra."""
+    import contextlib
+    import io
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            return fn(*args, **kwargs)
+    finally:
+        for line in buf.getvalue().splitlines():
+            if line.strip() and not _LLM_NOISE.match(line):
+                print(line)
+
+
+def _format_questions(text: str, gaps: List[dict]) -> List[str]:
+    """Las preguntas del LLM siempre en el mismo formato: una por línea, sin numeración ni viñetas, máximo 3.
+    Si el modelo devuelve un párrafo, se parte en cada '?'; si no sale nada, se usa la pista de cada campo."""
+    text = re.sub(r"[*_`#]", "", text or "")
+    # "¿...?" aunque vengan en un párrafo con saludo; sin signo de apertura, cada línea que termine en '?'
+    questions = [q.strip() for q in re.findall(r"¿[^¿?]+\?", text)] or [
+        re.sub(r"^\s*(?:[-•]|\d+[.)])\s*", "", l).strip() for l in text.splitlines() if l.strip().endswith("?")]
+    return questions[:3] or [f"¿{g['pista']}?" for g in gaps]
+
+
+def _round_header(n: int, tema: str, pendientes: int) -> str:
+    title = f" Ronda {n} · {tema.replace('_', ' ').capitalize()} · faltan {pendientes} campos"
+    return f"\n{'=' * 64}\n{title}\n{'=' * 64}"
+
+
 def run_interview():
-    print("======================================================")
-    print(" Iniciando Entrevista Completa (JobHunter)")
-    print("======================================================\n")
+    print(f"{'=' * 64}\n Entrevista JobHunter\n{'=' * 64}")
 
     # 1. Leer el CV
     raw_cv = extract_text_from_document()
@@ -1017,8 +1048,9 @@ def run_interview():
     # 2. Pedir información adicional
     info_files_text = read_additional_info_files()
 
-    print("\n[Contexto Inicial] ¿Hay algún cambio de carrera o contexto general que deba saber?")
-    print("Escribe o pega tu contexto (acepta múltiples líneas). Presiona Enter dos veces seguidas para enviar, o solo Enter una vez para omitir:")
+    print(_round_header(0, "contexto inicial", 0).replace(" · faltan 0 campos", ""))
+    print("  1. ¿Hay algún cambio de carrera o contexto general que deba saber?")
+    print("\n  Tu respuesta (Enter dos veces para enviar · Enter una vez para omitir):")
     lines = []
     while True:
         try:
@@ -1035,7 +1067,7 @@ def run_interview():
     existing_profile_path = profile_paths.resolve("master_profile.json")
     existing_profile = None
     if os.path.exists(existing_profile_path):
-        print("\n[Sistema] Encontré un master_profile.json existente.")
+        print("  -> Encontré un master_profile.json existente.")
         try:
             with open(existing_profile_path, "r", encoding="utf-8") as f:
                 existing_profile_str = f.read()
@@ -1047,14 +1079,14 @@ def run_interview():
                 f"{existing_profile_str}\n\n"
             )
         except Exception as e:
-            print(f"[Sistema] Error cargando master_profile.json previo: {e}")
+            print(f"  -> Error cargando master_profile.json previo: {e}")
 
     if info_files_text:
         chat_history += f"Additional Info Files:\n{info_files_text}\n\n"
     if initial_context:
         chat_history += f"Candidate Initial Context:\n{initial_context}\n\n"
 
-    print("\n[Sistema] Analizando perfil inicial y estructurando datos...")
+    print("  -> Analizando perfil inicial y estructurando datos...")
     parse_system_prompt = """You are an expert data extraction assistant. Map the provided resume, additional info files, and chat history to the strict JSON schema in ENGLISH.
 TRANSLATE EVERY TEXT FIELD TO ENGLISH even if the resume is in Spanish or another language: professional_summary, target_roles,
 current_role, achievements, abilities, degrees, seniority_context, everything. Keep proper names (people, companies, products) as they are.
@@ -1062,7 +1094,8 @@ CRITICAL INSTRUCTION: You MUST extract ALL sections of the resume, particularly 
 Pay special attention to the 'Candidate Initial Context' in the chat history to adapt the professional_summary if needed."""
 
     try:
-        profile = llm_chain.invoke_structured(
+        profile = _quiet(
+            llm_chain.invoke_structured,
             system_prompt=parse_system_prompt,
             human_template="Resume:\n{cv_text}\n\nChat History / Context:\n{chat_history}",
             variables={"cv_text": raw_cv, "chat_history": chat_history},
@@ -1070,10 +1103,10 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             temperature=0.1,
         )
     except llm_chain.AllProvidersExhausted as e:
-        print(f"\n[CUOTA AGOTADA] Los proveedores se quedaron sin cupo estructurando el perfil ({e}).")
+        print(f"  -> [CUOTA AGOTADA] Los proveedores se quedaron sin cupo estructurando el perfil ({e}).")
         profile = existing_profile or MasterProfile()
     except Exception as e:
-        print(f"[Sistema] Error estructurando perfil inicial: {e}")
+        print(f"  -> Error estructurando perfil inicial: {e}")
         profile = existing_profile or MasterProfile()
     if existing_profile:  # el parser traduce todo al inglés: la muestra de escritura debe quedar tal cual
         profile.personalidad = existing_profile.personalidad
@@ -1082,12 +1115,12 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
     answers_path = profile_paths.resolve("answers.yaml")
     bank = {}
     if os.path.exists(answers_path):
-        print(f"\n[Sistema] Cargando answers.yaml existente...")
+        print(f"  -> Cargando answers.yaml existente...")
         try:
             with open(answers_path, "r", encoding="utf-8") as f:
                 bank = yaml.safe_load(f) or {}
         except Exception as e:
-            print(f"[Sistema] Error leyendo answers.yaml: {e}")
+            print(f"  -> Error leyendo answers.yaml: {e}")
             bank = {}
     # el estilo que antes vivía en el banco (estilo_escritura) o en writer_instructions pasa a profile.personalidad
     old_style = bank.pop("estilo_escritura", None) or {}
@@ -1099,7 +1132,7 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
     initial_gaps = find_gaps(profile, bank, check_quality=False)
     # logros sin métricas / tipos de rol sin material: la IA los evalúa una vez; se preguntan como un tema más
     quality_gaps = find_quality_gaps(profile)
-    print(f"\n[Sistema] Se identificaron {len(initial_gaps) + len(quality_gaps)} campos pendientes en la checklist.")
+    print(f"  -> Se identificaron {len(initial_gaps) + len(quality_gaps)} campos pendientes en la checklist.")
 
     # 5. Rondas de entrevista
     # 0 = sin tope: sigue hasta cubrir todo o hasta que la persona escriba salir (son ~13 rondas de 3 preguntas)
@@ -1131,11 +1164,11 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         current_gaps = [g for g in find_gaps(profile, bank, check_quality=False) + quality_gaps
                         if g["clave"] not in answered]
         if not current_gaps:
-            print("\nRecruiter: ¡Excelente! No quedan gaps pendientes en el banco.")
+            print("  -> ¡Excelente! No quedan gaps pendientes en el banco.")
             break
 
         if max_rounds and round_count >= max_rounds:
-            print(f"\nRecruiter: Se alcanzó el límite de rondas ({max_rounds}). Guardando progreso...")
+            print(f"  -> Se alcanzó el límite de rondas ({max_rounds}). Guardando progreso...")
             break
 
         selected_tema = None
@@ -1158,37 +1191,40 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         gaps_for_topic = [g for g in current_gaps if g["tema"] == selected_tema][:3]
 
         round_count += 1
-        print(f"\n--- [Ronda {round_count}: Tema '{selected_tema}'] ---")
 
         pistas_str = "\n".join(f"- {g['pista']} (campo: {g['clave']})" for g in gaps_for_topic)
         system_prompt = (
-            "Eres un reclutador senior experto, empático y profesional. "
-            f"Formula como MÁXIMO 3 preguntas conversadas y fluidas en español sobre el tema '{selected_tema}'. "
-            "REGLAS:\n"
-            "1. NO suenes a formulario burocrático o lista rígida.\n"
-            "2. Pregunta amablemente por los aspectos faltantes indicados.\n"
-            "3. Máximo 3 preguntas breves en un solo párrafo o texto bien estructurado."
+            "Eres un reclutador senior, cercano y profesional. Escribe en español UNA pregunta por cada aspecto "
+            "faltante indicado (máximo 3).\n"
+            "FORMATO OBLIGATORIO: solo las preguntas, una por línea, cada una entre ¿?. Sin saludo, sin introducción, "
+            "sin numeración, sin viñetas, sin markdown, sin cierre.\n"
+            "Cada pregunta: corta, natural (no de formulario burocrático), con un ejemplo breve entre paréntesis si "
+            "ayuda.\n"
+            "NUNCA repitas algo que ya se preguntó o que la persona ya contó en la conversación de abajo."
         )
-        system_prompt += ("\n4. NUNCA repitas algo que ya se preguntó o que la persona ya contó en la conversación de "
-                          "abajo; si ya lo dijo, no lo preguntes.")
         human_template = "Aspectos a consultar:\n{pistas}\n\nConversación hasta ahora:\n{chat}"
 
         try:
-            questions_text = llm_chain.invoke_text(
+            questions_text = _quiet(
+                llm_chain.invoke_text,
                 system_prompt=system_prompt,
                 human_template=human_template,
                 variables={"pistas": pistas_str, "chat": qa_chat[-4000:] or "(ninguna)"},
                 temperature=0.6,
             )
         except llm_chain.AllProvidersExhausted:
-            print("\n[CUOTA AGOTADA] Sin cupo de LLM para formular preguntas. Guardando progreso...")
+            print("  -> [CUOTA AGOTADA] Sin cupo de LLM para formular preguntas. Guardando progreso...")
             break
         except Exception as e:
-            print(f"[Sistema] Error generando preguntas: {e}")
+            print(f"  -> Error generando preguntas: {e}")
             break
 
-        print(f"\nRecruiter: {questions_text}")
-        print("\nTú (puedes escribir/pegar múltiples líneas. Escribe 'salir' en una línea nueva para terminar. Presiona Enter dos veces para enviar):")
+        questions = _format_questions(questions_text, gaps_for_topic)
+        questions_text = "\n".join(questions)
+        print(_round_header(round_count, selected_tema, len(current_gaps)))
+        for i, q in enumerate(questions, 1):
+            print(f"  {i}. {q}")
+        print("\n  Tu respuesta (Enter dos veces para enviar · 'salir' en una línea sola para guardar y terminar):")
         user_lines = []
         while True:
             try:
@@ -1212,17 +1248,17 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             if selected_tema in {g["tema"] for g in quality_gaps}:
                 quality_gaps = [g for g in quality_gaps if g["tema"] != selected_tema]  # va al perfil al re-armarlo
         elif not stop:
-            print("[Sistema] Respuesta vacía, pasando a la siguiente consulta.")
+            print("  -> Sin respuesta, sigo con el siguiente tema.")
             continue
 
         if stop and not user_response:
-            print("\nRecruiter: Entendido. Guardando perfil y respuestas...")
+            print("  -> Entendido. Guardando perfil y respuestas...")
             break
 
         # Extraer hechos
-        print("[Sistema] Extrayendo datos estructurados de tu respuesta...")
         # contra TODOS los huecos, no solo los del tema: si de paso contó su ciudad o una fortaleza, ya no se pregunta
-        extracted = extract_facts(user_response, current_gaps)
+        extracted = _quiet(extract_facts, user_response, current_gaps)
+        print(f"  -> {len(extracted)} dato(s) guardado(s).")
 
         # Distribuir historias y campos de profile
         for k, v in list(extracted.items()):
@@ -1237,11 +1273,11 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         # Merge en bank
         merge_bank(bank, extracted)
         if stop:
-            print("\nRecruiter: Entendido. Guardando perfil y respuestas...")
+            print("  -> Entendido. Guardando perfil y respuestas...")
             break
 
     # 6. Al final: guardar master_profile.json, answers.yaml y gaps_pendientes.json
-    print("\n[Sistema] Finalizando entrevista y guardando archivos...")
+    print("  -> Finalizando entrevista y guardando archivos...")
     if qa_chat:
         # lo que contó en la entrevista (métricas, logros, contexto) se integra al perfil: experiencia, resumen, etc.
         stories, personalidad = profile.stories, profile.personalidad  # el LLM no reescribe el texto literal
@@ -1257,7 +1293,7 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
             )
             profile.stories, profile.personalidad = stories, personalidad
         except Exception as e:
-            print(f"[Sistema] No se pudo re-armar el perfil con la entrevista ({e}); se guarda el anterior.")
+            print(f"  -> No se pudo re-armar el perfil con la entrevista ({e}); se guarda el anterior.")
     # las que dijo la persona se quedan; las inferidas del chat se suman sin repetir
     soft_skills = evaluate_soft_skills_from_chat(chat_history + qa_chat)
     profile.soft_skills += [s for s in soft_skills if s.lower() not in {x.lower() for x in profile.soft_skills}]
@@ -1266,7 +1302,7 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
 
     with open(answers_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(bank, f, allow_unicode=True, sort_keys=False)
-    print(f"[Sistema] Banco guardado en: {answers_path}")
+    print(f"  -> Banco guardado en: {answers_path}")
 
     final_gaps = [g for g in find_gaps(profile, bank, check_quality=False) if g["clave"] not in answered]
     with open(answered_path, "w", encoding="utf-8") as f:
@@ -1278,8 +1314,8 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
     ]
     with open(gaps_path, "w", encoding="utf-8") as f:
         json.dump(pending_records, f, indent=4, ensure_ascii=False)
-    print(f"[Sistema] Gaps pendientes ({len(pending_records)}) guardados en: {gaps_path}\n")
-    print("Entrevista completada con éxito.")
+    print(f"  -> Gaps pendientes ({len(pending_records)}) guardados en: {gaps_path}\n")
+    print("  -> Entrevista completada.")
 
 
 def print_fields(profile: Any, bank: Any):
@@ -1303,6 +1339,11 @@ if __name__ == "__main__":
     import sys
     # la consola de Windows (cp1252) no imprime algunos caracteres que devuelve el LLM (ej. espacio fino)
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    # avisos de librerías (temperature ignorada, AFC de google-genai) en medio de las preguntas: no le sirven a la persona
+    import logging
+    import warnings
+    warnings.filterwarnings("ignore")
+    logging.getLogger("google_genai").setLevel(logging.ERROR)
     if not os.environ.get("JOBHUNTER_PROFILE"):
         sys.exit("Falta el perfil. En PowerShell: $env:JOBHUNTER_PROFILE='Tu Nombre'; py interviewer_agent.py")
     if "--campos" in sys.argv:
