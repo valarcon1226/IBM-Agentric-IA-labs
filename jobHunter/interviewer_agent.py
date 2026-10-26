@@ -132,6 +132,13 @@ CHECKLIST: List[dict] = [
         "para": ["responder", "cv"],
         "pista": "URL o usuario de perfil de GitHub",
     },
+    {
+        "tema": "datos_personales",
+        "archivo": "bank",
+        "clave": "datos_personales.gitlab",
+        "para": ["responder"],
+        "pista": "URL o usuario de perfil de GitLab",
+    },
 
     # --- Perfil Profesional ---
     {
