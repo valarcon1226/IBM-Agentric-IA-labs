@@ -56,6 +56,40 @@ def _find_element(target: Any, field: Field):
     return None
 
 
+_OPTION_TEXT_JS = """el => {
+    const l = el.closest('label');
+    if (l) return l.innerText;
+    if (el.id) {
+        const lbl = document.querySelector(`label[for="${el.id}"]`);
+        if (lbl) return lbl.innerText;
+    }
+    return '';
+}"""
+
+
+def _check_many(target: Any, field: Field, wanted: list) -> bool:
+    """Grupo de casillas con varias respuestas: marca las elegidas (por texto o value) y verifica que quedaron."""
+    want = {normalize_label(w) for w in wanted}
+    boxes = target.locator(field.locator)
+    done = set()
+    for i in range(boxes.count()):
+        box = boxes.nth(i)
+        hit = want & {normalize_label(box.evaluate(_OPTION_TEXT_JS) or ""), normalize_label(box.get_attribute("value") or "")}
+        if not hit:
+            continue
+        try:
+            box.check(timeout=3000)
+        except Exception:
+            box.evaluate("el => { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }")
+        if box.is_checked():
+            done |= hit
+    if done != want:
+        logger.warning(f"[form_filler] Grupo '{field.label}': marcadas {sorted(done)} de {sorted(want)}")
+        return not field.required
+    logger.info(f"[form_filler] Grupo verificado '{field.label}': {sorted(done)}")
+    return True
+
+
 def fill(page: Any, field: Field, answer: Any) -> bool:
     """Llena un campo del formulario en la página viva de Playwright y verifica lo escrito.
 
@@ -124,6 +158,8 @@ def fill(page: Any, field: Field, answer: Any) -> bool:
     # -----------------------------------------------------------------------
     # 2. Casillas de verificación (checkbox)
     # -----------------------------------------------------------------------
+    if kind == "checkbox" and isinstance(val, (list, tuple)):
+        return _check_many(target, field, val)  # "marca todas las que apliquen": una casilla por opción elegida
     if kind == "checkbox":
         is_checked = str(val).strip().lower() in ("true", "yes", "1", "si", "sí", "on")
         if field.options and len(field.options) == 1:

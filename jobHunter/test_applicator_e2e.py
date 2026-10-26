@@ -213,3 +213,22 @@ finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
     except Exception:
         pass
+
+# Grupo "marca todas las que apliquen" (Palantir): el aplicador marca cada opción elegida y verifica en Edge real
+from playwright.sync_api import sync_playwright
+from form_reader import parse_html
+from form_filler import fill
+from answer_engine import Answer
+_langs_html = """<form><fieldset><legend>Language Skill(s) (Check all that apply)</legend>
+<label><input type=checkbox name=lang value=eng> English (ENG)</label>
+<label><input type=checkbox name=lang value=spa> Spanish (SPA)</label>
+<label><input type=checkbox name=lang value=fra> French (FRA)</label></fieldset></form>"""
+_group = next(x for x in parse_html(_langs_html) if x.kind == "checkbox")
+with sync_playwright() as _p:
+    _b = _p.chromium.launch(channel="msedge", headless=True)
+    _pg = _b.new_page()
+    _pg.set_content(_langs_html)
+    assert fill(_pg, _group, Answer(["English (ENG)", "Spanish (SPA)"], "bank", False))
+    assert [_pg.is_checked(f"input[value={v}]") for v in ("eng", "spa", "fra")] == [True, True, False]
+    _b.close()
+print("ok - casillas multiples")

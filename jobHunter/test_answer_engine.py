@@ -651,8 +651,9 @@ assert _a("Additional information", kind="textarea").value == ""
 assert _ai("Do you have hands-on experience with Playwright or Selenium?", "Yes, I have used both.", kind="combobox").value == "Yes"
 assert _ai("Have you notified your current manager that you are applying to this role?", "No", kind="combobox").needs_human
 assert _ai("Do you have a 30-day notice to serve?", "1 week", kind="combobox").value == "No"  # preaviso 1 semana
+# idiomas: los del banco con nivel B1+ (inglés C1, español nativo), no lo que diga la IA
 assert _ai("Language Skill(s) (Check all that apply)", "English (ENG)", kind="checkbox",
-           options=["English (ENG)", "Spanish (SPA)"]).needs_human
+           options=["English (ENG)", "Spanish (SPA)", "French (FRA)"]).value == ["English (ENG)", "Spanish (SPA)"]
 
 # 14. Cuarta ronda (regresiones y modelo local)
 assert _a("Are you Hispanic/Latino?", kind="combobox").value
@@ -718,7 +719,9 @@ assert _f("Are you currently based in {location}?", job={**JOB_FIXTURE, "locatio
 assert _f("Are you currently based in {location}?", job={**JOB_FIXTURE, "location": ""}).needs_human
 assert _f("Are you legally authorized to work in the country in which this role is located?", job=_us).value == "No"
 assert _f("Are you legally authorized to work in the country in which this role is located?",
-          job={**JOB_FIXTURE, "location": ""}).needs_human                                  # sin ubicación: decides tú
+          job={**JOB_FIXTURE, "location": ""}).value == "Yes"           # remota sin país: trabaja desde Colombia
+assert _f("Are you legally authorized to work in the country in which this role is located?",
+          job={**JOB_FIXTURE, "location": "", "description": "Hybrid role in our Toronto office."}).needs_human
 _src_opts = ["Citizen or permanent resident where this role is listed", "Valid visa with permission to work with any employer where this role is listed", "I do not currently have an unlimited right to work where this role is listed and will require sponsorship"]
 assert "sponsorship" in _f("What is the source of your right to work where this role is listed?", opts=_src_opts, job={**JOB_FIXTURE, "location": "Remote - India"}).value
 assert _f("What is the source of your right to work where this role is listed?", job={**JOB_FIXTURE, "location": "Remote - Mexico"}).value == "sponsorship"  # sin opciones
@@ -732,6 +735,7 @@ assert _f("It is important to us to create an accessible and inclusive interview
 print("ok")
 
 # IN-2: lo que la entrevista guarda (situación laboral, políticas, clearance, estilo) lo usa el aplicador sin preguntar
+import json
 import answer_engine
 import llm_chain
 with tempfile.TemporaryDirectory() as td:
@@ -764,6 +768,36 @@ with tempfile.TemporaryDirectory() as td:
     assert _b("As part of our interview process, we may use AI notetakers to transcribe conversations. Do you consent?").value == "Yes"
     assert _b("Please share my resume and contact information with external Palantir partners", kind="checkbox", opts=None).value == ""
     assert _b("Certification: by initialing below, you hereby agree that all information is true", kind="text", opts=None).needs_human
+
+    # IN-3: con lo decidido en la entrevista, firmas, términos, universidad e idiomas salen sin preguntar
+    _full = yaml.safe_load(open(_bank_path, encoding="utf-8"))
+    _full["datos_personales"]["nombre_legal"] = "Ana Maria Perez"
+    _full["politicas"].update(certifica_veracidad=True, acepta_terminos_para_postular=True, acepta_avisos_privacidad=True)
+    _full["idiomas"] = {"espanol": "Nativo", "ingles": "B2", "frances": "no"}
+    yaml.safe_dump(_full, open(_bank_path, "w", encoding="utf-8"), allow_unicode=True)
+    _prof_path = os.path.join(td, "master_profile.json")
+    json.dump({"education": [{"institution": "Universidad Nacional de Colombia, Bogota"}]}, open(_prof_path, "w"))
+
+    def _c(label, kind="radio", opts=_yn):
+        return answer(Field(key="q", kind=kind, label=label, options=opts, required=True), job=JOB_FIXTURE,
+                      answers_path=_bank_path, master_profile_path=_prof_path, **NO_LLM)
+
+    assert _c("CERTIFICATION AND CONFIDENTIALITY: By initialing below, you hereby agree", kind="text", opts=None).value == "AMP"
+    assert _c("Signature", kind="text", opts=None).value == "Ana Maria Perez"
+    assert _c("I certify that the information provided is true and complete", kind="checkbox", opts=None).value == "Yes"
+    assert _c("Please confirm that you have read and agree to Canonical's Recruitment Privacy Notice").value == "Yes"
+    assert _c("I agree to the terms and conditions of this application").value == "Yes"
+    # compromisos con la vacante no son "acepto términos": los contesta la persona (aprendidas)
+    assert _c("Entiendo que esta posición es presencial en la ciudad de Quito/Ecuador.", opts=["YES", "NO"]).needs_human
+    assert _c("During this application process I agree to use only my own words", kind="checkbox", opts=None).needs_human
+    _unis = ["Click Here", "Aalborg University", "Universidad Nacional de Colombia", "Other (School not listed)"]
+    assert _c("Which university are you currently attending or did you last attend?", "select", _unis).value == "Universidad Nacional de Colombia"
+    assert _c("Which university did you last attend?", "select", ["Aalborg University", "Other (School not listed)"]).value == "Other (School not listed)"
+    assert _c("Language Skill(s) (Check all that apply)", "checkbox", ["English (ENG)", "Spanish (SPA)", "French (FRA)"]).value == [
+        "English (ENG)", "Spanish (SPA)"]
+    # lo que la persona contestó en la entrevista para una pregunta de formulario (aprendidas) se reutiliza
+    learn("Entiendo que esta posición es presencial en la ciudad de Quito/Ecuador.", "NO", answers_path=_bank_path)
+    assert _c("Entiendo que esta posición es presencial en la ciudad de Quito/Ecuador.", opts=["YES", "NO"]).value == "NO"
 
     # la carta y las respuestas abiertas reciben la muestra, el tono y lo que hay que evitar
     _seen = {}

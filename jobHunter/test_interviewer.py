@@ -9,6 +9,7 @@ Verificaciones:
 3. Una entrevista de 1 ronda con input simulado escribe answers.yaml,
    master_profile.json y gaps_pendientes.json correctos sin tocar Profiles/Valentina Alarcon.
 4. El estilo de escritura entra al banco y la tabla de --campos marca qué falta.
+5. form_gaps convierte las preguntas de formularios guardados en preguntas de la entrevista.
 """
 import builtins
 import json
@@ -34,6 +35,7 @@ from interviewer_agent import (
     extract_facts,
     run_interview,
     print_fields,
+    form_gaps,
 )
 
 
@@ -376,6 +378,32 @@ def test_estilo_y_campos():
     assert f"{len(CHECKLIST) - 1} de {len(CHECKLIST)} campos pendientes" in out.getvalue(), lines[-1]
 
 
+def test_form_gaps():
+    """5. Las preguntas de formularios guardados que el banco no contesta se vuelven preguntas de la entrevista
+    (aprendidas.<etiqueta>); al contestarlas dejan de salir, y lo que cubre la CHECKLIST no se repite."""
+    import answer_engine
+    with tempfile.TemporaryDirectory() as td:
+        os.environ["JOBHUNTER_PROFILE"] = td
+        os.makedirs(os.path.join(td, "forms_real"))
+        with open(os.path.join(td, "forms_real", "1.html"), "w", encoding="utf-8") as f:
+            f.write('<form><label for=a>How did you perform in mathematics at high school? *</label>'
+                    '<input id=a name=a required>'
+                    '<label for=b>What is the name of your current manager? *</label><input id=b name=b required></form>')
+        import glob
+        real_glob = glob.glob
+        # solo el formulario de esta prueba (sin los de fixtures/forms)
+        with patch("glob.glob", lambda pat, **kw: [] if "fixtures" in pat else real_glob(pat, **kw)):
+            gaps = form_gaps({}, {})
+            claves = [g["clave"] for g in gaps]
+            key = "aprendidas." + answer_engine.normalize_label("How did you perform in mathematics at high school?")
+            assert claves == [key], claves  # el jefe lo pregunta la CHECKLIST (situacion_laboral.nombre_jefe_actual)
+            facts_llm = json.dumps({key: "Muy bien, 4.8/5", "aprendidas.inventada": "x"})
+            with patch.object(llm_chain, "invoke_text", return_value=facts_llm):
+                facts = extract_facts("Me fue muy bien, 4.8 de 5", gaps)
+            assert facts == {key: "Muy bien, 4.8/5"}, facts
+            assert form_gaps({}, merge_bank({}, facts)) == []
+
+
 if __name__ == "__main__":
     print("Corriendo pruebas de interviewer_agent...")
     test_find_gaps()
@@ -386,4 +414,6 @@ if __name__ == "__main__":
     print("ok - 1_round_interview")
     test_estilo_y_campos()
     print("ok - estilo_y_campos")
+    test_form_gaps()
+    print("ok - form_gaps")
     print("ok")

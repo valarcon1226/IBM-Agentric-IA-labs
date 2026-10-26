@@ -1182,6 +1182,11 @@ _RELOCATE = re.compile(r"relocat|mudar(te|se)?\b|reubicar")
 _NOTICE_DAYS = re.compile(r"(\d+)[ -]?days? (of )?notice")
 _BASED_IN = re.compile(r"^are you (currently )?(based (in|out of)|an? resident of|residing in|living in) (.+)")
 _TZ = re.compile(r"\b(us|eu|europe\w*)\b.*time ?zone")
+_FOREIGN = re.compile(r"\b(united states|usa|u s|united kingdom|england|canada|germany|india|mexico|brazil|brasil|spain|"
+                      r"espana|argentina|chile|peru|europe|australia|new york|san francisco|london|"
+                      # ponytail: los estados/ciudades de EE.UU. y Canadá más comunes en vacantes, no la lista completa
+                      r"texas|austin|california|florida|washington|seattle|boston|chicago|illinois|colorado|denver|"
+                      r"atlanta|georgia|virginia|north carolina|new jersey|massachusetts|ontario|toronto)\b")
 _US_WORDS = re.compile(r"\b(us|usa|united states|new york|san francisco|california|seattle|austin|boston|chicago)\b")
 
 
@@ -1248,6 +1253,82 @@ def _foreign_authorization(field: Field, norm_label: str, job: dict, bank: dict)
     return _yes_no(field, False)
 
 
+_CERTIFY = re.compile(r"initial|signature|firma|certify|certifico|attest|declaro|true and (complete|correct|accurate)")
+# "Entiendo que es presencial en Quito", "acepto usar solo mis palabras, sin IA": suenan a consentimiento pero son
+# compromisos con ESA vacante; los contesta la persona (aprendidas: de la entrevista), nunca "acepto términos"
+_CONSENT_COMMITMENT = re.compile(r"tiempo completo|full ?time|disponib|own words|plagiari|propias palabras")
+
+
+def is_consent(norm_label: str) -> bool:
+    """Consentimiento, firma o términos (los decide politicas.* del banco), no un compromiso con la vacante."""
+    # "Privacy Notice" no es un preaviso (\bnotice\b de _COMMITMENT)
+    return bool(_CONSENT.search(norm_label)) and (bool(_CERTIFY.search(norm_label) or "privacy" in norm_label) or not (
+        _COMMITMENT.search(norm_label) or _CONSENT_COMMITMENT.search(norm_label)))
+
+
+def _consent_answer(field: Field, norm_label: str, bank: dict) -> Answer:
+    """Consentimientos y firmas con lo que la persona decidió en la entrevista (politicas.*); sin decisión, te pregunta.
+    Certificar que la información es verdadera (iniciales, firma, casilla) -> politicas.certifica_veracidad.
+    Un consentimiento con sinónimo propio (grabación con IA, compartir el CV) -> esa clave; cualquier otro "acepto /
+    i agree" para postular -> politicas.acepta_terminos_para_postular."""
+    pol = bank.get("politicas") or {}
+    key = _find_synonym_key(norm_label) or ""
+    if _CERTIFY.search(norm_label):
+        decided = pol.get("certifica_veracidad")
+    elif key.startswith("politicas."):
+        decided = pol.get(key.split(".", 1)[1])
+    elif re.search(r"privacy|privacidad|personal data|datos personales", norm_label):
+        decided = pol.get("acepta_avisos_privacidad")
+    else:
+        decided = pol.get("acepta_terminos_para_postular")
+    if not isinstance(decided, bool):
+        return Answer(None, "none", True)
+    if field.kind in ("text", "textarea") and not field.options:  # se firma escribiendo: iniciales o nombre legal
+        name = str((bank.get("datos_personales") or {}).get("nombre_legal") or "").split()
+        if not decided or not name:
+            return Answer(None, "bank", True)
+        if "initial" in norm_label:
+            return Answer("".join(w[0].upper() for w in name), "bank", False)
+        return Answer(" ".join(name), "bank", False)
+    return _yes_no(field, decided)
+
+
+_UNIVERSITY = re.compile(r"\b(university|universidad|college|school|institution|institucion)\b")
+
+
+def _university_answer(field: Field, master_profile_path: Optional[str]) -> Optional[Answer]:
+    """Desplegable de universidad: la de la persona (la primera de education en el perfil) o, si no está, la opción
+    "Other / not listed". None = no es desplegable o el perfil no la tiene, sigue el resto de reglas."""
+    path = master_profile_path or profile_paths.resolve("master_profile.json")
+    try:
+        edu = (json.load(open(path, encoding="utf-8")) or {}).get("education") or []
+    except (OSError, ValueError):
+        return None
+    inst = str(edu[0].get("institution") or "").split(",")[0].strip() if edu and isinstance(edu[0], dict) else ""
+    if not inst or not field.options:  # campo de texto: ya lo contesta el perfil (paso 3 de _answer_raw)
+        return None
+    norm = normalize_label(inst)
+    opts = {normalize_label(o): o for o in field.options}
+    hit = next((o for n, o in opts.items() if len(n) >= 10 and (n in norm or norm in n)), None)
+    close = difflib.get_close_matches(norm, list(opts), n=1, cutoff=0.8)
+    other = next((o for n, o in opts.items() if re.search(r"\bother\b|not listed|\botra\b", n)), None)
+    pick = hit or (opts[close[0]] if close else other)
+    return Answer(pick, "profile", False) if pick else None
+
+
+# idiomas del banco (claves en español) -> cómo los nombran los formularios
+_LANG_NAMES = {"ingles": "english", "espanol": "spanish", "frances": "french", "italiano": "italian",
+               "aleman": "german", "portugues": "portuguese", "japones": "japanese", "chino": "chinese|mandarin"}
+
+
+def _languages_answer(field: Field, bank: dict) -> Optional[Answer]:
+    """'Language skill(s) (check all that apply)': las opciones de los idiomas del banco con nivel B1 o más (lista)."""
+    spoken = [_LANG_NAMES.get(normalize_label(k), normalize_label(k)) for k, v in (bank.get("idiomas") or {}).items()
+              if re.match(r"\s*(b1|b2|c1|c2|nativ)", str(v).lower())]
+    chosen = [o for o in field.options if any(re.search(rf"\b({s})\b", normalize_label(o)) for s in spoken)]
+    return Answer(chosen, "bank", False) if chosen else None
+
+
 def answer(
     field: Field,
     job: Optional[dict] = None,
@@ -1304,14 +1385,17 @@ def _answer_rules(
             and not re.search(r"certify|attest|initial|signature|firma|true and (complete|correct)", norm_label)
             and ((_load_bank(answers_path).get("politicas") or {}).get("acepta_avisos_privacidad")) is not False):
         return Answer(field.options[0] if len(field.options or []) == 1 else "Yes", "bank", False)
-    if field.kind != "file" and _CONSENT.search(norm_label):
-        # consentimiento que la persona ya contestó en la entrevista (politicas.*: sí/no); firmas e iniciales, nunca
-        key = _find_synonym_key(norm_label)
-        decided = (_load_bank(answers_path).get("politicas") or {}).get(key.split(".", 1)[1]) if (
-            key or "").startswith("politicas.") else None
-        if isinstance(decided, bool) and not re.search(r"initial|signature|firma|certify|attest", norm_label):
-            return _yes_no(field, decided)
-        return Answer(value=None, source="none", needs_human=True)
+    if field.kind != "file" and is_consent(norm_label):
+        return _consent_answer(field, norm_label, _load_bank(answers_path))
+    if (field.kind == "checkbox" and len(field.options or []) > 1 and re.search(r"language|idioma", norm_label)):
+        langs = _languages_answer(field, _load_bank(answers_path))
+        if langs:
+            return langs
+    if (field.kind != "file" and _UNIVERSITY.search(norm_label) and not _GRADES.search(norm_label)
+            and not re.search(r"degree|major|field of study|graduat|titulo|carrera", norm_label)):
+        uni = _university_answer(field, master_profile_path)
+        if uni:
+            return uni
     if (field.kind != "file" and _SALARY.search(norm_label)
             and not re.search(r"\b(current|actual|present|minimo|minimum|lowest)\b", norm_label)):
         return _salary_answer(field, _load_bank(answers_path))
@@ -1325,6 +1409,9 @@ def _answer_rules(
         where = normalize_label(f"{job.get('location') or ''} {str(job.get('description') or '')[:5000]}")
         authorized = (bank.get("autorizacion_de_trabajo") or {}).get(f"autorizada_para_trabajar_en_{home.replace(' ', '_')}")
         in_home = _AUTH_HOME.search(norm_label) or re.search(rf"\b{re.escape(home)}\b", where)
+        # vacante remota que no nombra ningún país (el scout solo deja pasar las que contratan desde LATAM): se trabaja
+        # desde tu país. Si nombra otro país, no se asume nada.
+        in_home = in_home or (home and not job.get("location") and not _FOREIGN.search(where))
         if home and in_home and isinstance(authorized, bool) and "source" in norm_label and authorized:
             opt = next((o for o in field.options or [] if "citizen" in normalize_label(o)), None)
             return Answer(opt or "Citizen", "bank", False)  # vacante en tu país y tienes permiso: ciudadana
@@ -1350,7 +1437,7 @@ def _answer_rules(
     if field.kind != "file" and not field.required and _OPTIONAL_SKIP.search(norm_label):
         return Answer(value="", source="skip", needs_human=False)
     res = _answer_raw(field, *args)
-    if res.source == "llm" and (_COMMITMENT.search(norm_label) or _GRADES.search(norm_label)
+    if res.source == "llm" and (_COMMITMENT.search(norm_label) or _GRADES.search(norm_label) or _CONSENT.search(norm_label)
                                 or _MEETS_REQ.search(norm_label) and normalize_label(str(res.value)) == "no"):
         return Answer(value=None, source="none", needs_human=True)
     # "Are you fluent in English?" con el nivel del banco -> Yes/No (B2 o más = Yes)

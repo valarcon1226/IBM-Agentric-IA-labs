@@ -382,6 +382,20 @@ CHECKLIST: List[dict] = [
         "para": ["responder"],
         "pista": "¿Acepta compartir su CV con socios o clientes aliados?",
     },
+    {
+        "tema": "politicas",
+        "archivo": "bank",
+        "clave": "politicas.certifica_veracidad",
+        "para": ["responder"],
+        "pista": "¿Autoriza que el aplicador firme por ella (iniciales o nombre) que la información enviada es verdadera? (sí/no)",
+    },
+    {
+        "tema": "politicas",
+        "archivo": "bank",
+        "clave": "politicas.acepta_terminos_para_postular",
+        "para": ["responder"],
+        "pista": "¿Acepta los términos y condiciones que piden los formularios para poder postular? (sí/no)",
+    },
 
     # --- Respuestas Modelo ---
     {
@@ -703,6 +717,47 @@ def find_gaps(profile: Any = None, bank: Any = None, check_quality: bool = False
     return gaps
 
 
+def form_gaps(profile: Any, bank: dict) -> List[dict]:
+    """Preguntas de los formularios ya guardados (fixtures/forms y Profiles/<persona>/forms_real) que el aplicador aún
+    no sabría contestar con este banco. Se preguntan una vez en la entrevista y quedan en aprendidas: (answer_engine
+    las busca por etiqueta). Las abiertas no: esas las redacta la IA con el perfil, las historias y el estilo."""
+    import tempfile
+    import answer_engine
+    from form_reader import parse_html
+    here = os.path.dirname(os.path.abspath(__file__))
+    paths = (glob.glob(os.path.join(here, "fixtures", "forms", "*.html"))
+             + glob.glob(os.path.join(profile_paths.resolve("forms_real"), "**", "*.html"), recursive=True))
+    no_llm = dict(llm_classifier_fn=lambda *_: None, llm_text_fn=lambda *_: None)
+    checklist_keys = {item["clave"] for item in CHECKLIST}
+    gaps, seen = [], set()
+    with tempfile.TemporaryDirectory() as td:  # answer_engine lee de archivos: el banco y perfil de esta entrevista
+        bank_path, prof_path = os.path.join(td, "answers.yaml"), os.path.join(td, "master_profile.json")
+        with open(bank_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(bank or {}, f, allow_unicode=True)
+        with open(prof_path, "w", encoding="utf-8") as f:
+            json.dump(profile.model_dump() if hasattr(profile, "model_dump") else (profile or {}), f, ensure_ascii=False)
+        for path in paths:
+            with open(path, encoding="utf-8", errors="ignore") as f:
+                fields = parse_html(f.read())
+            for field in fields:
+                norm = answer_engine.normalize_label(field.label or field.key)
+                # plantillas rotas ({location}) y retos anti-bots ("figure out the secret") no son datos de la persona
+                if (not norm or norm in seen or field.kind == "file" or "{" in (field.label or "")
+                        or re.search(r"secret|encoded", norm) or answer_engine._is_open_text_field(field, norm)):
+                    continue
+                # ya las cubre la CHECKLIST (salario, consentimientos y firmas, claves con sinónimo): no se repiten
+                if (answer_engine._find_synonym_key(norm) in checklist_keys or answer_engine.is_consent(norm)
+                        or answer_engine._SALARY.search(norm)):
+                    continue
+                seen.add(norm)
+                if answer_engine.answer(field, {}, answers_path=bank_path, master_profile_path=prof_path,
+                                        **no_llm).needs_human:
+                    opts = f" (opciones: {', '.join(field.options[:12])})" if field.options else ""
+                    gaps.append({"tema": "formularios", "archivo": "bank", "clave": f"aprendidas.{norm}",
+                                 "para": ["responder"], "pista": f"Pregunta de formulario: {field.label}{opts}"})
+    return gaps
+
+
 # ==========================================
 # 5. EXTRACT FACTS Y MERGE BANK / PROFILE
 # ==========================================
@@ -727,7 +782,9 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
         "4. NO inventes datos. NO agregues claves adicionales bajo ninguna circunstancia.\n"
         "   Si dice que no tiene eso, que no aplica o que prefiere no decirlo, usa el valor 'no aplica' (así no se "
         "le vuelve a preguntar).\n"
-        "5. Devuelve SOLO el JSON sin texto introductorio, explicaciones ni formato markdown."
+        "5. Devuelve SOLO el JSON sin texto introductorio, explicaciones ni formato markdown.\n"
+        "6. Si el detalle trae '(opciones: ...)', el valor es EXACTAMENTE una de esas opciones, copiada tal cual.\n"
+        "7. Preguntas de sí/no: el valor es true o false."
     )
 
     human_template = "Respuesta del candidato:\n{respuesta}"
@@ -766,9 +823,11 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
     if not isinstance(data, dict):
         return {}
 
+    asked = {g["clave"] for g in gaps_preguntados}
     facts = {}
     for k, v in data.items():
-        if (k in valid_checklist_keys or k.startswith("respuestas_modelo.") or k.startswith("idiomas.")) and not _is_empty_or_placeholder(v):
+        if (k in valid_checklist_keys or k.startswith(("respuestas_modelo.", "idiomas.")) or k in asked
+                and k.startswith("aprendidas.")) and not _is_empty_or_placeholder(v):
             facts[k] = v
 
     return facts
@@ -793,6 +852,7 @@ def merge_bank(bank: dict, facts: dict) -> dict:
             raw_clave in valid_bank_keys
             or raw_clave.startswith("respuestas_modelo.")
             or raw_clave.startswith("idiomas.")
+            or raw_clave.startswith("aprendidas.")  # preguntas de formularios (form_gaps)
             or raw_clave in (
                 "salario.expectativa_mensual", "salario.minimo_aceptable", "salario.salario_actual",
                 "datos_personales.nombre_legal", "datos_personales.email", "datos_personales.telefono",
@@ -1038,13 +1098,19 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         if t not in distinct_temas:
             distinct_temas.append(t)
 
-    distinct_temas += [g["tema"] for g in quality_gaps if g["tema"] not in distinct_temas]
+    distinct_temas += [g["tema"] for g in quality_gaps if g["tema"] not in distinct_temas] + ["formularios"]
     asked_temas = set()
     round_count = 0
     qa_chat = ""
+    pending_forms = None
 
     while True:
         current_gaps = find_gaps(profile, bank, check_quality=False) + quality_gaps
+        if not current_gaps and pending_forms is None:
+            # con el banco ya completo, lo que los formularios guardados todavía preguntarían
+            pending_forms = form_gaps(profile, bank)
+            print(f"\n[Sistema] {len(pending_forms)} preguntas de formularios reales que el banco aún no contesta.")
+        current_gaps += [g for g in pending_forms or [] if _is_empty_or_placeholder(_get_nested_val(bank, g["clave"]))]
         if not current_gaps:
             print("\nRecruiter: ¡Excelente! No quedan gaps pendientes en el banco.")
             break
@@ -1179,7 +1245,8 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         yaml.safe_dump(bank, f, allow_unicode=True, sort_keys=False)
     print(f"[Sistema] Banco guardado en: {answers_path}")
 
-    final_gaps = find_gaps(profile, bank, check_quality=False)
+    final_gaps = find_gaps(profile, bank, check_quality=False) + [
+        g for g in pending_forms or [] if _is_empty_or_placeholder(_get_nested_val(bank, g["clave"]))]
     gaps_path = profile_paths.resolve("gaps_pendientes.json")
     pending_records = [
         {"tema": g["tema"], "clave": g["clave"], "para": g["para"]}
@@ -1210,5 +1277,9 @@ if __name__ == "__main__":
         prof = json.load(open(paths[0], encoding="utf-8")) if os.path.exists(paths[0]) else {}
         bnk = (yaml.safe_load(open(paths[1], encoding="utf-8")) or {}) if os.path.exists(paths[1]) else {}
         print_fields(prof, bnk)
+        forms = form_gaps(prof, bnk)
+        print(f"{len(forms)} preguntas de formularios guardados que el banco aún no contesta:")
+        for g in forms:
+            print(f"  - {g['pista'].removeprefix('Pregunta de formulario: ')[:150]}")
     else:
         run_interview()
