@@ -274,14 +274,16 @@ def test_1_round_interview():
 
         def mock_invoke_text(system_prompt="", human_template="", variables=None, **kwargs):
             sys_p = system_prompt.lower()
-            if "soft skills" in sys_p:
-                return "Pensamiento Analítico, Comunicación, Resiliencia"
+            # el extractor primero: su prompt lista todos los huecos, incluido soft_skills
             if "extractor" in sys_p:
+                assert "soft skills" in sys_p and "salario.expectativa_mensual_cop" in sys_p  # todos, no solo el tema
                 return json.dumps({
                     "salario.expectativa_mensual_cop": "15.000.000 COP",
                     "stories.como_usa_la_ia": "Construyo agentes de prueba con Playwright y LLMs diariamente.",
                     "clave_desconocida_que_debe_descartarse": "invalido",
                 })
+            if "soft skills" in sys_p:
+                return "Pensamiento Analítico, Comunicación, Resiliencia"
             # Generador de preguntas
             return "¿Cuál es tu expectativa salarial en COP y cómo aplicas la IA en tu trabajo?"
 
@@ -318,6 +320,9 @@ def test_1_round_interview():
         assert saved_profile["stories"][0]["tema"] == "como_usa_la_ia"
         assert "Playwright" in saved_profile["stories"][0]["texto"]
         assert "Pensamiento Analítico" in saved_profile["soft_skills"]
+        # lo contestado queda registrado: la próxima entrevista no lo repite
+        with open(os.path.join(td, "entrevista_respondidas.json"), encoding="utf-8") as f:
+            assert "salario.expectativa_mensual_cop" in json.load(f)
 
         # Comprobar copia en perfiles_de_prueba
         test_dir = os.path.join(td, "perfiles_de_prueba")
@@ -391,7 +396,7 @@ def test_schema_gaps():
               "eeo.genero", "idiomas.aleman"):
         assert c in claves, c
     assert "Acme" in claves["experience.0.achievements"]["pista"]
-    assert "soft_skills" not in claves and "experience.0.company_name" not in claves
+    assert "soft_skills" in claves and "experience.0.company_name" not in claves  # blandas también se preguntan
     _update_profile_field(prof, "experience.0.achievements", "Bajé los bugs en producción 40%")
     _update_profile_field(prof, "experience.0.time_period_worked", "2021 - 2023")
     _update_profile_field(prof, "certifications", "ISTQB")  # lista de objetos: queda para el re-armado del LLM

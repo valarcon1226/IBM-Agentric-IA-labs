@@ -854,7 +854,11 @@ def _generate_open_text(
                 # sin esto contestó "no degree" a "What was your bachelor's degree result?"
                 f"Education: {json.dumps(profile.get('education', []), ensure_ascii=False)[:800]}\n"
                 # historias de la entrevista (proyecto favorito, en qué es excelente...): material para preguntas abiertas
-                f"Stories: {json.dumps(profile.get('stories', []), ensure_ascii=False)[:2500]}"
+                f"Stories: {json.dumps(profile.get('stories', []), ensure_ascii=False)[:2500]}\n"
+                # todo lo que dio la entrevista: con esto contesta preguntas raras de un formulario sin pararse
+                + "".join(f"{k}: {json.dumps(profile.get(k), ensure_ascii=False)[:1500]}\n" for k in (
+                    "technical_stacks", "additional_skills", "certifications", "spoken_languages", "soft_skills",
+                    "seniority_context", "work_model", "deal_breakers") if profile.get(k))
             )
         job_info = ""
         if job:
