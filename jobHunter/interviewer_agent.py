@@ -1301,8 +1301,11 @@ def print_fields(profile: Any, bank: Any):
 
 if __name__ == "__main__":
     import sys
+    # la consola de Windows (cp1252) no imprime algunos caracteres que devuelve el LLM (ej. espacio fino)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if not os.environ.get("JOBHUNTER_PROFILE"):
+        sys.exit("Falta el perfil. En PowerShell: $env:JOBHUNTER_PROFILE='Tu Nombre'; py interviewer_agent.py")
     if "--campos" in sys.argv:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         paths = profile_paths.resolve("master_profile.json"), profile_paths.resolve("answers.yaml")
         prof = json.load(open(paths[0], encoding="utf-8")) if os.path.exists(paths[0]) else {}
         bnk = (yaml.safe_load(open(paths[1], encoding="utf-8")) or {}) if os.path.exists(paths[1]) else {}
