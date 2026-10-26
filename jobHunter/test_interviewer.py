@@ -89,7 +89,7 @@ def test_find_gaps():
         },
         "datos_personales": {
             "github": "https://github.com/test",
-            "gitlab": "",  # GAP esperado
+            "gitlab": "",  # opcional: no se pregunta
         },
         "idiomas": {
             "ingles": "C1",
@@ -129,7 +129,6 @@ def test_find_gaps():
         "situacion_laboral.jefe_sabe_que_busca",
         "autorizacion_de_trabajo.necesita_patrocinio_de_visa",
         "disponibilidad.ciudades_para_mudarse",
-        "datos_personales.gitlab",
         "respuestas_modelo.por_que_buscas_cambio",
         "respuestas_modelo.que_te_diferencia",
     ]
