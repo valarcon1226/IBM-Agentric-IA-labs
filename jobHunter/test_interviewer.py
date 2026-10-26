@@ -380,6 +380,26 @@ def test_estilo_y_campos():
     assert row.rstrip().endswith("sí") and "responder,cv" in row, row
 
 
+def test_schema_gaps():
+    """5. La entrevista pregunta todo campo vacío del esquema del perfil y todo hueco ??? del banco, y guarda lo
+    contestado en su sitio (incluso dentro de una experiencia)."""
+    from interviewer_agent import Experience, schema_gaps
+    prof = MasterProfile(experience=[Experience(company_name="Acme", current_role="QA", time_period_worked="",
+                                                achievements=[])])
+    claves = {g["clave"]: g for g in find_gaps(prof, {"eeo": {"genero": "???"}, "idiomas": {"aleman": "???"}})}
+    for c in ("experience.0.time_period_worked", "experience.0.achievements", "certifications", "education",
+              "eeo.genero", "idiomas.aleman"):
+        assert c in claves, c
+    assert "Acme" in claves["experience.0.achievements"]["pista"]
+    assert "soft_skills" not in claves and "experience.0.company_name" not in claves
+    _update_profile_field(prof, "experience.0.achievements", "Bajé los bugs en producción 40%")
+    _update_profile_field(prof, "experience.0.time_period_worked", "2021 - 2023")
+    _update_profile_field(prof, "certifications", "ISTQB")  # lista de objetos: queda para el re-armado del LLM
+    assert prof.experience[0].achievements == ["Bajé los bugs en producción 40%"] and prof.certifications == []
+    assert not any(g["clave"].startswith("experience.0.") for g in schema_gaps(prof))
+    assert merge_bank({"eeo": {"genero": "???"}}, {"eeo.genero": "Mujer", "eeo.x": "y"}) == {"eeo": {"genero": "Mujer"}}
+
+
 if __name__ == "__main__":
     print("Corriendo pruebas de interviewer_agent...")
     test_find_gaps()
@@ -390,4 +410,6 @@ if __name__ == "__main__":
     print("ok - 1_round_interview")
     test_estilo_y_campos()
     print("ok - estilo_y_campos")
+    test_schema_gaps()
+    print("ok - schema_gaps")
     print("ok")

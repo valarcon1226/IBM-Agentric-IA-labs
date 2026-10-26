@@ -3,6 +3,7 @@ import os
 import glob
 import re
 import datetime
+import typing
 from typing import List, Optional, Any
 from pydantic import BaseModel, Field
 
@@ -657,6 +658,57 @@ def find_quality_gaps(profile: Any) -> List[dict]:
     return []
 
 
+def _bank_holes(bank: Any, prefix: str = "") -> List[str]:
+    """Rutas del banco cuyo valor es '???' (los huecos de la plantilla answers.yaml)."""
+    if not isinstance(bank, dict):
+        return []
+    holes = []
+    for k, v in bank.items():
+        path = f"{prefix}{k}"
+        if isinstance(v, dict):
+            holes += _bank_holes(v, path + ".")
+        elif isinstance(v, str) and v.strip() == "???":
+            holes.append(path)
+    return holes
+
+
+# lo llena otro agente o se infiere solo (no se le pregunta a la persona), o ya lo pregunta el banco
+_SCHEMA_SKIP = {"soft_skills", "portfolio_projects", "writer_instructions", "stories",
+                "personal_info.visa_sponsorship_needed", "personal_info.willing_to_relocate"}
+
+
+def schema_gaps(profile: Any) -> List[dict]:
+    """Campos vacíos del esquema MasterProfile, con la descripción del campo como pista. Listas de objetos: vacía
+    = un hueco para toda la lista; con elementos = los campos vacíos de cada uno (ej. experience.0.achievements)."""
+    if isinstance(profile, dict):
+        try:
+            profile = MasterProfile.model_validate(profile)
+        except Exception:
+            return []
+    if not isinstance(profile, BaseModel):
+        return []
+    gaps = []
+
+    def walk(obj: BaseModel, prefix: str, tema: str, label: str):
+        for name, info in type(obj).model_fields.items():
+            clave, val = f"{prefix}{name}", getattr(obj, name)
+            if clave in _SCHEMA_SKIP:
+                continue
+            t = tema or name
+            if isinstance(val, BaseModel):
+                walk(val, clave + ".", t, label)
+            elif isinstance(val, list) and val and isinstance(val[0], BaseModel):
+                for i, item in enumerate(val):
+                    first = next((str(v) for v in item.model_dump().values() if isinstance(v, str) and v), "")
+                    walk(item, f"{clave}.{i}.", t, f"{name} #{i + 1} ({first[:60]}): ")
+            elif _is_empty_or_placeholder(val):
+                gaps.append({"tema": t, "archivo": "profile", "clave": clave, "para": ["cv", "responder"],
+                             "pista": f"{label}{info.description or name.replace('_', ' ')}"})
+
+    walk(profile, "", "", "")
+    return gaps
+
+
 def find_gaps(profile: Any = None, bank: Any = None, check_quality: bool = False) -> List[dict]:
     """Evalúa determinísticamente la CHECKLIST sobre profile y bank.
     Falta = vacío, '???' o ausente.
@@ -690,32 +742,18 @@ def find_gaps(profile: Any = None, bank: Any = None, check_quality: bool = False
                 if _is_empty_or_placeholder(val):
                     gaps.append(dict(item))
 
-    # 2. Búsqueda dinámica de campos extras con '???' en bank (respuestas_modelo e idiomas)
-    if isinstance(bank, dict):
-        if isinstance(bank.get("respuestas_modelo"), dict):
-            for k, v in bank["respuestas_modelo"].items():
-                clave = f"respuestas_modelo.{k}"
-                if _is_empty_or_placeholder(v):
-                    if not any(g["clave"] == clave for g in gaps):
-                        gaps.append({
-                            "tema": "respuestas_modelo",
-                            "archivo": "bank",
-                            "clave": clave,
-                            "para": ["responder"],
-                            "pista": f"Respuesta modelo para: {k.replace('_', ' ')}",
-                        })
-        if isinstance(bank.get("idiomas"), dict):
-            for k, v in bank["idiomas"].items():
-                clave = f"idiomas.{k}"
-                if _is_empty_or_placeholder(v):
-                    if not any(g["clave"] == clave for g in gaps):
-                        gaps.append({
-                            "tema": "idiomas",
-                            "archivo": "bank",
-                            "clave": clave,
-                            "para": ["responder", "cv"],
-                            "pista": f"Nivel para idioma: {k}",
-                        })
+    # 2. Todo hueco '???' de la plantilla del banco (respuestas_modelo, idiomas o cualquier sección nueva)
+    known = {g["clave"] for g in gaps}
+    for clave in _bank_holes(bank):
+        if clave not in known:
+            tema = clave.split(".")[0]
+            gaps.append({"tema": tema, "archivo": "bank", "clave": clave,
+                         "para": ["responder", "cv"] if tema == "idiomas" else ["responder"],
+                         "pista": clave.split(".", 1)[-1].replace("_", " ")})
+
+    # 2b. Todo campo vacío del esquema del perfil (lo que el LLM sacó de la hoja de vida), no solo la CHECKLIST
+    known = {g["clave"] for g in gaps} | {item["clave"] for item in CHECKLIST}
+    gaps.extend(g for g in schema_gaps(profile) if g["clave"] not in known)
 
     # 3. Gaps de calidad con IA
     if check_quality and profile:
@@ -789,9 +827,10 @@ def extract_facts(respuesta: str, gaps_preguntados: List[dict]) -> dict:
     if not isinstance(data, dict):
         return {}
 
+    asked = {g["clave"] for g in gaps_preguntados}  # incluye campos del esquema y huecos '???' del banco
     facts = {}
     for k, v in data.items():
-        if (k in valid_checklist_keys or k.startswith(("respuestas_modelo.", "idiomas."))) and not _is_empty_or_placeholder(v):
+        if (k in valid_checklist_keys or k in asked or k.startswith(("respuestas_modelo.", "idiomas.")))                and not _is_empty_or_placeholder(v):
             facts[k] = v
 
     return facts
@@ -814,6 +853,7 @@ def merge_bank(bank: dict, facts: dict) -> dict:
 
         is_valid = (
             raw_clave in valid_bank_keys
+            or raw_clave in _bank_holes(bank)  # cualquier hueco ??? de la plantilla
             or raw_clave.startswith("respuestas_modelo.")
             or raw_clave.startswith("idiomas.")
             or raw_clave in (
@@ -893,23 +933,32 @@ def _update_profile_field(profile: Any, clave: str, val: Any):
             if _is_empty_or_placeholder(profile.get(clave)):
                 profile[clave] = val
     else:
-        if "." in clave:
-            parts = clave.split(".")
-            if parts[0] == "personal_info":
-                if profile.personal_info is None:
-                    profile.personal_info = PersonalInfo(
-                        full_name="", email="", number="", location="", linkedin_url="", github_url=""
-                    )
-            sub = getattr(profile, parts[0], None)
-            if sub is not None and _is_empty_or_placeholder(getattr(sub, parts[1], None)):
-                setattr(sub, parts[1], ", ".join(map(str, val)) if isinstance(val, list) else str(val))
+        # rutas del esquema con índices de lista, ej. experience.0.achievements o personalidad.tono
+        parts = clave.split(".")
+        if parts[0] == "personal_info" and profile.personal_info is None:
+            profile.personal_info = PersonalInfo(
+                full_name="", email="", number="", location="", linkedin_url="", github_url=""
+            )
+        obj = profile
+        for p in parts[:-1]:
+            if isinstance(obj, list):
+                obj = obj[int(p)] if p.isdigit() and int(p) < len(obj) else None
+            else:
+                obj = getattr(obj, p, None)
+            if obj is None:
+                return
+        info = type(obj).model_fields.get(parts[-1]) if isinstance(obj, BaseModel) else None
+        if info is None or not _is_empty_or_placeholder(getattr(obj, parts[-1])):
+            return
+        args = typing.get_args(info.annotation)
+        if typing.get_origin(info.annotation) is list:
+            if args and args[0] is not str:
+                return  # lista de objetos (certificaciones, estudios...): la arma el LLM al re-armar el perfil
+            setattr(obj, parts[-1], [str(x) for x in val] if isinstance(val, list) else [str(val)])
+        elif info.annotation is str:
+            setattr(obj, parts[-1], ", ".join(map(str, val)) if isinstance(val, list) else str(val))
         else:
-            curr_val = getattr(profile, clave, None)
-            if _is_empty_or_placeholder(curr_val):
-                if isinstance(curr_val, list) and not isinstance(val, list):
-                    setattr(profile, clave, [val])
-                else:
-                    setattr(profile, clave, val)
+            setattr(obj, parts[-1], val)
 
 
 def evaluate_soft_skills_from_chat(chat_history: str) -> List[str]:
@@ -1067,11 +1116,13 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
 
     distinct_temas += [g["tema"] for g in quality_gaps if g["tema"] not in distinct_temas]
     asked_temas = set()
+    answered = set()
     round_count = 0
     qa_chat = ""
 
     while True:
-        current_gaps = find_gaps(profile, bank, check_quality=False) + quality_gaps
+        current_gaps = [g for g in find_gaps(profile, bank, check_quality=False) + quality_gaps
+                        if g["clave"] not in answered]
         if not current_gaps:
             print("\nRecruiter: ¡Excelente! No quedan gaps pendientes en el banco.")
             break
@@ -1164,13 +1215,14 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
         extracted = extract_facts(user_response, gaps_for_topic)
 
         # Distribuir historias y campos de profile
-        valid_checklist_keys = {item["clave"] for item in CHECKLIST}
         for k, v in list(extracted.items()):
             if k.startswith("stories."):
                 story_tema = k.split(".", 1)[1]
                 _upsert_story(profile, story_tema, str(v))
-            elif any(item["clave"] == k and item["archivo"] == "profile" for item in CHECKLIST):
+            elif any(g["clave"] == k and g["archivo"] == "profile" for g in gaps_for_topic):
                 _update_profile_field(profile, k, v)
+        # lo contestado no se repite aunque no quepa en un campo (ej. certificaciones: las arma el LLM al final)
+        answered |= set(extracted)
 
         # Merge en bank
         merge_bank(bank, extracted)
@@ -1220,7 +1272,13 @@ Pay special attention to the 'Candidate Initial Context' in the chat history to 
 
 def print_fields(profile: Any, bank: Any):
     """Tabla de la CHECKLIST: de qué campo saca cada agente lo que necesita y si ya está lleno. Sin LLM."""
-    pending = {g["clave"] for g in find_gaps(profile, bank)}
+    gaps = find_gaps(profile, bank)
+    pending = {g["clave"] for g in gaps}
+    extra = [g for g in gaps if g["clave"] not in {item["clave"] for item in CHECKLIST}]
+    print(f"{len(extra)} huecos del perfil (esquema sacado de la hoja de vida) y del banco (???) fuera de la tabla:")
+    for g in extra:
+        print(f"  {g['archivo']:<8} {g['clave']:<45} {g['pista'][:90]}")
+    print()
     print(f"{'tema':<24} {'clave':<58} {'archivo':<8} {'para':<20} lleno")
     for item in CHECKLIST:
         print(f"{item['tema']:<24} {item['clave']:<58} {item['archivo']:<8} {','.join(item['para']):<20} "
