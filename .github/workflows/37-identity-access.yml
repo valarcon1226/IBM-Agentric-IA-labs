@@ -152,10 +152,17 @@ jobs:
         run: |
           uv run pytest tests/api/test_partial_import.py -v
 
-      # The 25 -> 26 upgrade test is not here yet: it read files from a manual run on a
-      # laptop instead of upgrading the stack itself. It comes back once it does.
+      - name: Tear down initial SUT stack
+        if: ${{ !cancelled() }}
+        run: |
+          docker compose down -v
 
-      - name: Tear down SUT stack
+      - name: Run Major Version Upgrade test (Keycloak 25.0.6 -> 26.0.5)
+        if: ${{ !cancelled() }}
+        run: |
+          uv run pytest tests/migration/test_upgrade.py -v
+
+      - name: Tear down upgrade stack
         if: always()
         run: |
           docker compose down -v

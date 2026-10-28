@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0.5
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.0.5}
     container_name: identity-keycloak
     mem_limit: 1536m
     command: ["start", "--import-realm"]

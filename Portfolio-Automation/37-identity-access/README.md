@@ -17,7 +17,7 @@ Evaluates OAuth 2.0 / OpenID Connect Core 1.0, PKCE S256, refresh token rotation
 | **Backpressure & Load Shedding** | Async httpx load loop at 10, 50 and 100 rps target (one request in flight at a time, 3 × 4 s windows per rate). Concurrent burst of 300 token requests with `--http-max-queued-requests 20`: excess requests return HTTP 503 and 0 HTTP 500s; recovers within 2s. | ASVS V13.1.5 | [`tests/perf/test_load.py`](tests/perf/test_load.py), [`tests/resilience/test_overload.py`](tests/resilience/test_overload.py) |
 | **Admin User Pagination** | Walk 10,000 users via admin REST API with `max` 100, 37, and 1: identical set of IDs, 0 duplicates. Walk during concurrent 300-user insertion: 0 baseline users missed; repeats are allowed up to the number created (see FIND-008). Prefix search agrees with count. | ASVS V13.2.3 | [`tests/api/test_pagination.py`](tests/api/test_pagination.py) |
 | **Partial Import Collision Policies** | Import 1,000 users with 50 conflicts under SKIP, OVERWRITE, and FAIL policies on fresh realms. FAIL verified as atomic all-or-nothing rollback (409 Conflict). | ASVS V13.2.1 | [`tests/api/test_partial_import.py`](tests/api/test_partial_import.py) |
-| **Major Schema Migration** | **Not in CI yet.** The first version read files from a manual laptop run instead of upgrading the stack; it is being rewritten to start 25.0.6, enroll TOTP, switch to 26.0.5 and log in again. | ASVS V14.2.3 | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
+| **Major Schema Migration** | Fully automated upgrade from Keycloak 25.0.6 to 26.0.5: starts 25.0.6 on a fresh database, seeds 10k users, enrolls 20 TOTP users, dumps postgres to temp file, switches image to 26.0.5, verifies /health/ready, authenticates all 20 users with password and TOTP, validates client secrets, and completes OIDC PKCE flow. | ASVS V14.2.3 | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
 
 ---
 
@@ -34,7 +34,7 @@ Numbers from the nightly run [39543095736](https://github.com/valarcon1226/IBM-A
 | Lockout after failed attempts (Edge, Firefox, WebKit) | exactly 3 | 3 | PASS | [`tests/ui/test_mfa_lockout.py`](tests/ui/test_mfa_lockout.py) |
 | Baseline users missed in a 10k walk with 300 created mid-walk | 0 | 0 missed, 300 repeated (FIND-008) | PASS | [`tests/api/test_pagination.py`](tests/api/test_pagination.py) |
 | Partial import of 1,000 users with 50 conflicts (SKIP, OVERWRITE, FAIL) | FAIL is all-or-nothing | 3/3 policies as specified | PASS | [`tests/api/test_partial_import.py`](tests/api/test_partial_import.py) |
-| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | not measured on CI yet | — | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
+| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | 18.12 s (10k users, 20/20 TOTP logins preserved, OIDC flow verified) | PASS | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
 
 Other load numbers from the same run (p95): `client_credentials` 10.99 ms at 10 rps and 6.76 ms at 100 rps (~94 rps reached). A password login takes about 40 ms, so with one request in flight the loop tops out near 26 rps: the 50 and 100 rps login steps reached ~26 and ~27 rps (p95 45.36 ms and 42.08 ms). They show latency, not capacity at those rates.
 
