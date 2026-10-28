@@ -87,10 +87,21 @@ jobs:
           if-no-files-found: ignore
 
   nightly-suite:
-    name: Nightly Suite (Burst, Faults, Perf, Classifier, Migration, UI)
+    name: Nightly ${{ matrix.suite.name }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    # One runner per suite: each gets a clean stack and they run in parallel.
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - { name: 'burst ingestion (500 documents)', args: 'tests/resilience/test_burst.py' }
+          - { name: 'fault injection', args: 'tests/resilience/test_faults.py' }
+          - { name: 'listing and search latency', args: 'tests/api/test_pagination.py -m perf' }
+          - { name: 'classifier evaluation (3 seeds)', args: 'tests/eval/test_classifier.py -m eval' }
+          - { name: '2.14.6 to 2.14.7 migration', args: 'tests/migration/test_upgrade.py -m migration' }
+          - { name: 'Edge UI flow and accessibility scan', args: 'tests/ui/test_document_flow.py' }
     defaults:
       run:
         working-directory: Portfolio-Automation/35-document-intake-pipeline
@@ -108,47 +119,24 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Install project dependencies and Edge
+      - name: Install project dependencies and corpus
         run: |
           uv sync --frozen
-          uv run playwright install --with-deps msedge
           uv run python corpus/generate.py --seed 42 --count 600
 
-      # Each suite gets a clean stack so one suite's documents never skew another's numbers.
-      - name: Run burst ingestion (500 documents)
+      - name: Install Edge
+        if: contains(matrix.suite.args, 'tests/ui/')
         run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/resilience/test_burst.py -v -rxXs
+          uv run playwright install --with-deps msedge
 
-      - name: Run fault injection (Redis restart, Toxiproxy drop, retries)
-        if: success() || failure()
+      - name: Start SUT Docker stack
         run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/resilience/test_faults.py -v -rxXs
+          docker compose up -d --wait
+          uv run python scripts/setup.py
 
-      - name: Run listing and search latency
-        if: success() || failure()
+      - name: Run ${{ matrix.suite.name }}
         run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/api/test_pagination.py -m perf -v -rxXs
-
-      - name: Run classifier evaluation (3 seeds)
-        if: success() || failure()
-        run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/eval/test_classifier.py -m eval -v -rxXs
-
-      - name: Run 2.14.6 to 2.14.7 migration
-        if: success() || failure()
-        run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/migration/test_upgrade.py -m migration -v -rxXs
-
-      - name: Run Edge UI flow and accessibility scan
-        if: success() || failure()
-        run: |
-          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
-          uv run pytest tests/ui/test_document_flow.py -v -rxXs
+          uv run pytest ${{ matrix.suite.args }} -v -rxXs
 
       - name: Save container logs
         if: always()
@@ -165,7 +153,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-          name: nightly-results
+          name: nightly-results-${{ strategy.job-index }}
           path: |
             Portfolio-Automation/35-document-intake-pipeline/results/
           if-no-files-found: ignore
