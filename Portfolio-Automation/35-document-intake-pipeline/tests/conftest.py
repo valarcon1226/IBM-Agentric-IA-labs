@@ -199,7 +199,6 @@ async def _upload_and_drain_corpus(
 def ensure_corpus_loaded(
     request: pytest.FixtureRequest,
     base_url: str,
-    auth_headers: dict[str, str],
     corpus_dir: Path,
     labels_file: Path,
 ) -> None:
@@ -216,6 +215,9 @@ def ensure_corpus_loaded(
     # 2. Skip if session contains test_burst.py, which specifically tests burst ingestion on clean queue
     if any("test_burst" in nid for nid in test_nodeids):
         return
+
+    # Requested here, not as an argument, so the skips above never need a running stack.
+    auth_headers: dict[str, str] = request.getfixturevalue("auth_headers")
 
     # 3. Ensure corpus files exist on disk; generate if missing
     if not labels_file.is_file() or not corpus_dir.is_dir() or len(list(corpus_dir.glob("*.pdf"))) < 500:
