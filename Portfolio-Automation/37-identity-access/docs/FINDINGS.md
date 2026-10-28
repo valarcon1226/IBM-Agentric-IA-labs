@@ -64,8 +64,8 @@ This document formalizes the security and operational resilience findings identi
 ### FIND-007: Major Schema Upgrade Credential & Secret Continuity
 - **Severity:** Critical
 - **Specification:** OWASP ASVS v4.0.3 V14.2.3.
-- **Observation:** An automated major version upgrade from Keycloak 25.0.6 (N-1) to Keycloak 26.0.5 (N) over 10,000 seeded users executed 10 Liquibase change sets in **15.06 seconds** (SLA $\le$ 300s). All 20 enrolled TOTP secrets and Argon2 password hashes remained fully functional, authenticating 20 out of 20 users without credential invalidation or re-enrollment. Confidential client secrets remained identical (`confidential-secret-1234`).
-- **Remediation / Configuration:** Maintain database backup snapshots (`results/snapshot_n1.sql`) before production upgrades.
+- **Observation:** An automated major version upgrade from Keycloak 25.0.6 (N-1) to Keycloak 26.0.5 (N) over 10,000 seeded users executed Liquibase schema migrations and reached ready state in **18.12 seconds** (SLA $\le$ 300s). The test suite starts Keycloak 25.0.6 on a fresh database, seeds 10,000 users, enrolls TOTP for 20 users in memory, verifies an uncompressed database dump via pg_dump, switches the container image to 26.0.5, and validates that all 20 enrolled TOTP secrets and password credentials authenticate successfully (20/20) alongside confidential client secrets (`confidential-secret-1234`) and cryptographic OIDC PKCE code flows.
+- **Remediation / Configuration:** Take pre-upgrade database snapshots (`pg_dump`) prior to applying major schema upgrades in production.
 
 ### FIND-008: Admin user list repeats users when users are created mid-walk
 - **Severity:** Low
