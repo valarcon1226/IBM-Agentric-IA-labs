@@ -39,4 +39,3 @@ Generated automatically by qa_common pytest plugin.
 | REQ-IAM-007 | `tests/api/test_partial_import.py::test_partial_import_overwrite_policy` | PASSED |
 | REQ-IAM-007 | `tests/api/test_partial_import.py::test_partial_import_skip_policy` | PASSED |
 | REQ-IAM-008 | `tests/migration/test_upgrade.py::test_keycloak_major_version_upgrade_25_to_26` | PASSED |
-| REQ-IAM-008 | `tests/migration/test_upgrade.py::test_upgrade_user_passwords_and_totp_logins` | PASSED |
