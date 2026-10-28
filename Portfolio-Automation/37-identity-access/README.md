@@ -34,7 +34,7 @@ Numbers from the nightly run [39543095736](https://github.com/valarcon1226/IBM-A
 | Lockout after failed attempts (Edge, Firefox, WebKit) | exactly 3 | 3 | PASS | [`tests/ui/test_mfa_lockout.py`](tests/ui/test_mfa_lockout.py) |
 | Baseline users missed in a 10k walk with 300 created mid-walk | 0 | 0 missed, 300 repeated (FIND-008) | PASS | [`tests/api/test_pagination.py`](tests/api/test_pagination.py) |
 | Partial import of 1,000 users with 50 conflicts (SKIP, OVERWRITE, FAIL) | FAIL is all-or-nothing | 3/3 policies as specified | PASS | [`tests/api/test_partial_import.py`](tests/api/test_partial_import.py) |
-| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | 18.12 s (10k users, 20/20 TOTP logins preserved, OIDC flow verified) | PASS | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
+| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | 16.54 s in nightly run [40781905121](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40781905121) (10k users, 20/20 TOTP logins preserved, OIDC flow verified) | PASS | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
 
 Other load numbers from the same run (p95): `client_credentials` 10.99 ms at 10 rps and 6.76 ms at 100 rps (~94 rps reached). A password login takes about 40 ms, so with one request in flight the loop tops out near 26 rps: the 50 and 100 rps login steps reached ~26 and ~27 rps (p95 45.36 ms and 42.08 ms). They show latency, not capacity at those rates.
 
