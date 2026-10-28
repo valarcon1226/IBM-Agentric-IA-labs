@@ -1,0 +1,171 @@
+name: 35-document-intake-pipeline
+
+on:
+  push:
+    paths:
+      - 'Portfolio-Automation/35-document-intake-pipeline/**'
+      - 'Portfolio-Automation/qa_common/**'
+      - '.github/workflows/35-document-intake-pipeline.yml'
+  pull_request:
+    paths:
+      - 'Portfolio-Automation/35-document-intake-pipeline/**'
+      - 'Portfolio-Automation/qa_common/**'
+      - '.github/workflows/35-document-intake-pipeline.yml'
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pr-gate:
+    name: PR Gate (Lint, Types, Corpus, Partial Failures & Pagination)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/35-document-intake-pipeline
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@887a942a15af3a7626099df99e897a18d9e5ab3a # v5.1.0
+        with:
+          version: 'latest'
+
+      - name: Install project dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Code quality and lint checks (Ruff)
+        run: |
+          uv run ruff check .
+
+      - name: Static type validation (Mypy)
+        run: |
+          uv run mypy .
+
+      - name: Generate the deterministic corpus and check its manifest
+        run: |
+          uv run python corpus/generate.py --seed 42 --count 600
+          uv run pytest tests/test_corpus.py -v
+
+      - name: Start SUT Docker stack
+        run: |
+          docker compose up -d --wait
+          uv run python scripts/setup.py
+
+      - name: Run P1 partial-failure and pagination suites
+        run: |
+          uv run pytest -m p1 -v -rxXs
+
+      - name: Save container logs
+        if: always()
+        run: |
+          mkdir -p results
+          docker compose logs --no-color > results/compose-logs.txt 2>&1 || true
+
+      - name: Tear down SUT stack
+        if: always()
+        run: |
+          docker compose down -v
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: pr-gate-results
+          path: |
+            Portfolio-Automation/35-document-intake-pipeline/results/
+          if-no-files-found: ignore
+
+  nightly-suite:
+    name: Nightly Suite (Burst, Faults, Perf, Classifier, Migration, UI)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/35-document-intake-pipeline
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@887a942a15af3a7626099df99e897a18d9e5ab3a # v5.1.0
+        with:
+          version: 'latest'
+
+      - name: Install project dependencies and Edge
+        run: |
+          uv sync --frozen
+          uv run playwright install --with-deps msedge
+          uv run python corpus/generate.py --seed 42 --count 600
+
+      # Each suite gets a clean stack so one suite's documents never skew another's numbers.
+      - name: Run burst ingestion (500 documents)
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/resilience/test_burst.py -v -rxXs
+
+      - name: Run fault injection (Redis restart, Toxiproxy drop, retries)
+        if: success() || failure()
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/resilience/test_faults.py -v -rxXs
+
+      - name: Run listing and search latency
+        if: success() || failure()
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/api/test_pagination.py -m perf -v -rxXs
+
+      - name: Run classifier evaluation (3 seeds)
+        if: success() || failure()
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/eval/test_classifier.py -m eval -v -rxXs
+
+      - name: Run 2.14.6 to 2.14.7 migration
+        if: success() || failure()
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/migration/test_upgrade.py -m migration -v -rxXs
+
+      - name: Run Edge UI flow and accessibility scan
+        if: success() || failure()
+        run: |
+          docker compose down -v; docker compose up -d --wait && uv run python scripts/setup.py
+          uv run pytest tests/ui/test_document_flow.py -v -rxXs
+
+      - name: Save container logs
+        if: always()
+        run: |
+          mkdir -p results
+          docker compose logs --no-color > results/compose-logs.txt 2>&1 || true
+
+      - name: Tear down SUT stack
+        if: always()
+        run: |
+          docker compose down -v
+
+      - name: Upload nightly results and metrics
+        if: always()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: nightly-results
+          path: |
+            Portfolio-Automation/35-document-intake-pipeline/results/
+          if-no-files-found: ignore
