@@ -20,6 +20,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
+# Windows consoles default to cp1252; titles with U+202F etc. crashed print() and killed whole courses
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from bs4 import BeautifulSoup
 from markdownify import markdownify
 from playwright.sync_api import sync_playwright
@@ -176,7 +179,7 @@ def download(ctx, slug, only_module=None):
     root.mkdir(parents=True, exist_ok=True)
     (root / "course.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    done, failed = 0, []
+    done, failed, hidden = 0, [], 0
     for mi, mid in enumerate(course["moduleIds"], 1):
         if only_module and mi != only_module:
             continue
@@ -188,9 +191,8 @@ def download(ctx, slug, only_module=None):
             folder.mkdir(parents=True, exist_ok=True)
             for ii, iid in enumerate(les["itemIds"], 1):
                 it = items.get(iid)
-                if not it:  # Coursera hides some items (usually graded) when you're not enrolled
-                    failed.append(f"elemento {iid} oculto por Coursera (¿no inscrita?)")
-                    print(f"  [x] elemento {iid} oculto por Coursera")
+                if not it:  # verified: labs/quizzes/graded/coach/discussions, never video or reading; not a failure
+                    hidden += 1
                     continue
                 kind = it["contentSummary"]["typeName"]
                 base = folder / f"{ii:02d} {safe(it['name'])}"
@@ -206,7 +208,7 @@ def download(ctx, slug, only_module=None):
                 except Exception as e:  # one broken item must not stop the course; reported at the end
                     failed.append(f"{it['name']}: {e}")
                     print(f"    [x] {e}")
-    print(f"\nListo: {done} elementos en {root}")
+    print(f"\nListo: {done} elementos en {root}" + (f" ({hidden} labs/quizzes/tareas que Coursera no expone, no descargables)" if hidden else ""))
     if failed:
         print(f"{len(failed)} fallaron (vuelve a ejecutar para reintentar, lo ya bajado se salta):")
         print("\n".join(f"  - {f}" for f in failed))
