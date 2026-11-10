@@ -20,8 +20,8 @@ def enhance_profile_with_github():
     print("Iniciando Escaneador de GitHub...")
     
     # Repositorio proporcionado
-    owner = "valarcon1226"
-    repo = "IBM-AGENTIC-IA"
+    owner = os.getenv("GITHUB_OWNER", "your-github-user")
+    repo = os.getenv("GITHUB_REPO", "your-repo")
     
     readme_content = fetch_github_repo_readme(owner, repo)
     if not readme_content:
