@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 class WebChatRequest(BaseModel):
-    session_id: str = Field(min_length=1, max_length=100)
+    session_id: str = Field(min_length=1, max_length=16)  # "web_" + 16 fits VARCHAR(20)
     text: str = Field(min_length=1, max_length=1000)
 
 

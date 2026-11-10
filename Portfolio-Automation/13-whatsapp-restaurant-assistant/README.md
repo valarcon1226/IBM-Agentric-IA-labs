@@ -102,6 +102,8 @@ docker compose --env-file .env up -d --build
 docker compose ps
 ```
 
+El widget de chat se monta en `/widget` desde `../22-web-chat-widget` (o `WIDGET_DIR`); si la carpeta no existe, `/widget` se omite.
+
 Con `DEV_MODE=true` (el valor por defecto en `.env.example`) queda disponible
 `POST /dev/chat`, protegido con `DEV_API_KEY`, que corre exactamente la misma lógica que el
 webhook real pero sin necesitar WhatsApp. Para chatear desde la terminal:

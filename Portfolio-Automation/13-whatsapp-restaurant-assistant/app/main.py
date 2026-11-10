@@ -38,13 +38,21 @@ def create_app(*, dev_mode: bool) -> FastAPI:
     fastapi_app.include_router(web_chat_router)
     fastapi_app.include_router(admin_router)
 
+    import logging
     import os
 
     from fastapi.staticfiles import StaticFiles
 
-    # Serve 22-web-chat-widget at /widget
-    widget_dir = os.path.join(os.path.dirname(__file__), "..", "..", "22-web-chat-widget")
-    fastapi_app.mount("/widget", StaticFiles(directory=widget_dir, html=True), name="widget")
+    # Serve 22-web-chat-widget at /widget (skipped when the folder is not present, e.g. in Docker)
+    widget_dir = os.environ.get(
+        "WIDGET_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "22-web-chat-widget")
+    )
+    if os.path.isdir(widget_dir):
+        fastapi_app.mount("/widget", StaticFiles(directory=widget_dir, html=True), name="widget")
+    else:
+        logging.getLogger(__name__).warning(
+            "Widget folder not found (%s); /widget disabled", widget_dir
+        )
 
     if dev_mode:
         from app.dev_chat import router as dev_chat_router

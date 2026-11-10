@@ -21,6 +21,8 @@ services:
       DEV_MODE: ${DEV_MODE}
       DEV_API_KEY: ${DEV_API_KEY}
       ADMIN_API_KEY: ${ADMIN_API_KEY}
+    volumes:
+      - ../22-web-chat-widget:/22-web-chat-widget:ro
     ports:
       - "8004:8000"
     depends_on:

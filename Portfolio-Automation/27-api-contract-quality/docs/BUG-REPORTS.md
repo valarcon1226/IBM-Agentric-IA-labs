@@ -8,7 +8,7 @@
 
 - **Component**: `13-whatsapp-restaurant-assistant/app/main.py:46-47`
 - **Severity**: Critical (Deployment Blocker)
-- **Status**: Open (Workaround applied via volume overlay in QA)
+- **Status**: Fixed (`WIDGET_DIR` env var; `/widget` mounted only if the folder exists, else a warning; compose mounts `../22-web-chat-widget` read-only)
 - **Date**: 2026-10-15
 
 ### Description
@@ -64,7 +64,7 @@ if os.path.isdir(widget_dir):
 
 - **Component**: `13-whatsapp-restaurant-assistant/app/web_chat.py:13,36` vs `init-db.sql: customers(wa_id VARCHAR(20))`
 - **Severity**: High (Unhandled 500 Server Error)
-- **Status**: Open
+- **Status**: Fixed (`session_id` now `max_length=16`, so `web_` + id fits VARCHAR(20); invalid ids get 422)
 - **Date**: 2026-10-15
 
 ### Description
