@@ -1,0 +1,14 @@
+DOCUMENTO FICTICIO PARA PRUEBAS DE AUTOMATIZACION
+GLOBAL CLOUD SOLUTIONS INC
+VAT ID: US-987654321
+Address: 500 Tech Blvd, Austin, TX, USA
+INVOICE
+Invoice #: INV-2026-6006
+Date: 2026-10-06
+Bill To: ANDES TECH LABS SAS
+Customer ID: CUST-7788
+Dedicated Cloud Server Hosting  1  500.00  500.00
+Database Backup & Replication  1  200.00  200.00
+Subtotal: $ 700.00
+Tax (10%): $ 70.00
+Grand Total: $ 770.00

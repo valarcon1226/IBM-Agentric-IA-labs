@@ -1,0 +1,6 @@
+watch_folder/*
+!watch_folder/COLOCA_AQUI_TUS_DOCUMENTOS.txt
+cache/
+chroma_db/
+__pycache__/
+*.pyc

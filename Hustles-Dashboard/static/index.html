@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hustles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #EEF2F3; --surface: #FFFFFF; --surface-2: #E4EAEC;
+    --ink: #16232A; --ink-soft: #55696F; --ink-faint: #8B9CA2;
+    --line: rgba(22,35,42,0.12); --line-strong: rgba(22,35,42,0.22);
+    --accent: #147D82; --accent-ink: #0B4F53; --accent-soft: rgba(20,125,130,0.12);
+    --amber: #9A6B12; --amber-soft: rgba(154,107,18,0.14);
+    --rose: #A23B3B; --rose-soft: rgba(162,59,59,0.13);
+    --shadow: 0 1px 2px rgba(22,35,42,0.06), 0 8px 24px -12px rgba(22,35,42,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10171B; --surface: #1A2327; --surface-2: #202B30;
+      --ink: #E6EDEF; --ink-soft: #96A8AE; --ink-faint: #647579;
+      --line: rgba(230,237,239,0.10); --line-strong: rgba(230,237,239,0.18);
+      --accent: #3FBAC0; --accent-ink: #BEF0F2; --accent-soft: rgba(63,186,192,0.16);
+      --amber: #D8A94A; --amber-soft: rgba(216,169,74,0.16);
+      --rose: #E08585; --rose-soft: rgba(224,133,133,0.16);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.55);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'IBM Plex Sans', -apple-system, Segoe UI, Roboto, sans-serif;
+    font-size: 14px;
+    padding-inline: 20px; padding-block: 24px 60px;
+  }
+  [hidden] { display: none !important; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  header.page { margin-bottom: 16px; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  h1 { font-size: clamp(26px, 4vw, 34px); margin: 6px 0 4px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .sub { color: var(--ink-soft); font-size: 14.5px; max-width: 60ch; line-height: 1.5; }
+
+  nav.tabs {
+    display: flex; gap: 6px; margin-top: 20px; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; background: var(--bg); z-index: 5;
+    padding-top: 4px; overflow-x: auto;
+  }
+  nav.tabs button {
+    font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink-soft);
+    background: none; border: none; padding: 10px 14px 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; border-bottom: 2px solid transparent;
+    white-space: nowrap; margin-bottom: -1px;
+  }
+  nav.tabs button .cnt {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 1px 7px; border-radius: 100px;
+    background: var(--surface-2); color: var(--ink-faint);
+  }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  nav.tabs button[aria-selected="true"] .cnt { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 18px; }
+  .stat { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .stat .n { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 560px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  .toolbar { display: flex; gap: 10px; margin: 20px 0 14px; flex-wrap: wrap; }
+  .search { flex: 1 1 220px; position: relative; }
+  .search input { width: 100%; padding: 10px 12px 10px 34px; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 14px; font-family: inherit; }
+  .search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
+  .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 9px; overflow: hidden; }
+  .seg button { font-family: inherit; font-size: 13px; padding: 9px 13px; border: none; background: var(--surface); color: var(--ink-soft); cursor: pointer; border-right: 1px solid var(--line); }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+  select.sortSel { font-family: inherit; font-size: 13px; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+
+  .count-line { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 10px; font-family: 'IBM Plex Mono', monospace; }
+
+  ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .row { display: grid; grid-template-columns: 46px 1fr auto auto auto; align-items: center; gap: 14px; padding: 13px 14px; cursor: pointer; width: 100%; background: none; border: none; text-align: left; font-family: inherit; color: inherit; }
+  .row:hover { background: var(--surface-2); }
+  .row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .match { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--ring, var(--accent)) calc(var(--m) * 1%), var(--surface-2) 0); flex-shrink: 0; }
+  .match span { background: var(--surface); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .match.low { --ring: var(--ink-faint); }
+  .match.warn { --ring: var(--amber); }
+  [hidden] { display: none !important; }
+  .t-sec { margin: 26px 0 8px; }
+  .t-sec h2 { font-size: 19px; margin: 0 0 4px; }
+  .t-help { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 14px; max-width: 70ch; }
+  .t-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .t-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .t-head { display: flex; gap: 10px; align-items: flex-start; }
+  .t-head h3 { margin: 0; font-size: 15.5px; line-height: 1.35; text-wrap: balance; }
+  .t-rank { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .t-note { font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+  .t-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .t-chip { font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .t-card dl { margin: 0; display: grid; gap: 4px; font-size: 13.5px; }
+  .t-card dt { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin-top: 6px; }
+  .t-card dd { margin: 0; line-height: 1.5; }
+  .t-sub { color: var(--ink-soft); font-size: 12px; font-weight: 400; }
+  .mkt-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 0 0 12px; }
+  .mkt-bar input { flex: 1 1 220px; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+  .mkt-f { display: flex; flex-direction: column; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+  .mkt-f select { min-height: 36px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; text-transform: none; letter-spacing: 0; }
+  .mkt-cats { margin-bottom: 8px; }
+  .mkt-cat { cursor: pointer; border: 1px solid var(--line); font: inherit; font-size: 13px; }
+  .mkt-cat[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .t-modebar { margin: 18px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+  .t-modebar .t-help { margin: 0; }
+  .t-click { cursor: pointer; }
+  .t-click:hover td, .t-click:focus-visible td { background: var(--surface-2); }
+  .t-click:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .mkt-open td { background: var(--surface-2); }
+  .mkt-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .mkt-item.gone { opacity: .55; }
+  .mkt-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .t-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .t-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .t-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .t-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .t-table tr:last-child td { border-bottom: none; }
+  .t-table tr.picked td { background: var(--accent-soft); }
+  .t-name { font-weight: 600; white-space: nowrap; }
+  .t-table .num { font-variant-numeric: tabular-nums; text-align: center; }
+  .t-demand { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+  .t-bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .t-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .t-tasks { color: var(--ink-soft); font-size: 12.5px; min-width: 220px; }
+  .card.has-corner { position: relative; }
+  .card.has-corner .row { padding-top: 26px; }
+  .corner { position: absolute; top: 8px; right: 16px; font-size: 11.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; pointer-events: none; }
+  .corner.soon { color: var(--amber); font-weight: 600; }
+  .corner.closed { color: var(--ink-faint); text-decoration: line-through; }
+  .lead { width: 64px; flex-shrink: 0; text-align: center; line-height: 1.1; }
+  .lead b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .lead small { color: var(--ink-soft); font-size: 11px; }
+
+  .titles { min-width: 0; }
+  .titles .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .titles .c { font-size: 13px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .pill { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 100px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pill.done { background: var(--accent-soft); color: var(--accent-ink); }
+  .pill.pending { background: var(--amber-soft); color: var(--amber); }
+  .pill.discarded { background: var(--rose-soft); color: var(--rose); }
+  .pill.applied { background: var(--accent); color: var(--surface); }
+
+  .applied-toggle { font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .applied-toggle.is-applied { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .applied-toggle:disabled { opacity: 0.6; cursor: wait; }
+
+  .chev { color: var(--ink-faint); transition: transform 0.15s ease; flex-shrink: 0; }
+  .card[data-open="true"] .chev { transform: rotate(180deg); }
+
+  .detail { border-top: 1px solid var(--line); padding: 16px 18px 20px; display: grid; gap: 14px; }
+  .group-h { list-style: none; margin: 18px 2px 4px; font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+  .group-h span { font-weight: 500; color: var(--ink-soft); font-size: 13px; }
+  .detail .gaps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; background: var(--surface-2); color: var(--ink-soft); padding: 4px 9px; border-radius: 7px; border: 1px solid var(--line); }
+  .detail h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin: 0 0 6px; font-weight: 600; }
+  .desc { font-size: 13.5px; line-height: 1.6; color: var(--ink); white-space: pre-wrap; max-height: 260px; overflow-y: auto; padding-right: 6px; border-left: 2px solid var(--line); padding-left: 12px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 12.5px; color: var(--ink-soft); }
+  .meta-row b { color: var(--ink); font-weight: 600; }
+  .link-out { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--accent-ink); text-decoration: none; padding: 8px 13px; background: var(--accent-soft); border-radius: 8px; width: fit-content; }
+  .link-out:hover { background: var(--accent); color: var(--surface); }
+
+  .apply-block { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .cvpath { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-faint); word-break: break-all; }
+
+  .empty, .error-banner { text-align: center; padding: 60px 20px; color: var(--ink-faint); font-size: 14px; }
+  .error-banner { color: var(--rose); padding: 14px 16px; text-align: left; background: var(--rose-soft); border-radius: 10px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <div class="eyebrow"><span class="dot"></span> AutoJob-Hunter &middot; Panel de Hustles</div>
+    <h1 id="pageH1">Hustles</h1>
+    <p class="sub" id="pageSub">Cargando datos en vivo desde la API&hellip;</p>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Secciones"></nav>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="error-banner" id="errorBanner" hidden></div>
+
+  <div class="toolbar" id="toolbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Buscar&hellip;" aria-label="Buscar">
+    </div>
+    <div class="seg" role="group" aria-label="Filtrar" id="filterSeg"></div>
+    <select class="sortSel" id="sortSel" aria-label="Ordenar"></select>
+  </div>
+
+  <div class="count-line" id="countLine"></div>
+  <ul class="list" id="list"></ul>
+  <div id="customView" hidden></div>
+  <div class="empty" id="emptyState" hidden>No hay resultados que coincidan con la b&uacute;squeda.</div>
+</div>
+
+<script>
+(async function(){
+  function esc(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function fmtDate(s){ if(!s) return '—'; return String(s).slice(0,10); }
+
+  async function fetchJson(url){
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+    return res.json();
+  }
+
+  let JOBS = [], FREELANCE = [], TRENDS = [], LEARN = [], SIGNALS = [];
+  let loadError = null;
+  try {
+    [JOBS, FREELANCE, TRENDS, LEARN, SIGNALS] = await Promise.all([
+      fetchJson('/api/jobs'),
+      fetchJson('/api/freelance'),
+      fetchJson('/api/trends'),
+      fetchJson('/api/learning'),
+      fetchJson('/api/signals').catch(() => []),
+    ]);
+  } catch (err) {
+    loadError = err;
+  }
+
+  const errorBanner = document.getElementById('errorBanner');
+  if (loadError) {
+    errorBanner.hidden = false;
+    errorBanner.textContent = `No se pudo cargar la información desde la API (${loadError.message}). Verifica que el backend esté corriendo y que JOBS_DB_PATH apunte a un jobs.db válido.`;
+  }
+
+  const scoreRank = { 'Alta': 90, 'Media': 55, 'Baja': 25 };
+  const scoreRing = { 'Alta': 'done', 'Media': 'warn', 'Baja': 'low' };
+
+  const ROLE_ORDER = ['ai_engineer', 'forward_deployed_engineer', 'qa_automation'];
+  // Tipos de proyecto freelance (categoría que asigna freelance_hunter_agent)
+  const GIG_TYPES = { automation:'Automatizaciones', website:'Páginas web', ai:'Agentes IA y chatbots', scraping:'Scraping',
+                      qa:'QA y testing', data:'Datos y dashboards', other:'Otros', none:'Sin clasificar (descartados por filtro)' };
+  const GIG_CATEGORY = { automation_integration:'automation', website:'website', ai_agent:'ai', chatbot_rag:'ai',
+                         web_scraping:'scraping', qa_testing:'qa', data_pipeline:'data', dashboard_webapp:'data' };
+  // Pago máximo del gig, leído del resumen "[... · $lo-hi USD (fixed) ...]"; por hora = semana de 40 h para comparar
+  const gigPay = g => { const m = String(g.reasoning).match(/\$(\d+)(?:-(\d+))? USD(\/h)?/); if (!m) return 0;
+                        const v = +(m[2] || m[1]); return m[3] ? v * 40 : v; };
+  // ---- Fechas de los gigs (UTC en la base) -> fecha local corta, días hasta el cierre
+  const utc = s => s ? new Date(String(s).replace(' ', 'T') + 'Z') : null;
+  const shortDate = d => d ? d.toLocaleDateString('es-CO', {day: 'numeric', month: 'short'}) : '';
+  const daysLeft = g => g.closes_at ? Math.ceil((utc(g.closes_at) - Date.now()) / 86400000) : null;
+  // cerrado = ya pasó su fecha de cierre, o Freelancer dice que está cerrado o borrado (LINK, verificado al cargar)
+  const isClosed = g => ['closed', 'removed'].includes(LINK[g.url]) || (g.closes_at && utc(g.closes_at) < Date.now());
+  const postedDays = g => g.posted_at ? (Date.now() - utc(g.posted_at)) / 86400000 : 999;
+  const gigDates = g => {
+    const posted = g.posted_at ? `Publicado ${shortDate(utc(g.posted_at))}` : '';
+    let close, cls = '';
+    if (LINK[g.url] === 'removed') { close = 'Ya no existe (lo borraron)'; cls = 'closed'; }
+    else if (LINK[g.url] === 'closed' && !(g.closes_at && utc(g.closes_at) < Date.now())) { close = 'Ya no recibe propuestas'; cls = 'closed'; }
+    else if (isClosed(g)) { close = `Cerró ${shortDate(utc(g.closes_at))}`; cls = 'closed'; }
+    else if (g.closes_at) { const d = daysLeft(g); close = d <= 3 ? `Cierra en ${d} día${d === 1 ? '' : 's'}` : `Cierra ${shortDate(utc(g.closes_at))}`; if (d <= 3) cls = 'soon'; }
+    else close = g.platform === 'Workana' ? 'Cierre no publicado' : (g.platform === 'GitHub Bounty' ? 'Abierto hasta resolverse' : 'Cierre no informado');
+    return `<span class="corner ${cls}">${[posted, close].filter(Boolean).map(esc).join(' · ')}</span>`;
+  };
+  const gigType = g => !g.category ? 'none' : (GIG_CATEGORY[g.category] || 'other');
+  // Trend Spotter: los side hustles del reporte se guardan como "[Side hustle] ..." (⭐ = elegidos)
+  const trendType = t => !String(t.trend_name).startsWith('[Side hustle]') ? ['niche', 'Nichos para automatizar']
+                       : String(t.trend_name).includes('⭐') ? ['picked', '⭐ Tus side hustles'] : ['hustle', 'Otros side hustles del video'];
+
+  // ---- Trend Spotter: solo el último reporte (cada reporte guarda sus filas con la misma hora)
+  const isHustle = t => String(t.trend_name).startsWith('[Side hustle]');
+  const HUSTLE_NAMES = [[/recortar videos|clips cortos/i, 'Clipping de videos'], [/canal de youtube/i, 'Agencia de YouTube'],
+    [/back-end de un creador|funnels/i, 'Growth operator'], [/seo|buscadores/i, 'SEO / AEO'], [/prospectos|lead generation/i, 'Lead generation'],
+    [/email marketing/i, 'Email marketing'], [/anuncios/i, 'Anuncios en Meta'], [/voz de una persona|ghostwriting/i, 'Ghostwriting / copywriting'],
+    [/contenido propio sobre ia|creador de contenido/i, 'Creador de contenido IA'], [/mensajes directos|appointment/i, 'Appointment setting']];
+  const shortHustle = name => { const n = String(name).replace('[Side hustle]', '').replace('⭐', '').trim();
+    const hit = HUSTLE_NAMES.find(([re]) => re.test(n)); return hit ? hit[1] : n.split(':')[0]; };
+  const ts = t => new Date(String(t.detected_at).replace(' ', 'T')).getTime();
+  const reportBatches = data => {  // filas de cada reporte diario (se guardan en la misma corrida), del más nuevo al más viejo
+    const sorted = data.slice().sort((a,b) => ts(b) - ts(a)), batches = [];
+    sorted.forEach(t => { const b = batches[batches.length - 1];
+      if (b && ts(b[0]) - ts(t) < 15 * 60 * 1000) b.push(t); else batches.push([t]); });
+    return batches;
+  };
+  const analyzed = batch => batch.some(t => !isHustle(t) && !String(t.agent_idea).includes('pendiente de análisis'));
+  const latestTrends = data => reportBatches(data)[0] || [];
+  const latestAnalyzed = data => reportBatches(data).find(analyzed) || [];
+  const trendFields = txt => {  // "idea\nCómo venderlo: ...\nRevisión: ..." -> {build, 'Cómo venderlo', ...}
+    const o = {};
+    String(txt || '').split('\n').forEach(l => {
+      const m = l.match(/^(Cómo venderlo|Revisión|Competencia|Tareas típicas|Últimos 7 días|Propuestas promedio):\s*(.*)$/);
+      if (m) o[m[1]] = m[2]; else if (l.trim()) o.build = (o.build ? o.build + ' ' : '') + l.trim();
+    });
+    return o;
+  };
+  // verde = bueno para ti (competencia baja / automatización alta)
+  // ---- Cómo pagan: método de la plataforma + lo que mencione el aviso (verificado oct-2026 en las ayudas de cada plataforma)
+  const PAY_WORDS = [[/paypal/i, 'PayPal'], [/payoneer/i, 'Payoneer'], [/\bwise\b|transferwise/i, 'Wise'], [/\bdeel\b/i, 'Deel'],
+    [/remote\.com/i, 'Remote.com'], [/\boyster\b/i, 'Oyster'], [/\bontop\b/i, 'Ontop'], [/\bskrill\b/i, 'Skrill'], [/\bzelle\b/i, 'Zelle'],
+    [/\bstripe\b/i, 'Stripe'], [/\busdt\b|\busdc\b|crypto|cripto|bitcoin/i, 'Cripto'], [/wire transfer|bank transfer|transferencia bancaria/i, 'Transferencia bancaria']];
+  const PLATFORM_PAY = {
+    freelancer: ['PayPal · Payoneer · banco', 'Te paga Freelancer.com (el cliente deja el pago en garantía). Retiras por PayPal, Payoneer (USD) o Express Withdrawal a tu cuenta en COP. Mínimo $50; el primer retiro se retiene hasta 15 días.'],
+    workana: ['PayPal · Payoneer', 'Te paga Workana (el cliente deja el pago en garantía). Retiras por PayPal o Payoneer (mínimo $50 en Payoneer); tu perfil debe estar en USD.'],
+    algora: ['Stripe (Algora)', 'Algora paga por Stripe Express (pide verificar identidad); llega 1-3 días hábiles después de que aprueban tu PR.'],
+    github: ['Según el repo', 'Lo define quien publica el bounty: revisa el issue (Algora paga por Stripe; otros por PayPal o cripto).'],
+  };
+  const payInfo = (platform, url, text) => {
+    const where = `${platform} ${url}`.toLowerCase(), t = String(text || '');
+    let k = where.includes('freelancer') ? 'freelancer' : where.includes('workana') ? 'workana' : where.includes('github') ? 'github' : null;
+    if (k === 'github' && /algora/i.test(t)) k = 'algora';
+    const said = PAY_WORDS.filter(([re]) => re.test(t)).map(([, l]) => l);
+    return {k, said, short: k ? PLATFORM_PAY[k][0] : (said.join(' · ') || 'No lo dice'),
+      long: k ? PLATFORM_PAY[k][1] : 'El aviso no dice cómo pagan: pregúntalo antes de aceptar.'};
+  };
+  const payHtml = (platform, url, text) => {
+    const p = payInfo(platform, url, text);
+    const outside = (p.k === 'freelancer' || p.k === 'workana') && p.said.length;  // pagar por fuera rompe las reglas y es típico de estafa
+    return `<div><h4>Cómo te pagan</h4><div class="desc">${esc(p.long)}${p.said.length ? ` <b>El aviso menciona:</b> ${esc(p.said.join(', '))}.` : ''}${outside
+      ? ' <b>Ojo:</b> si el cliente propone pagarte por fuera de la plataforma, no aceptes: va contra sus reglas, pierdes la garantía y es la estafa más común.' : ''}</div></div>`;
+  };
+  // ---- "Todo el mercado": cada vacante/gig analizado, con tipo de servicio por palabras clave (el primero que calza)
+  const MKT_CATS = [
+    ['video', 'Edición de video', /video|\bclips?\b|\breels?\b|tiktok|youtube|shorts|animat|motion graphic|podcast|footage|vfx/],
+    ['design', 'Diseño gráfico', /logo|graphic|design|banner|thumbnail|illustrat|flyer|branding|figma|mockup|poster|packaging|photo|image|retouch|\b3d\b/],
+    ['translation', 'Traducción y transcripción', /translat|transcri|subtit|caption|locali[sz]/],
+    ['writing', 'Redacción y contenido', /\bwrit|article|blog|copy|ghostwrit|content|script|newsletter|proofread|ebook|resume|cv\b/],
+    ['marketing', 'Marketing, SEO y ads', /\bseo\b|\bads?\b|advertis|campaign|marketing|social media|\bleads?\b|email|outreach|funnel|influencer|sales/],
+    ['web', 'Páginas web', /website|web site|landing|wordpress|shopify|webflow|wix|web page|storefront/],
+    ['ai', 'Automatización e IA', /automat|\bbots?\b|chatbot|agent|\bai\b|llm|gpt|scrap|workflow|n8n|zapier|make\.com|\brag\b/],
+    ['data', 'Datos, Excel y reportes', /data entry|excel|spreadsheet|dashboard|report|analy|bookkeep|accounting|invoice/],
+    ['qa', 'QA y testing', /\btest|\bqa\b|quality assurance|\bbugs?\b/],
+    ['dev', 'Apps y software', /\bapps?\b|\bapi\b|backend|frontend|software|develop|\bcode|integrat|mobile|platform|system|game/],
+    ['admin', 'Asistencia y soporte', /assistant|support|customer|virtual|schedul|\bcalls?\b|admin/],
+  ];
+  const mktCat = s => { const t = `${s.task} ${s.deliverable} ${s.domain}`.toLowerCase();
+    return (MKT_CATS.find(([, , re]) => re.test(t)) || ['other', 'Otros'])[0]; };
+  const MKT_LABEL = Object.fromEntries([...MKT_CATS.map(([k, l]) => [k, l]), ['other', 'Otros']]);
+  const AUTO_ES = {high: 'Alta', medium: 'Media', low: 'Baja'};
+  const compLevel = b => b == null ? null : (b < 20 ? 'Baja' : b <= 60 ? 'Media' : 'Alta');
+  const HUSTLE_KEYS = {content_distribution: 'Clipping de videos', youtube_agency: 'Agencia de YouTube', growth_operator: 'Growth operator',
+    seo_aeo: 'SEO / AEO', lead_generation: 'Lead generation', email_marketing: 'Email marketing', meta_ads: 'Anuncios en Meta',
+    ghostwriting: 'Ghostwriting / copywriting', ai_creator: 'Creador de contenido IA', dm_setting: 'Appointment setting'};
+  const PICKED_H = ['growth_operator', 'youtube_agency', 'content_distribution', 'seo_aeo'];
+  // mode: auto = automatizable alta; manual = media/baja (trabajo que haces tú)
+  const mkt = {mode: 'all', cat: 'all', hustle: 'all', comp: 'all', pay: 'all', src: 'all', q: '', sort: 'count', open: null};
+  const inMode = s => mkt.mode === 'all' || (mkt.mode === 'auto' ? s.automatable === 'high' : s.automatable !== 'high');
+  const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null;
+  const median = a => a.length ? a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)] : null;
+  const hustleStats = () => {
+    const weekAgo = Date.now() - 7 * 86400000;
+    const by = Object.fromEntries(Object.entries(HUSTLE_KEYS).map(([k, name]) => [k, {key: k, name, picked: PICKED_H.includes(k), n: 0, n7: 0, bids: [], pays: [], tasks: {}}]));
+    SIGNALS.filter(s => by[s.hustle] && inMode(s)).forEach(s => { const h = by[s.hustle];
+      h.n++; h.n7 += utc(s.extracted_at) >= weekAgo; if (s.competition != null) h.bids.push(s.competition); if (s.budget > 0) h.pays.push(s.budget);
+      h.tasks[s.task] = (h.tasks[s.task] || 0) + 1; });
+    return Object.values(by).map(h => ({...h, avgBids: avg(h.bids), payMed: median(h.pays),
+      top: Object.keys(h.tasks).sort((a, b) => h.tasks[b] - h.tasks[a]).slice(0, 3)})).sort((a, b) => (b.picked - a.picked) || (b.n - a.n));
+  };
+  const siteName = u => { try { const h = new URL(u).hostname.replace(/^www\./, '');
+    return {'freelancer.com': 'Freelancer', 'workana.com': 'Workana', 'github.com': 'GitHub', 'linkedin.com': 'LinkedIn'}[h] || h; } catch { return ''; } };
+  let mktList = [];
+  const mktGroups = () => {  // filtra (menos la categoría, para contar por chip) y agrupa por tarea igual
+    const weekAgo = Date.now() - 7 * 86400000, q = mkt.q.trim().toLowerCase(), byCat = {};
+    const rows = SIGNALS.filter(s => inMode(s)
+      && (mkt.hustle === 'all' || s.hustle === mkt.hustle)
+      && (mkt.src === 'all' || s.source === mkt.src)
+      && (mkt.comp === 'all' || compLevel(s.competition) === mkt.comp)
+      && (mkt.pay === 'all' || (mkt.pay === 'known' ? s.budget > 0 : (s.budget || 0) >= +mkt.pay))
+      && (!q || `${s.task} ${s.deliverable} ${s.domain} ${s.title || ''}`.toLowerCase().includes(q)));
+    const groups = new Map();
+    rows.forEach(s => { const cat = mktCat(s); byCat[cat] = (byCat[cat] || 0) + 1;
+      if (mkt.cat !== 'all' && cat !== mkt.cat) return;
+      const g = groups.get(s.task) || {task: s.task, cat, n: 0, n7: 0, bids: [], pay: 0, auto: {}, domains: new Set(), items: [], last: ''};
+      g.n++; g.n7 += utc(s.extracted_at) >= weekAgo; g.pay = Math.max(g.pay, s.budget || 0);
+      if (s.competition != null) g.bids.push(s.competition);
+      g.auto[s.automatable] = (g.auto[s.automatable] || 0) + 1; g.domains.add(s.domain); g.items.push(s);
+      if (s.extracted_at > g.last) g.last = s.extracted_at;
+      groups.set(s.task, g); });
+    const list = [...groups.values()].map(g => ({...g, avgBids: avg(g.bids),
+      autoTop: Object.keys(g.auto).sort((a, b) => g.auto[b] - g.auto[a])[0]}));
+    const cmp = {count: (a, b) => b.n - a.n || b.last.localeCompare(a.last), pay: (a, b) => b.pay - a.pay,
+      comp: (a, b) => (a.avgBids ?? 1e9) - (b.avgBids ?? 1e9), recent: (a, b) => b.last.localeCompare(a.last)}[mkt.sort];
+    return {list: list.sort(cmp), byCat, total: rows.length};
+  };
+  const LINK = {};  // url -> open | closed | removed | unknown (el backend lo verifica solo en Freelancer)
+  const LINK_LABEL = {open: ['Abierto', 'done'], closed: ['Cerrado', 'pending'], removed: ['Ya no existe', 'discarded'], unknown: ['Sin verificar', '']};
+  const linkRank = s => ({open: 0, unknown: 1, closed: 2, removed: 3}[LINK[s.source_url]] ?? 1);
+  const checkLinks = async (urls, done = mktRender) => {
+    urls = [...new Set(urls)].filter(u => u && !(u in LINK));
+    if (!urls.length) return;
+    for (let i = 0; i < urls.length; i += 100) {  // el backend acepta hasta 100 por llamada
+      try {
+        const res = await fetch('/api/link-status', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: urls.slice(i, i + 100)})});
+        if (res.ok) Object.assign(LINK, await res.json());
+      } catch { /* sin red: se muestran sin estado */ }
+    }
+    urls.forEach(u => { if (!(u in LINK)) LINK[u] = 'unknown'; });
+    done();
+  };
+  const listingHtml = s => {
+    const url = /^https?:\/\//.test(s.source_url) ? s.source_url : '';
+    const st = LINK[s.source_url], lab = LINK_LABEL[st];
+    const facts = [siteName(url), `visto ${fmtDate(s.extracted_at)}`, s.competition != null ? `${s.competition} propuestas` : '',
+      s.budget ? `hasta $${s.budget.toLocaleString('es-CO')}` : '', `pagan por ${payInfo('', url, '').short}`].filter(Boolean);
+    // avisos viejos sin título guardado: el slug de la URL (freelancer.com/projects/…, workana.com/job/…) es legible
+    const slug = !s.title && /freelancer\.com\/projects\/|workana\.com\/job\//.test(url) ? url.replace(/\/+$/, '').split('/').pop().replace(/-\d+$/, '').replace(/-/g, ' ') : '';
+    const status = st === undefined ? '<span class="t-sub">Revisando si sigue abierto…</span>' : lab ? `<span class="pill ${lab[1]}">${lab[0]}</span>` : '';
+    const action = !url || st === 'removed' ? '<span class="t-sub">El cliente o la plataforma lo borró.</span>'
+      : `<a class="link-out" href="${esc(url)}" target="_blank" rel="noopener">${st === 'closed' ? 'Ver aviso (ya no recibe propuestas) ↗' : 'Abrir y aplicar ↗'}</a>`;
+    return `<li class="mkt-item ${st === 'removed' ? 'gone' : ''}"><div><b>${esc(s.title || (slug ? slug[0].toUpperCase() + slug.slice(1) : s.task))}</b> ${status}<div class="t-sub">${esc(facts.join(' · '))}</div></div>
+      ${action}</li>`;
+  };
+  const MKT_MAX = 150;
+  const mktRender = () => {
+    const box = document.getElementById('mktResults'); if (!box) return;
+    const {list, byCat, total} = mktGroups();
+    mktList = list.slice(0, MKT_MAX);
+    const chips = [['all', 'Todos', total], ...[...MKT_CATS.map(([k]) => k), 'other'].filter(k => byCat[k]).map(k => [k, MKT_LABEL[k], byCat[k]])];
+    const rows = mktList.map((g, i) => {
+      const comp = compLevel(g.avgBids), open = mkt.open === g.task;
+      const items = open ? g.items.slice().sort((a, b) => linkRank(a) - linkRank(b) || b.extracted_at.localeCompare(a.extracted_at)) : [];
+      if (open) checkLinks(items.map(s => s.source_url));
+      return `<tr class="t-click" data-i="${i}" tabindex="0" aria-expanded="${open}"><td class="t-name">${open ? '▾' : '▸'} ${esc(g.task)}<div class="t-sub">${esc(MKT_LABEL[g.cat])} · ${esc([...g.domains].slice(0, 3).join(', '))}</div></td>
+        <td class="num"><b>${g.n}</b>${g.n7 ? `<div class="t-sub">${g.n7} esta semana</div>` : ''}</td>
+        <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${g.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
+        <td class="num">${g.pay ? `$${g.pay.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
+        <td><span class="pill ${levelCls(AUTO_ES[g.autoTop], true)}">${AUTO_ES[g.autoTop] || '—'}</span></td>
+        <td class="t-sub">${esc([...new Set(g.items.map(s => payInfo('', s.source_url, '').short))].join(' / ') || 'No lo dice')}</td>
+        <td class="t-sub">${g.items.length} ${g.items.length === 1 ? 'aviso' : 'avisos'}</td></tr>
+        ${open ? `<tr class="mkt-open"><td colspan="7"><p class="t-sub">Primero los abiertos y los más recientes. Los que ya no existen salen al final.</p><ul class="mkt-items">${items.map(listingHtml).join('')}</ul></td></tr>` : ''}`;
+    }).join('');
+    box.innerHTML = `
+      <div class="t-chips mkt-cats" role="group" aria-label="Tipo de servicio">${chips.map(([k, l, n]) =>
+        `<button type="button" class="t-chip mkt-cat" data-cat="${k}" aria-pressed="${mkt.cat === k}">${esc(l)} <b>${n}</b></button>`).join('')}</div>
+      <p class="t-sub">${list.length > MKT_MAX ? `Mostrando ${MKT_MAX} de ${list.length} tareas. Filtra o busca para ver el resto.` : `${list.length} tareas.`} Toca una fila para ver sus avisos y aplicar.</p>
+      <div class="t-table-wrap"><table class="t-table">
+        <thead><tr><th>Qué piden</th><th>Veces (30 días)</th><th>Competencia</th><th>Pago máx. (USD)</th><th>Automatizable</th><th>Pagan por</th><th>Avisos</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="t-sub">Nada con esos filtros.</td></tr>'}</tbody></table></div>`;
+  };
+  const mktSelect = (key, label, opts) => `<label class="mkt-f">${label}<select data-mkt="${key}">${opts.map(([v, l]) =>
+    `<option value="${v}" ${mkt[key] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const mktSection = () => `
+    <section class="t-sec" id="mktSec">
+      <h2>Todo el mercado</h2>
+      <p class="t-help">Cada vacante y gig que analizó el Trend Spotter en los últimos 30 días. Filtra por tipo de servicio, side hustle, competencia o pago, y toca una fila para ver los avisos. El pago solo se guarda desde el 6 de oct, así que muchos avisos anteriores salen con —.</p>
+      <div class="mkt-bar">
+        <input type="search" data-mkt="q" placeholder="Buscar (ej. video, logo, podcast)…" value="${esc(mkt.q)}" aria-label="Buscar tarea">
+        ${mktSelect('hustle', 'Side hustle', [['all', 'Cualquiera'], ...Object.entries(HUSTLE_KEYS)])}
+        ${mktSelect('comp', 'Competencia', [['all', 'Todas'], ['Baja', 'Baja'], ['Media', 'Media'], ['Alta', 'Alta']])}
+        ${mktSelect('pay', 'Pago', [['all', 'Todos'], ['known', 'Con pago informado'], ['100', '≥ $100'], ['500', '≥ $500'], ['1000', '≥ $1.000']])}
+        ${mktSelect('src', 'Origen', [['all', 'Todo'], ['gig', 'Gigs freelance'], ['job', 'Vacantes 9-5']])}
+        ${mktSelect('sort', 'Ordenar', [['count', 'Más pedidos'], ['pay', 'Mejor pago'], ['comp', 'Menos competencia'], ['recent', 'Más recientes']])}
+      </div>
+      <div id="mktResults"></div>
+    </section>`;
+  const customView = document.getElementById('customView');
+  const goHustle = key => { Object.assign(mkt, {hustle: key, cat: 'all', open: null}); render();
+    document.getElementById('mktSec').scrollIntoView({behavior: 'smooth', block: 'start'}); };
+  customView.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.mkt; if (k) { mkt[k] = e.target.value; mkt.open = null; mktRender(); } });
+  customView.addEventListener('click', e => {
+    const mode = e.target.closest('[data-mode]'); if (mode) { mkt.mode = mode.dataset.mode; mkt.open = null; render(); return; }
+    const h = e.target.closest('[data-hustle]'); if (h) { goHustle(h.dataset.hustle); return; }
+    const c = e.target.closest('.mkt-cat'); if (c) { mkt.cat = c.dataset.cat; mkt.open = null; mktRender(); return; }
+    const r = e.target.closest('tr[data-i]');
+    if (r && !e.target.closest('a')) { const t = mktList[+r.dataset.i].task; mkt.open = mkt.open === t ? null : t; mktRender();
+      const again = document.querySelector(`#mktResults tr[data-i="${r.dataset.i}"]`); if (again) again.focus(); }
+  });
+  customView.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.t-click')) { e.preventDefault(); e.target.click(); } });
+  const levelCls = (v, highIsGood) => { const x = String(v || '').toLowerCase();
+    if (x.startsWith('baja')) return highIsGood ? 'discarded' : 'done';
+    if (x.startsWith('alta')) return highIsGood ? 'done' : 'discarded';
+    if (x.startsWith('media')) return 'pending'; return ''; };
+
+  const TABS = {
+    jobs: {
+      label: 'Vacantes', data: JOBS,
+      group: j => [j.role, j.role_label || j.role], groupOrder: ROLE_ORDER,
+      h1: 'Radar de Vacantes',
+      sub: 'Vacantes evaluadas contra tu master_profile.json — abre cualquiera para leer el requerimiento completo, el gap analysis y el link original.',
+      searchPlaceholder: 'Buscar por título, empresa o palabra clave…',
+      appliedEndpoint: 'jobs',
+      filters: [ {key:'all', label:'Todas'}, {key:'Aprobado', label:'Pendientes'}, {key:'CV Generado', label:'Con CV'}, {key:'Match Insuficiente', label:'Bajo Match'}, {key:'Aplicado', label:'Aplicados'},
+                 {key:'role:ai_engineer', label:'AI Engineer'}, {key:'role:forward_deployed_engineer', label:'Forward Deployed'}, {key:'role:qa_automation', label:'QA Automation'},
+                 {key:'r90-100', label:'90%+'}, {key:'r70-89', label:'70–89%'}, {key:'r50-69', label:'50–69%'}, {key:'r40-49', label:'40–49%'} ],
+      filterFn: (j,k) => {
+        if (k === 'all') return true;
+        if (k === 'Aplicado') return !!j.applied_at;
+        if (k.startsWith('role:')) return j.role === k.slice(5);
+        if (k[0] === 'r') { const [lo, hi] = k.slice(1).split('-').map(Number); return j.match_percentage >= lo && j.match_percentage <= hi; }
+        return j.status === k;
+      },
+      searchText: j => `${j.title} ${j.company}`,
+      sorts: [
+        {value:'match_desc', label:'Mayor match', cmp:(a,b)=>b.match_percentage-a.match_percentage},
+        {value:'match_asc', label:'Menor match', cmp:(a,b)=>a.match_percentage-b.match_percentage},
+        {value:'recent', label:'Más recientes', cmp:(a,b)=>String(b.created_at).localeCompare(String(a.created_at))},
+        {value:'company', label:'Empresa (A-Z)', cmp:(a,b)=>String(a.company).localeCompare(String(b.company))},
+      ],
+      stats: (data) => {
+        const total = data.length;
+        const conCv = data.filter(j=>j.status==='CV Generado').length;
+        const bajoMatch = data.filter(j=>j.status==='Match Insuficiente').length;
+        const pend = total - conCv - bajoMatch;
+        const aplicados = data.filter(j=>j.applied_at).length;
+        return [ {n:total,l:'Vacantes'}, {n:conCv,l:'Con CV'}, {n:pend,l:'Pendientes'}, {n:aplicados,l:'Aplicados'} ];
+      },
+      matchValue: j => j.match_percentage,
+      matchLabel: j => j.match_percentage + '%',
+      matchRing: j => j.match_percentage >= 75 ? 'done' : (j.match_percentage >= 50 ? 'warn' : 'low'),
+      title: j => j.title, subtitle: j => j.location ? `${j.company} · ${j.location}` : j.company,
+      pill: j => j.status === 'CV Generado' ? {cls:'done', label:'Con CV'} : (j.status === 'Match Insuficiente' ? {cls:'discarded', label:'Bajo Match'} : {cls:'pending', label:'Pendiente'}),
+      detail: j => {
+        const gapsHtml = j.gaps.length ? `<div><h4>Gap Analysis</h4><div class="gaps">${j.gaps.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}</div></div>` : '';
+        // cv_link: link público de Drive (sync_cvs_drive.py) para pegar en "link to your CV"
+        const cvHtml = j.cv_path ? `<div class="apply-block"><a class="link-out" href="/api/cv/${j.id}" target="_blank" rel="noopener">Abrir CV ↗</a>${j.cv_link ? `<a class="link-out" href="${esc(j.cv_link)}" target="_blank" rel="noopener">CV en Drive ↗</a><span class="cvpath">${esc(j.cv_link)}</span>` : '<span class="cvpath">Subiendo a Drive…</span>'}</div>` : '';
+        return `
+          ${gapsHtml}
+          ${payHtml('', '', j.scraped_content)}
+          <div><h4>Descripción</h4><div class="desc">${esc(j.scraped_content) || 'Sin descripción disponible.'}</div></div>
+          <div class="meta-row"><span><b>Publicado</b> ${fmtDate(j.created_at)}</span><span><b>Estado</b> ${esc(j.status)}</span></div>
+          ${cvHtml}
+          ${j.has_study ? `<a class="link-out" href="/api/study/${j.id}" target="_blank" rel="noopener">Plan de estudio ↗</a>` : ''}
+          ${j.url ? `<a class="link-out" href="${esc(j.url)}" target="_blank" rel="noopener">Ver vacante original ↗</a>` : ''}
+        `;
+      },
+    },
+    freelance: {
+      label: 'Freelance', data: FREELANCE,
+      h1: 'Freelance Hunter',
+      sub: 'Gigs escaneados en plataformas freelance y evaluados contra tu perfil.',
+      searchPlaceholder: 'Buscar por título o plataforma…',
+      appliedEndpoint: 'freelance',
+      corner: gigDates,
+      group: g => [gigType(g), GIG_TYPES[gigType(g)]], groupOrder: Object.keys(GIG_TYPES),
+      filters: [ {key:'all', label:'Todos'}, {key:'Aplicable', label:'Aplicables'}, {key:'Descartado', label:'Descartados'}, {key:'Aplicado', label:'Aplicados'},
+                 {key:'date:open', label:'Abiertos'}, {key:'date:soon', label:'Cierran en ≤3 días'}, {key:'date:new', label:'Publicados ≤3 días'}, {key:'date:closed', label:'Cerrados'},
+                 ...Object.entries(GIG_TYPES).filter(([k]) => k !== 'none').map(([k,l]) => ({key:'type:'+k, label:l})) ],
+      filterFn: (g,k) => {
+        if (k === 'all') return true;
+        if (k.startsWith('type:')) return gigType(g) === k.slice(5);
+        if (k === 'date:open') return !isClosed(g);
+        if (k === 'date:soon') return !isClosed(g) && daysLeft(g) !== null && daysLeft(g) <= 3;
+        if (k === 'date:new') return postedDays(g) <= 3;
+        if (k === 'date:closed') return !!isClosed(g);
+        return k === 'Aplicado' ? !!g.applied_at : g.status === k;
+      },
+      searchText: g => `${g.title} ${g.platform}`,
+      sorts: [
+        {value:'match_desc', label:'Mayor match', cmp:(a,b)=>b.match_percentage-a.match_percentage},
+        {value:'pay_desc', label:'Mejor pagados', cmp:(a,b)=>gigPay(b)-gigPay(a)},
+        // abiertos que cierran antes primero; sin fecha de cierre después; los cerrados al final
+        {value:'closes_asc', label:'Cierran primero', cmp:(a,b)=>{ const k = g => isClosed(g) ? 2e15 : (g.closes_at ? +utc(g.closes_at) : 1e15); return k(a) - k(b); }},
+        {value:'posted_desc', label:'Publicados más recientes', cmp:(a,b)=>String(b.posted_at || '').localeCompare(String(a.posted_at || ''))},
+        {value:'match_asc', label:'Menor match', cmp:(a,b)=>a.match_percentage-b.match_percentage},
+        {value:'recent', label:'Más recientes', cmp:(a,b)=>String(b.created_at).localeCompare(String(a.created_at))},
+        {value:'platform', label:'Plataforma (A-Z)', cmp:(a,b)=>String(a.platform).localeCompare(String(b.platform))},
+      ],
+      stats: (data) => {
+        const total = data.length;
+        const aprob = data.filter(g=>g.status==='Aplicable').length;
+        const desc = data.filter(g=>g.status==='Descartado').length;
+        const aplicados = data.filter(g=>g.applied_at).length;
+        return [ {n:total,l:'Gigs'}, {n:aprob,l:'Aplicables'}, {n:desc,l:'Descartados'}, {n:aplicados,l:'Aplicados'} ];
+      },
+      matchValue: g => g.match_percentage,
+      matchLabel: g => g.match_percentage + '%',
+      matchRing: g => g.match_percentage >= 75 ? 'done' : (g.match_percentage >= 50 ? 'warn' : 'low'),
+      title: g => g.title, subtitle: g => g.platform,
+      pill: g => g.status === 'Aplicable' ? {cls:'done', label:'Aplicable'} : {cls:'discarded', label:'Descartado'},
+      detail: g => `
+          ${g.reasoning ? `<div><h4>Por qué ese match</h4><div class="desc">${esc(g.reasoning)}</div></div>` : ''}
+          ${payHtml(g.platform, g.url, g.description)}
+          <div><h4>Descripción del gig</h4><div class="desc">${esc(g.description) || 'Sin descripción disponible.'}</div></div>
+          <div class="meta-row"><span><b>Plataforma</b> ${esc(g.platform)}</span><span><b>Detectado</b> ${fmtDate(g.created_at)}</span></div>
+          ${!g.url ? '' : LINK[g.url] === 'removed' ? '<p class="t-sub">Este gig ya no existe en Freelancer: lo borró el cliente o la plataforma.</p>'
+            : `<a class="link-out" href="${esc(g.url)}" target="_blank" rel="noopener">${LINK[g.url] === 'closed' ? 'Ver gig (ya no recibe propuestas) ↗' : 'Ver gig original ↗'}</a>`}
+        `,
+    },
+    trends: {
+      label: 'Trend Spotter', data: TRENDS,
+      count: data => latestTrends(data).length,
+      h1: 'Trend Spotter',
+      sub: 'Qué está pagando el mercado (vacantes + gigs freelance) y qué se puede automatizar con un agente para venderlo. Muestra el último reporte diario.',
+      searchPlaceholder: '', filters: [], filterFn: () => true, searchText: () => '',
+      sorts: [ {value:'none', label:'', cmp:() => 0} ],
+      stats: (data) => {
+        const rows = latestTrends(data);
+        const hustles = rows.filter(isHustle);
+        const picked = hustles.filter(t => String(t.trend_name).includes('⭐')).sort((a,b) => b.demand_mentions - a.demand_mentions)[0];
+        const last = rows.reduce((m,t) => t.detected_at > m ? t.detected_at : m, '');
+        return [ {n: rows.length - hustles.length, l:'Nichos detectados'},
+                 {n: picked ? shortHustle(picked.trend_name) : '—', l:'Tu side hustle con más demanda'},
+                 {n: rows[0] ? rows[0].gigs_analyzed : 0, l:'Vacantes y gigs analizados'},
+                 {n: fmtDate(last), l:'Último reporte'} ];
+      },
+      custom: (data) => {
+        const rows = latestTrends(data);
+        if (!rows.length && !SIGNALS.length) return '<p class="t-help">Todavía no hay reportes. El Trend Spotter genera uno al día.</p>';
+        const nicheRows = rows.length && analyzed(rows) ? rows : latestAnalyzed(data);
+        const niches = nicheRows.filter(t => !isHustle(t)).sort((a,b) => b.demand_mentions - a.demand_mentions);
+        const nicheNote = nicheRows !== rows && nicheRows.length
+          ? `<p class="t-note">El reporte de hoy no alcanzó a analizarse (la IA estaba saturada). Estos nichos son del reporte del ${esc(fmtDate(nicheRows[0].detected_at))}.</p>` : '';
+        const cards = niches.map((t, i) => {
+          const f = trendFields(t.agent_idea);
+          const comp = f['Competencia'] || 'Sin datos';
+          return `<article class="t-card">
+            <div class="t-head"><span class="t-rank">${i + 1}</span><h3>${esc(t.trend_name)}</h3></div>
+            <div class="t-chips"><span class="t-chip"><b>${t.demand_mentions}</b> menciones</span>
+              <span class="pill ${levelCls(comp)}">Competencia: ${esc(comp)}</span>
+              <span class="pill ${levelCls(t.estimated_automation_score, true)}">Automatización: ${esc(t.estimated_automation_score || '—')}</span></div>
+            <dl>${f.build ? `<dt>Qué construir</dt><dd>${esc(f.build)}</dd>` : ''}
+                ${f['Cómo venderlo'] ? `<dt>Cómo venderlo</dt><dd>${esc(f['Cómo venderlo'])}</dd>` : ''}
+                ${f['Revisión'] ? `<dt>Revisión humana</dt><dd>${esc(f['Revisión'])}</dd>` : ''}</dl>
+          </article>`;
+        }).join('');
+        const hs = hustleStats(), maxH = Math.max(1, ...hs.map(h => h.n));
+        const table = hs.map(h => {
+          const comp = compLevel(h.avgBids);
+          return `<tr class="t-click ${h.picked ? 'picked' : ''}" data-hustle="${h.key}" tabindex="0" aria-label="Ver avisos de ${esc(h.name)}">
+            <td class="t-name">${h.picked ? '⭐ ' : ''}${esc(h.name)}</td>
+            <td><div class="t-demand"><div class="t-bar"><span style="width:${Math.round(100 * h.n / maxH)}%"></span></div><b>${h.n}</b></div></td>
+            <td class="num">${h.n7}</td>
+            <td>${comp ? `<span class="pill ${levelCls(comp)}">${comp} · ${h.avgBids} prop.</span>` : '<span class="t-sub">Sin datos</span>'}</td>
+            <td class="num">${h.payMed ? `$${h.payMed.toLocaleString('es-CO')}` : '<span class="t-sub">—</span>'}</td>
+            <td class="t-tasks">${esc(h.top.join(', '))}</td>
+            <td><span class="link-out">Ver avisos →</span></td></tr>`;
+        }).join('');
+        const MODES = [['auto', 'Automatizables'], ['manual', 'Para hacer tú (no automatizables)'], ['all', 'Todo']];
+        const modeHelp = {auto: 'Lo que un agente de IA puede hacer casi solo: para construir y vender.',
+          manual: 'Trabajo que haces tú (editar videos, manejar canales, diseñar…): no se automatiza pero no es difícil y paga.',
+          all: 'Todo lo que pide el mercado, automatizable o no.'}[mkt.mode];
+        return `
+          <div class="t-modebar"><div class="seg" role="group" aria-label="Qué trends ver">${MODES.map(([k, l]) =>
+            `<button type="button" data-mode="${k}" aria-pressed="${mkt.mode === k}">${l}</button>`).join('')}</div>
+            <p class="t-help">${modeHelp}</p></div>
+          ${mkt.mode !== 'manual' ? `<section class="t-sec">
+            <h2>Nichos para automatizar y vender</h2>
+            <p class="t-help">Del último reporte diario: nichos que el mercado paga y que un agente de IA puede resolver. Lo ideal: muchas menciones, competencia baja y automatización alta.</p>
+            ${nicheNote}<div class="t-cards">${cards || '<p class="t-help">Sin nichos analizados todavía.</p>'}</div>
+          </section>` : ''}
+          <section class="t-sec">
+            <h2>Side hustles</h2>
+            <p class="t-help">⭐ = los que elegiste. Demanda = avisos de los últimos 30 días${mkt.mode === 'all' ? '' : ' (solo los de esta vista)'}. Competencia = propuestas promedio por aviso. Toca uno para ver sus avisos y aplicar.</p>
+            <div class="t-table-wrap"><table class="t-table">
+              <thead><tr><th>Servicio</th><th>Demanda</th><th>Últimos 7 días</th><th>Competencia</th><th>Pago típico (USD)</th><th>Qué piden (ejemplos)</th><th></th></tr></thead>
+              <tbody>${table}</tbody></table></div>
+          </section>
+          ${mktSection()}`;
+      },
+    },
+    learn: {
+      label: 'Aprender', data: LEARN,
+      group: s => [s.role, s.role_label || s.role], groupOrder: [...ROLE_ORDER, 'freelance'],
+      h1: 'Qué aprender',
+      sub: 'Los gaps de tus vacantes visibles agrupados por skill y tipo de rol: la misma skill se estudia distinto según el rol. Ordenados por cuántas vacantes desbloquean, con las horas al mínimo viable de una prueba técnica.',
+      searchPlaceholder: 'Buscar skill…',
+      filters: [ {key:'all', label:'Todas'}, {key:'ai_engineer', label:'AI Engineer'}, {key:'forward_deployed_engineer', label:'Forward Deployed'}, {key:'qa_automation', label:'QA Automation'}, {key:'freelance', label:'Freelance'}, {key:'cv', label:'Te suben a CV'}, {key:'quick', label:'Rápidas (≤10 h)'} ],
+      filterFn: (s,k) => k==='all' || (k==='cv' ? s.near_cv > 0 : k==='quick' ? (s.hours_to_mvp ?? 999) <= 10 : s.role === k),
+      searchText: s => s.skill + ' ' + (s.role_label || ''),
+      sorts: [
+        {value:'jobs_desc', label:'Más vacantes', cmp:(a,b)=>b.jobs.length-a.jobs.length},
+        {value:'roi_desc', label:'Más vacantes por hora', cmp:(a,b)=>b.jobs.length/(b.hours_to_mvp||99)-a.jobs.length/(a.hours_to_mvp||99)},
+        {value:'hours_asc', label:'Menos horas', cmp:(a,b)=>(a.hours_to_mvp||999)-(b.hours_to_mvp||999)},
+      ],
+      stats: (data) => {
+        const top = [...data].sort((a,b)=>b.jobs.length-a.jobs.length).slice(0,5);
+        const hours = top.reduce((s,x)=>s+(x.hours_to_mvp||0),0);
+        const unlocked = new Set(top.flatMap(x=>x.jobs.map(j=>j.id))).size;
+        return [ {n:data.length,l:'Grupos skill + rol'}, {n:hours+' h',l:'Top 5 al mínimo'}, {n:unlocked,l:'Vacantes del top 5'}, {n:data.reduce((s,x)=>s+x.near_cv,0),l:'Cerca de CV'} ];
+      },
+      lead: s => `<span class="lead"><b>${s.jobs.length}</b><small>${s.role === 'freelance' ? 'gigs' : 'vacantes'}<br>la piden</small></span>`,
+      matchValue: s => Math.min(100, s.jobs.length * 5),
+      matchLabel: s => s.jobs.length + ' vac.',
+      matchRing: s => s.jobs.length >= 10 ? 'done' : (s.jobs.length >= 4 ? 'warn' : 'low'),
+      title: s => `${s.skill} · ${s.role_label || ''}`,
+      subtitle: s => s.hours_to_mvp == null ? 'Estimando horas…' : (s.hours_to_mvp === 0 ? 'Ya la sabes: agrégala a tu perfil' : `~${s.hours_to_mvp} h al mínimo viable`),
+      pill: s => s.hours_to_mvp == null ? {cls:'pending', label:'—'} : (s.hours_to_mvp <= 10 ? {cls:'done', label:'Rápida'} : (s.hours_to_mvp <= 30 ? {cls:'pending', label:'Media'} : {cls:'discarded', label:'Larga'})),
+      detail: s => `
+          ${s.what_to_learn ? `<div><h4>Mínimo viable para la prueba</h4><ol class="desc">${s.what_to_learn.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>` : ''}
+          ${s.practice_project ? `<div><h4>Mini proyecto para practicar</h4><div class="desc">${esc(s.practice_project)}</div></div>` : ''}
+          ${s.practice && s.practice.length ? `<div><h4>Practicar (gratis, en la web)</h4><ul class="desc">${s.practice.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+          ${s.interview_prompt ? `<div><h4>Prompt de entrevista simulada (pégalo en Claude o Gemini)</h4><textarea class="desc" readonly rows="5" style="width:100%;font:inherit;resize:vertical" onclick="this.select()">${esc(s.interview_prompt)}</textarea><button type="button" class="applied-toggle" onclick="const t=this.previousElementSibling;navigator.clipboard.writeText(t.value).then(()=>{this.textContent='Copiado ✓'},()=>{t.select();this.textContent='Selecciónalo y copia con Ctrl+C'})">Copiar prompt</button></div>` : ''}
+          ${s.free_resources ? `<div><h4>Recursos gratis</h4><ul class="desc">${s.free_resources.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+          ${s.role === 'freelance' && s.avg_budget ? `<div><h4>Pago promedio de esos gigs</h4><div class="desc">~${s.avg_budget} USD por proyecto</div></div>` : ''}
+          <div><h4>${s.role === 'freelance' ? 'Gigs' : 'Vacantes'} que la piden (${s.jobs.length})</h4><ul class="desc">${s.jobs.map(j=>`<li>${j.match}% · ${esc(j.title)} — ${esc(j.company)}${j.budget ? ` · ${j.budget} USD` : ''}</li>`).join('')}</ul></div>
+        `,
+    },
+  };
+
+  const state = { tab: 'jobs', filter: 'all', query: '', sort: null, openId: null };
+
+  const els = {
+    tabs: document.getElementById('tabs'),
+    stats: document.getElementById('stats'),
+    h1: document.getElementById('pageH1'),
+    sub: document.getElementById('pageSub'),
+    search: document.getElementById('searchInput'),
+    seg: document.getElementById('filterSeg'),
+    sortSel: document.getElementById('sortSel'),
+    countLine: document.getElementById('countLine'),
+    list: document.getElementById('list'),
+    empty: document.getElementById('emptyState'),
+    toolbar: document.getElementById('toolbar'),
+    custom: document.getElementById('customView'),
+  };
+
+  function buildTabs(){
+    els.tabs.innerHTML = '';
+    Object.keys(TABS).forEach(key => {
+      const cfg = TABS[key];
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.role = 'tab';
+      btn.setAttribute('aria-selected', String(state.tab === key));
+      btn.innerHTML = `${cfg.label} <span class="cnt">${cfg.count ? cfg.count(cfg.data) : cfg.data.length}</span>`;
+      btn.addEventListener('click', () => { switchTab(key); });
+      els.tabs.appendChild(btn);
+    });
+  }
+
+  function switchTab(key){
+    state.tab = key; state.filter = 'all'; state.query = ''; state.openId = null;
+    const cfg = TABS[key];
+    state.sort = cfg.sorts[0].value;
+    els.h1.textContent = cfg.h1; els.sub.textContent = cfg.sub;
+    els.search.value = ''; els.search.placeholder = cfg.searchPlaceholder;
+    buildTabs(); buildFilters(); buildSort(); render();
+    checkLinks(FREELANCE.map(g => g.url).filter(u => String(u).startsWith('https://www.freelancer.com/projects/')), render);
+  }
+
+  function buildFilters(){
+    const cfg = TABS[state.tab];
+    els.seg.innerHTML = '';
+    cfg.filters.forEach(f => {
+      const b = document.createElement('button');
+      b.textContent = f.label; b.setAttribute('data-filter', f.key);
+      b.setAttribute('aria-pressed', String(state.filter === f.key));
+      b.addEventListener('click', () => { state.filter = f.key; buildFilters(); render(); });
+      els.seg.appendChild(b);
+    });
+  }
+
+  function buildSort(){
+    const cfg = TABS[state.tab];
+    els.sortSel.innerHTML = cfg.sorts.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+    els.sortSel.value = state.sort;
+  }
+
+  function renderStats(){
+    const cfg = TABS[state.tab];
+    els.stats.innerHTML = cfg.stats(cfg.data).map(s => `<div class="stat"><div class="n">${s.n}</div><div class="l">${s.l}</div></div>`).join('');
+  }
+
+  function appliedBlock(it, cfg){
+    if(!cfg.appliedEndpoint) return '';
+    const isApplied = !!it.applied_at;
+    const label = isApplied ? `✓ Aplicado el ${fmtDate(it.applied_at)}` : 'Marcar como aplicado';
+    return `<div class="apply-block"><button type="button" class="applied-toggle ${isApplied?'is-applied':''}" data-applied-toggle="${it.id}">${esc(label)}</button></div>`;
+  }
+
+  async function toggleApplied(cfg, it, btn){
+    const wasApplied = !!it.applied_at;
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/api/${cfg.appliedEndpoint}/${it.id}/applied`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({applied: !wasApplied}),
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      it.applied_at = data.applied_at;
+      render();
+    } catch(err) {
+      btn.disabled = false;
+      alert('No se pudo actualizar el estado de aplicado: ' + err.message);
+    }
+  }
+
+  function render(){
+    const cfg = TABS[state.tab];
+    renderStats();
+    const custom = !!cfg.custom;
+    els.toolbar.hidden = custom; els.countLine.hidden = custom; els.custom.hidden = !custom;
+    if (custom) { els.list.innerHTML = ''; els.empty.hidden = true; els.custom.innerHTML = cfg.custom(cfg.data); mktRender(); return; }
+    let items = cfg.data.filter(it => cfg.filterFn(it, state.filter));
+    if(state.query.trim()){
+      const q = state.query.trim().toLowerCase();
+      items = items.filter(it => cfg.searchText(it).toLowerCase().includes(q));
+    }
+    const sortCfg = cfg.sorts.find(s => s.value === state.sort) || cfg.sorts[0];
+    items = items.slice().sort(sortCfg.cmp);
+
+    els.countLine.textContent = `${items.length} de ${cfg.data.length} resultado${cfg.data.length===1?'':'s'}`;
+    els.empty.hidden = items.length !== 0;
+    els.list.innerHTML = '';
+
+    // Secciones por rol (AI Engineer / Forward Deployed / QA Automation) en las pestañas que lo tienen
+    const gKey = it => cfg.group(it)[0];
+    const gPos = it => { const i = cfg.groupOrder.indexOf(gKey(it)); return i < 0 ? 99 : i; };
+    if (cfg.group) items = items.slice().sort((a,b) => gPos(a) - gPos(b));
+    let lastGroup = null;
+    items.forEach(it => {
+      if (cfg.group && gKey(it) !== lastGroup) {
+        lastGroup = gKey(it);
+        const n = items.filter(x => gKey(x) === lastGroup).length;
+        const h = document.createElement('li');
+        h.className = 'group-h';
+        h.innerHTML = `${esc(cfg.group(it)[1])} <span>${n}</span>`;
+        els.list.appendChild(h);
+      }
+      const pill = cfg.pill(it);
+      const ring = cfg.matchRing(it);
+      const isOpen = state.openId === it.id;
+      const appliedBadge = (cfg.appliedEndpoint && it.applied_at) ? `<span class="pill applied">✓ Aplicado</span>` : '';
+      const li = document.createElement('li');
+      li.className = 'card' + (cfg.corner ? ' has-corner' : ''); li.setAttribute('data-open', String(isOpen));
+      li.innerHTML = `
+        ${cfg.corner ? cfg.corner(it) : ''}
+        <button class="row" aria-expanded="${isOpen}">
+          ${cfg.lead ? cfg.lead(it) : `<span class="match ${ring==='done'?'':ring==='warn'?'warn':'low'}" style="--m:${Math.max(0,Math.min(100,cfg.matchValue(it)))}"><span>${esc(cfg.matchLabel(it))}</span></span>`}
+          <span class="titles"><div class="t">${esc(cfg.title(it))}</div><div class="c">${esc(cfg.subtitle(it))}</div></span>
+          <span class="pill ${pill.cls}">${esc(pill.label)}</span>
+          ${appliedBadge}
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="detail" ${isOpen ? '' : 'hidden'}>${isOpen ? cfg.detail(it) + appliedBlock(it, cfg) : ''}</div>
+      `;
+      li.querySelector('.row').addEventListener('click', () => {
+        state.openId = isOpen ? null : it.id;
+        render();
+      });
+      const toggleBtn = li.querySelector('[data-applied-toggle]');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleApplied(cfg, it, toggleBtn);
+        });
+      }
+      els.list.appendChild(li);
+    });
+  }
+
+  els.search.addEventListener('input', (e) => { state.query = e.target.value; render(); });
+  els.sortSel.addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+
+  switchTab('jobs');
+})();
+</script>
+</body>
+</html>

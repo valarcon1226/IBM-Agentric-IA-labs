@@ -1,0 +1,31 @@
+[project]
+name = "business-registry-enricher"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+exclude = ["^\\.venv/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m \"not integration and not e2e and not live\""
+markers = [
+    "integration: needs Docker (real API/Postgres via docker compose)",
+    "e2e: full enrich flow against the real docker compose stack",
+    "live: hits a real external registry (e.g. the VIES checkVatTestService)",
+]
+
+[tool.coverage.run]
+source = ["app"]

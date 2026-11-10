@@ -1,38 +1,38 @@
 # Execution Plan — News Aggregator & Intelligence Reporter
 
-Source of truth: `README.md`. Note: LLM provider selection is one thin `summarize(text) -> str` function dispatching on `LLM_PROVIDER` — do not build a strategy-pattern class hierarchy for OpenAI vs Ollama.
+Source of truth: `README.md`. Note: LLM provider selection is one thin `summarize(text) -> str` function dispatching on `LLM_PROVIDER` with robust fallback to text extraction.
 
 ## Prerequisites
 - Docker + Docker Compose
-- Python 3.11+ (`feedparser`, `newspaper3k`, `scikit-learn`, `playwright`, `jinja2`)
-- `OPENAI_API_KEY` and/or a local Ollama install depending on `LLM_PROVIDER`
-- `SENDGRID_API_KEY`, `SLACK_WEBHOOK_URL` (README section 10)
+- Python 3.12 (`feedparser`, `trafilatura`, `scikit-learn`, `psycopg`, `pgvector`, `jinja2`, `celery`, `redis`, `fastapi`)
+- Local or containerized fake LLM / Ollama (`nomic-embed-text` and `llama3:8b`)
+- Mailpit for local SMTP delivery and testing
 
 ## Build Checklist
 
-- [ ] Create the file/dir tree from README section 7.2; `docker-compose.yml` with `postgres` + `redis` only.
-  - Verify: `docker compose up -d postgres redis` → healthy.
-- [ ] Write init SQL for `sources`, `categories`, `articles` (+ `pg_trgm` extension/index), `digests` (README section 4).
-  - Verify: `\dt` and `\d articles` show the tables and `idx_articles_search`.
-- [ ] Implement `ingestion/rss_parser.py` + `tests/test_rss_parser.py` against a saved sample feed.
+- [x] Create the file/dir tree from README section 7.2; `docker-compose.yml` with `postgres` (pgvector), `redis`, `mailpit`, `fake_llm`, `api`, `worker`.
+  - Verify: `docker compose up -d` → healthy.
+- [x] Write init SQL for `sources`, `categories`, `articles` (+ `pg_trgm`, `vector` extensions/indexes), `digests`, `digest_articles` (`db/schema.sql`).
+  - Verify: tables and indexes created successfully.
+- [x] Implement `ingestion/rss_parser.py` + `tests/test_rss_parser.py` against saved sample feeds.
   - Verify: `pytest tests/test_rss_parser.py -v` passes.
-- [ ] Implement `ingestion/text_extractor.py` (newspaper3k) against a saved HTML fixture.
-  - Verify: extraction returns non-empty body text.
-- [ ] Implement cosine-similarity dedup in `intelligence/nlp_processor.py` + `tests/test_dedup.py`.
-  - Verify: 3 near-identical articles flagged, 2 unrelated articles not flagged.
-- [ ] Implement TF-IDF categorization against `categories.keywords`.
-  - Verify: sample AI and Finance articles categorize correctly.
-- [ ] Implement `intelligence/llm_summarizer.py::summarize()` (thin dispatch on `LLM_PROVIDER`) + `tests/test_summarizer.py` (mocked, both providers + timeout fallback).
-  - Verify: `pytest tests/test_summarizer.py -v` passes all 3 cases.
-- [ ] Implement the 4 API endpoints (README section 5).
-  - Verify: each curl example works; `EXPLAIN ANALYZE` on a keyword search shows an index scan via `pg_trgm`.
-- [ ] Wire delivery automation (Jinja2 template → SendGrid/Slack, via script or n8n).
-  - Verify: a test digest renders correctly grouped by category and sends successfully.
-- [ ] Full stack up + smoke test: ingest → dedupe → categorize → summarize → deliver.
-  - Verify: generated digest has no duplicate stories.
+- [x] Implement `ingestion/text_extractor.py` (trafilatura + robots.txt compliance) against saved HTML fixture.
+  - Verify: extraction returns clean body text; robots.txt respected.
+- [x] Implement two-step deduplication (SHA-256 hash + pgvector cosine similarity, with scikit-learn TF-IDF fallback) in `intelligence/nlp_processor.py` + `tests/test_dedup.py`.
+  - Verify: cross-source duplicate articles flagged and linked to parent; unrelated articles preserved.
+- [x] Implement keyword categorization against `categories.keywords` (`tests/test_categorization.py`).
+  - Verify: sample AI, Cybersecurity, Cloud, Fintech articles categorize correctly.
+- [x] Implement `intelligence/llm_summarizer.py::summarize()` + `tests/test_summarizer.py` (mocked, timeout fallback).
+  - Verify: `pytest tests/test_summarizer.py -v` passes.
+- [x] Implement API endpoints (`api/routes.py` with Bearer token security, CRUD sources, articles search with pg_trgm, digests).
+  - Verify: `tests/test_api.py` passes all CRUD and search scenarios.
+- [x] Wire delivery automation (Jinja2 template → SMTP to Mailpit in `delivery/notifier.py`).
+  - Verify: digest renders grouped by category and dispatches to Mailpit.
+- [x] Full stack up + smoke test: ingest → dedupe → categorize → summarize → deliver (`scripts/run_demo.py` and `tests/test_integration.py`).
+  - Verify: generated digest has no duplicate stories and includes cross-source references.
 
 ## Definition of Done
-- [ ] `docker compose up -d` brings up `api`, `ingestion_worker`, `n8n`, `postgres`, `redis` healthy.
-- [ ] Dedup test proves near-identical articles are collapsed; unrelated ones are not.
-- [ ] Summarizer works for the configured `LLM_PROVIDER` and degrades gracefully on timeout/rate-limit.
-- [ ] `pytest` full suite green.
+- [x] `docker compose up -d --build` brings up `postgres`, `redis`, `mailpit`, `fake_llm`, `api`, `worker` healthy.
+- [x] Dedup test proves cross-source duplicate articles are collapsed to 1 parent + linked duplicates.
+- [x] Summarizer works for configured provider and degrades gracefully on timeout/rate-limit.
+- [x] `pytest` full suite green.

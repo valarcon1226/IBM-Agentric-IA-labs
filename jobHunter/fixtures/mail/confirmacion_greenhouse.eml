@@ -1,0 +1,19 @@
+Content-Type: multipart/mixed; boundary="===============8222209050217560727=="
+MIME-Version: 1.0
+From: Acme Recruiting <no-reply@greenhouse-mail.io>
+To: candidate@example.com
+Subject: Thank you for applying to Acme Corp
+Date: Mon, 06 Oct 2026 10:00:00 +0000
+Message-ID: <conf-gh-101@greenhouse-mail.io>
+
+--===============8222209050217560727==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+SGkgVmFsZW50aW5hLAoKVGhhbmsgeW91IGZvciBhcHBseWluZyB0byBBY21lIENvcnAuIFdlIGhh
+dmUgcmVjZWl2ZWQgeW91ciBhcHBsaWNhdGlvbiBmb3IgdGhlIFNlbmlvciBRQSBFbmdpbmVlciBw
+b3NpdGlvbi4gT3VyIHRlYW0gd2lsbCByZXZpZXcgeW91ciBhcHBsaWNhdGlvbiBhbmQgZ2V0IGJh
+Y2sgdG8geW91IHNvb24uCgpCZXN0LApBY21lIFRhbGVudCBUZWFt
+
+--===============8222209050217560727==--

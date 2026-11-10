@@ -1,0 +1,8 @@
+[
+  {
+    "name": "warehouse_pg",
+    "listen": "0.0.0.0:5432",
+    "upstream": "postgres-warehouse:5432",
+    "enabled": true
+  }
+]

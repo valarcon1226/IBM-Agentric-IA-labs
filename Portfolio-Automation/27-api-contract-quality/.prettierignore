@@ -1,0 +1,7 @@
+dist
+node_modules
+.venv
+reports
+pacts
+coverage
+.schemathesis

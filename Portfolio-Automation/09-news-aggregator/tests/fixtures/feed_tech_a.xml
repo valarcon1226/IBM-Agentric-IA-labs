@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>TechNews A - Noticias de Tecnología</title>
+    <link>https://technews-a.local</link>
+    <description>Actualidad en inteligencia artificial y desarrollo de software</description>
+    <item>
+      <title>OpenAI presenta su nuevo modelo GPT-5 con razonamiento avanzado</title>
+      <link>https://technews-a.local/openai-gpt-5-announcement</link>
+      <author>Carlos Gomez</author>
+      <pubDate>Wed, 14 Oct 2026 10:00:00 GMT</pubDate>
+      <description>OpenAI ha anunciado hoy oficialmente el lanzamiento de GPT-5. El nuevo modelo de inteligencia artificial incorpora arquitectura de razonamiento profundo, superando evaluaciones previas en matemáticas y código.</description>
+      <content:encoded><![CDATA[OpenAI ha anunciado hoy oficialmente el lanzamiento de GPT-5. El nuevo modelo de inteligencia artificial incorpora arquitectura de razonamiento profundo, superando evaluaciones previas en matemáticas y código. La compañía informó que el despliegue se realizará de forma gradual a partir de este mes.]]></content:encoded>
+    </item>
+    <item>
+      <title>Kubernetes 1.32 introduce mejoras críticas en la gestión de memoria y contenedores</title>
+      <link>https://technews-a.local/kubernetes-1-32-release</link>
+      <author>Elena Rivas</author>
+      <pubDate>Wed, 14 Oct 2026 09:30:00 GMT</pubDate>
+      <description>La comunidad de Cloud Native Computing Foundation anunció el lanzamiento de Kubernetes 1.32 con optimizaciones para clusters masivos y DevOps.</description>
+      <content:encoded><![CDATA[La comunidad de Cloud Native Computing Foundation anunció el lanzamiento de Kubernetes 1.32 con optimizaciones para clusters masivos y DevOps en la nube híbrida.]]></content:encoded>
+    </item>
+  </channel>
+</rss>

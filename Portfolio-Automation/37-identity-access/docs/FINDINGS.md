@@ -1,0 +1,80 @@
+# Verified Behaviours and Findings — Keycloak IAM (Project 37)
+
+This document records what the suite verified on Keycloak 26.0.5 and the three observations worth acting on. Requirements are **modeled on OWASP ASVS v4.0.3**, RFC 6749, RFC 7636, and RFC 9700.
+
+The ids stay stable because the README and the tests refer to them. Only the second table lists findings. The first table lists checks that passed, so those entries carry no severity.
+
+---
+
+## Verified behaviours (checks that passed)
+
+| ID | What was verified | Related ASVS / RFC | Result |
+|---|---|---|---|
+| **FIND-001** | Refresh token replay revokes the whole session | ASVS V3.5.3, RFC 9700 §4.14 | Passed |
+| **FIND-002** | Password reset shows the same generic error when SMTP is down, with no account enumeration | ASVS V2.5.4, V2.5.6 | Passed |
+| **FIND-004** | A burst beyond the request queue is shed with 503 and the server recovers | ASVS V13.1.5 | Passed |
+| **FIND-006** | Partial import with policy FAIL rolls back atomically | ASVS V13.2.1 | Passed |
+| **FIND-007** | Major upgrade 25.0.6 → 26.0.5 keeps passwords, TOTP secrets and client secrets | ASVS V14.2.3 | Passed |
+
+## Findings and operational notes
+
+| ID | Title | Related ASVS / RFC | Severity | What to do |
+|---|---|---|---|---|
+| **FIND-003** | Rapid-burst heuristic triggers before the configured failure threshold | ASVS V2.2.1, V2.2.2 | Informational | Set `quickLoginCheckMilliSeconds: 0` only in tests |
+| **FIND-005** | Admin tokens of the master realm expire after 60 seconds | ASVS V13.2.3, V3.2.1 | Low | Refresh tokens in long batch jobs |
+| **FIND-008** | Admin user list repeats users when users are created mid-walk | — | Low | Deduplicate by id, or page by a stable key |
+
+---
+
+## Details
+
+### FIND-001: Refresh Token Replay Cascading Session Revocation
+- **Result:** Passed. Expected behaviour confirmed.
+- **Specification:** OWASP ASVS v4.0.3 V3.5.3 ("Verify that re-use of revoked or rotated tokens is prevented"), RFC 9700 §4.14 ("Refresh Token Compromise").
+- **Observation:** When refresh token rotation (`revokeRefreshToken: true`) is active, exchanging a refresh token returns a new token pair and marks the previous refresh token as consumed. When an attacker or replayed request submits the previously used refresh token:
+  1. Keycloak rejects the request with HTTP 400 and error code `invalid_grant`.
+  2. In accordance with RFC 9700 §4.14, Keycloak invalidates the underlying user session (`UserSessionModel`), which automatically revokes the newly issued refresh token and marks all active access tokens as inactive upon token introspection.
+- **Remediation / Configuration:** Ensure `refreshTokenMaxReuse: 0` and `revokeRefreshToken: true` remain active in realm configuration.
+
+### FIND-002: Anti-Enumeration Protection on SMTP Downstream Outage
+- **Result:** Passed. Expected behaviour confirmed.
+- **Specification:** OWASP ASVS v4.0.3 V2.5.4, V2.5.6 ("Verify the application displays generic messages on password reset requests").
+- **Observation:** When downstream SMTP infrastructure is severed (simulated via Toxiproxy cutting upstream connection to Mailpit), submitting a password reset request displays:
+  > *"Failed to send email, please try again later."*
+  The response is uniform regardless of whether the submitted username exists in the realm or not. No usernames, email addresses, or system error stack traces are reflected back to the client.
+- **Remediation / Configuration:** Keep custom login theme error messages aligned with the default generic response.
+
+### FIND-003: Rapid-Burst Heuristic Mitigation vs Exact Lockout Threshold
+- **Severity:** Informational
+- **Specification:** OWASP ASVS v4.0.3 V2.2.1, V2.2.2.
+- **Observation:** Keycloak's brute-force attack detection includes `quickLoginCheckMilliSeconds` (default: 1000ms). Submitting multiple failed credentials within a 1-second interval triggers rapid-burst mitigation before the configured `failureFactor` (e.g. $N=3$) is reached. In high-speed automated integration test suites, setting `quickLoginCheckMilliSeconds: 0` isolates the exact failure count threshold for deterministic validation.
+- **Remediation / Configuration:** In production, leave `quickLoginCheckMilliSeconds: 1000` enabled for defense-in-depth against scripted bots.
+
+### FIND-004: Netty Queue Load Shedding Under Concurrency Bursts
+- **Result:** Passed. Expected behaviour confirmed.
+- **Specification:** OWASP ASVS v4.0.3 V13.1.5.
+- **Observation:** Under a concurrent burst of 300 simultaneous token requests with `--http-max-queued-requests 20`, Keycloak gracefully sheds excess load by returning HTTP `503 Service Unavailable` (*"Server not Available"*) for 216 requests. Exactly 0 unhandled HTTP 500 internal server errors occurred, and the service recovered instantly (HTTP 200 within 2 seconds). This protects the PostgreSQL thread and connection pools from exhaustion.
+- **Remediation / Configuration:** Size `--http-max-queued-requests` and worker pool threads proportionally to database connection pool limits.
+
+### FIND-005: Master Realm Administrative Token Short Expiration
+- **Severity:** Low
+- **Specification:** OWASP ASVS v4.0.3 V13.2.3.
+- **Observation:** Access tokens issued to `admin-cli` in the `master` realm have an enforced lifespan of 60 seconds. Long-running batch operations (such as walking 10,000 users with `max=1` taking ~66 seconds) fail midway with `401 Unauthorized` if tokens are not proactively refreshed.
+- **Remediation / Configuration:** Automated scripts and API consumers must use token management wrappers (`_AdminAuthManager`) that dynamically renew tokens before the 60-second boundary.
+
+### FIND-006: Atomicity and Rollback in Partial Import Collisions
+- **Result:** Passed. Expected behaviour confirmed.
+- **Specification:** OWASP ASVS v4.0.3 V13.2.1.
+- **Observation:** When executing `/admin/realms/{realm}/partialImport` with policy `ifResourceExists: "FAIL"` on a payload containing both new users and conflicting users, encountering a duplicate throws a `ModelDuplicateException`. Keycloak executes the import inside a unified Jakarta Transaction (JTA). The transaction rolls back atomically, leaving the database completely clean with 0 new users persisted.
+- **Remediation / Configuration:** Document policy behavior: use `FAIL` when strict atomicity is required, or `SKIP` / `OVERWRITE` for idempotent ETL imports.
+
+### FIND-007: Major Schema Upgrade Credential & Secret Continuity
+- **Result:** Passed. Expected behaviour confirmed.
+- **Specification:** OWASP ASVS v4.0.3 V14.2.3.
+- **Observation:** An automated major version upgrade from Keycloak 25.0.6 (N-1) to Keycloak 26.0.5 (N) over 10,000 seeded users executed Liquibase schema migrations and reached ready state in **16.54 seconds** on a GitHub ubuntu-latest runner (SLA $\le$ 300s). The test suite starts Keycloak 25.0.6 on a fresh database, seeds 10,000 users, enrolls TOTP for 20 users in memory, verifies an uncompressed database dump via pg_dump, switches the container image to 26.0.5, and validates that all 20 enrolled TOTP secrets and password credentials authenticate successfully (20/20) alongside confidential client secrets (`confidential-secret-1234`) and cryptographic OIDC PKCE code flows.
+- **Remediation / Configuration:** Take pre-upgrade database snapshots (`pg_dump`) prior to applying major schema upgrades in production.
+
+### FIND-008: Admin user list repeats users when users are created mid-walk
+- **Severity:** Low
+- **Observation:** `GET /admin/realms/{realm}/users` pages with `first`/`max`, an offset into the list sorted by username. In CI run [39540623713](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39540623713), 300 users named `conc_user_p8_*` were imported while a walk of 10,000 users was past that point in the alphabet. Every later page shifted by 300, and the walk returned exactly 300 baseline users twice. No user was missed. On the laptop the import landed ahead of the cursor, so the same test saw 0 repeats; the result depends on timing.
+- **Remediation / Configuration:** Clients that export or sync users must deduplicate by user ID, or page by a stable key (for example a username range with `search`) instead of an offset. Deleting users during a walk would shift the list the other way and skip users; that case is not tested here.

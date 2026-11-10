@@ -1,0 +1,33 @@
+[project]
+name = "lead-generator"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# *.md: ruff format also rewrites fenced Python code blocks inside Markdown; this project's
+# README/EXECUTION_PLAN are client-facing docs, not something a lint gate should rewrite.
+extend-exclude = [".venv", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]
+extend-ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+exclude = ["^\\.venv/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m \"not integration and not e2e\""
+markers = [
+    "integration: needs Docker (real Postgres via docker compose)",
+    "e2e: full job run against the real docker compose stack (demo-directory + api + postgres)",
+]
+
+[tool.coverage.run]
+source = ["app"]

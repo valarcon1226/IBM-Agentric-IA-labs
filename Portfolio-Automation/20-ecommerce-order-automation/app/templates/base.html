@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Panel Administrativo{% endblock %} - Café de Origen</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="/admin/orders" class="brand">
+      <span>☕</span> Café de Origen · Panel de Despachos
+    </a>
+    {% if current_user %}
+    <nav class="nav-links">
+      <a href="/admin/orders" class="nav-link {% if active_page == 'orders' %}active{% endif %}">Pedidos</a>
+      <a href="/admin/products" class="nav-link {% if active_page == 'products' %}active{% endif %}">Catálogo Café</a>
+      <a href="/admin/logout" class="nav-link logout">Cerrar Sesión ({{ current_user }})</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>Café de Origen &copy; 2026 · Automatización Centralizada de Pedidos (Shopify, WooCommerce, Stripe)</p>
+  </footer>
+</body>
+</html>

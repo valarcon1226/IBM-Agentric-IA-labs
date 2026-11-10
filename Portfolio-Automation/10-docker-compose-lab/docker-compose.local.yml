@@ -1,0 +1,42 @@
+services:
+  traefik:
+    environment:
+      - DOCKER_API_VERSION=1.40
+    command:
+      - "--api.insecure=false"
+      - "--ping=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=10-docker-compose-lab_frontend_net"
+      - "--entrypoints.web.address=:80"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=metrics"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+      - "--entrypoints.metrics.address=:8082"
+    ports: !override
+      - "127.0.0.1:8088:80"
+
+  fastapi-gateway:
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.fastapi.entrypoints=web"
+      - "traefik.http.services.fastapi.loadbalancer.server.port=8000"
+
+  n8n:
+    environment:
+      - N8N_HOST=n8n.localhost
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://n8n.localhost:8088/
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.localhost`)"
+      - "traefik.http.routers.n8n.entrypoints=web"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+  grafana:
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"

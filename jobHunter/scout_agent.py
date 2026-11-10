@@ -1,0 +1,237 @@
+import json
+import database
+import profile_paths
+import os
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+import time
+from typing import List
+from pydantic import BaseModel, Field
+from job_scraper import autonomous_job_search, search_jobright, clean_job_description
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import llm_chain
+import job_filters
+import job_scoring
+
+# ==========================================
+# 1. ESQUEMAS DE DATOS
+# ==========================================
+
+class ViabilityReport(BaseModel):
+    is_viable: bool = Field(description="True if candidate meets the minimum threshold to be considered for the job.")
+    match_percentage: int = Field(description="Estimated match percentage (0-100).")
+    missing_skills_to_study: List[str] = Field(description="Gap Analysis: What the candidate MUST study before the technical interview.")
+    reasoning: str = Field(description="Brief explanation of why they are viable or not.")
+
+# ==========================================
+# 2. LAS TOOLS DEL SCOUT
+# (el LLM en si -- Gemini/Groq/Cerebras/OpenRouter, con fallback automatico entre los 4 -- vive en llm_chain.py)
+# ==========================================
+
+# Búsqueda enfocada (corrida puntual, no el loop 24/7): p. ej. solo QA Automation mid-level
+#   SCOUT_QUERIES="QA Automation Engineer|SDET"  -> estas búsquedas fijas, una sola pasada
+#   SCOUT_FAMILY=qa_automation                   -> solo esa familia de rol
+#   SCOUT_YEARS=3-4                              -> años pedidos en ese rango (o sin años y seniority mid)
+# Lo que queda fuera del foco NO se guarda, para que el scout normal lo evalúe después.
+FOCUS_QUERIES = [q.strip() for q in os.environ.get("SCOUT_QUERIES", "").split("|") if q.strip()]
+FOCUS_FAMILY = os.environ.get("SCOUT_FAMILY", "").strip()
+FOCUS_YEARS = tuple(int(x) for x in os.environ.get("SCOUT_YEARS", "").split("-")) if os.environ.get("SCOUT_YEARS") else None
+
+
+def in_focus(facts) -> bool:
+    if FOCUS_FAMILY and facts.role_family != FOCUS_FAMILY:
+        return False
+    if FOCUS_YEARS:
+        lo, hi = FOCUS_YEARS
+        years_ok = lo <= facts.required_years <= hi
+        unstated_mid = facts.required_years == 0 and facts.seniority_level == "mid"
+        if not (years_ok or unstated_mid):
+            return False
+    return True
+
+
+def evaluate_viability_and_gaps(job_title: str, clean_job_desc: str, candidate_context: str, seniority_context: str) -> ViabilityReport:
+    """Evalúa en dos pasos (job_scoring.py): el LLM solo extrae hechos de la JD y Python calcula el match
+    contra master_profile.json. Pedirle al LLM un match holístico daba 85% a casi todo.
+    Si todos los proveedores fallan por cuota, AllProvidersExhausted sube hasta run_scout_agent()."""
+    # Solo modelo local por defecto: es el 90%+ de las llamadas del proyecto y agotaba la nube antes del mediodía.
+    # SCOUT_LOCAL_ONLY=0 vuelve a probar la nube primero.
+    facts = job_scoring.extract_facts(job_title, clean_job_desc,
+                                      local_only=os.environ.get("SCOUT_LOCAL_ONLY", "1") == "1")
+    if not in_focus(facts):
+        return None
+    viable, pct, missing, reasoning = job_scoring.score(facts)
+    return ViabilityReport(is_viable=viable, match_percentage=pct,
+                           missing_skills_to_study=missing, reasoning=reasoning)
+
+from database import save_job
+
+def export_curated_jobs_to_queue(job: dict, report: ViabilityReport):
+    """Guarda los trabajos viables en SQLite (jobs.db) para el Agente 3 (Tailor)"""
+    gap_str = ", ".join(report.missing_skills_to_study)
+
+    save_job(
+        url=job['url'],
+        title=job['title'],
+        company=job['company'],
+        status="Aprobado",
+        scraped_content=job['description'],
+        match_percentage=report.match_percentage,
+        gap_analysis=gap_str
+    )
+
+# ==========================================
+# 3. ORQUESTACIÓN DEL SCOUT (AGENTE 2)
+# ==========================================
+
+class SearchQueries(BaseModel):
+    queries: List[str] = Field(description="Lista exacta de 3 términos de búsqueda. Cero texto conversacional.")
+
+_QUERY_SYSTEM_PROMPT = ("You are an AI Job Search Strategist. Read the candidate's JSON profile. "
+                         "Determine their seniority based on their experience. "
+                         "Return exactly 3 highly targeted job search keywords that fit their exact level and skills. "
+                         "IMPORTANT: Return ONLY the raw keywords. NO conversational text, NO greetings.")
+
+def generate_smart_search_queries(profile: dict) -> List[str]:
+    """Lee el perfil y genera términos de búsqueda precisos, con el mismo fallback de 4 proveedores."""
+    print(f"[INFO] Analizando tu perfil para generar queries de búsqueda exactos...")
+    try:
+        res = llm_chain.invoke_structured(
+            system_prompt=_QUERY_SYSTEM_PROMPT,
+            human_template="{profile_str}",
+            variables={"profile_str": json.dumps(profile)},
+            pydantic_model=SearchQueries,
+            temperature=0.7,
+        )
+        return res.queries[:3]
+    except llm_chain.AllProvidersExhausted:
+        raise
+    except Exception:
+        return [profile.get("target_roles", "Software Engineer")]
+
+def run_scout_agent():
+    print("======================================================")
+    print("Iniciando Scout Agent (Buscador Autónomo 24/7)")
+    print("======================================================\n")
+
+    try:
+        with open(profile_paths.resolve("master_profile.json"), "r", encoding="utf-8") as f:
+            profile = json.load(f)
+    except Exception:
+        print("[ERROR] No se encontró master_profile.json")
+        return
+
+    user_seniority = profile.get("seniority_context", "Mid-Level / 2-3 años")
+    print(f"[INFO] Contexto de Seniority extraído: {user_seniority}")
+
+    starting_count = len(database.get_approved_jobs()) # Revisar cuántos tenemos ya
+    total_viables = starting_count
+    new_jobs_goal = int(os.environ.get("SCOUT_NEW_JOBS_GOAL", "100"))  # solo cuentan las nuevas de 70%+
+    target_count = starting_count + new_jobs_goal
+    max_runtime_hours = float(os.environ.get("SCOUT_MAX_RUNTIME_HOURS", "3"))
+
+    active = llm_chain.active_providers()
+    print(f"[INFO] Ya tienes {starting_count} trabajos aprobados. Meta: {new_jobs_goal} vacantes NUEVAS (hasta {target_count} en total), "
+          f"tope de {max_runtime_hours}h. Proveedores LLM disponibles ahora: {', '.join(active) if active else 'NINGUNO'} "
+          f"(salta automáticamente al siguiente si alguno se queda sin cuota).\n")
+
+    iteration = 1
+    start_time = time.time()
+
+    while total_viables < target_count:
+        if (time.time() - start_time) > max_runtime_hours * 3600:
+            print(f"\n[TIEMPO AGOTADO] Se alcanzó el tope de {max_runtime_hours}h. Deteniendo búsqueda de forma segura.")
+            break
+
+        print(f"\n--- [ITERACIÓN {iteration}] Generando nueva estrategia de búsqueda ---")
+        try:
+            smart_queries = FOCUS_QUERIES or generate_smart_search_queries(profile)
+        except llm_chain.AllProvidersExhausted:
+            print("\n[CUOTA AGOTADA] Los 4 proveedores (Gemini/Groq/Cerebras/OpenRouter) se quedaron sin cupo. "
+                  "Deteniendo el Scout de forma segura.")
+            return
+        print(f"[TARGET] Nuevas Palabras Clave: {smart_queries}\n")
+
+        # Jobright primero: ya vienen emparejadas con el perfil (una página nueva por iteración)
+        for query in ["Jobright", "Correo"] + list(smart_queries):
+            if total_viables >= target_count:
+                break
+
+            print(f"\n>> RASTREANDO: '{query}'")
+            if query == "Jobright":
+                raw_jobs = search_jobright(iteration - 1)
+            elif query == "Correo":
+                from mail_triage import alert_jobs
+                raw_jobs = alert_jobs()
+            else:
+                raw_jobs = autonomous_job_search(query)
+
+            if not raw_jobs:
+                print(f"[INFO] Cero resultados. Pasando a la siguiente...")
+                continue
+
+            for i, job in enumerate(raw_jobs, 1):
+                if total_viables >= target_count:
+                    break
+
+                print(f"[{i}/{len(raw_jobs)}] Evaluando: {job['title']} en {job['company']}")
+                clean_desc = clean_job_description(job['description'])
+
+                reason = job_filters.rejection_reason(job, clean_desc)
+                if reason:
+                    print(f"   [FILTRO] Saltada sin gastar LLM: {reason}")
+                    continue
+
+                try:
+                    report = evaluate_viability_and_gaps(job['title'], clean_desc, json.dumps(profile), user_seniority)
+                except llm_chain.AllProvidersExhausted:
+                    print("\n[CUOTA AGOTADA] Los 4 proveedores (Gemini/Groq/Cerebras/OpenRouter) se quedaron sin cupo. "
+                          "Deteniendo el Scout de forma segura para no seguir descartando vacantes por error.")
+                    return
+                if report is None:
+                    print("   [FOCO] Fuera del foco de esta búsqueda (rol/años). No se guarda.")
+                    continue
+
+                # 70+ -> Aprobado (el tailor le hace CV) · 40-69 -> se muestra sin CV · <40 o no viable ->
+                # No Elegible (el dashboard la oculta; se guarda igual para no re-evaluarla en cada corrida)
+                gaps_str = ", ".join(report.missing_skills_to_study) if report.missing_skills_to_study else ""
+                if not report.is_viable or report.match_percentage < 40:
+                    database.save_job(
+                        url=job['url'], title=job['title'], company=job['company'], status="No Elegible",
+                        match_percentage=report.match_percentage, gap_analysis=gaps_str
+                    )
+                    database.set_job_location(job['url'], job.get('location', ''))
+                    print(f"   [X] [DESCARTADO] ({report.match_percentage}%). Razón: {report.reasoning}")
+                else:
+                    status = "Aprobado" if report.match_percentage >= 70 else "Match Insuficiente"
+                    is_new = database.save_job(
+                        url=job['url'], title=job['title'], company=job['company'],
+                        status=status, scraped_content=job['description'],
+                        match_percentage=report.match_percentage, gap_analysis=gaps_str
+                    )
+                    database.set_job_location(job['url'], job.get('location', ''))
+                    if is_new and status == "Aprobado":
+                        total_viables += 1
+                        print(f"   [V] [MATCH VIABLE NUEVO] ({report.match_percentage}%). Guardando. (Progreso: {total_viables}/{target_count})")
+                    else:
+                        print(f"   [V] [MATCH VIABLE] ({report.match_percentage}%) pero ya estaba en la base de datos. Actualizado, no cuenta como nuevo.")
+
+        if FOCUS_QUERIES:
+            print("\n[FOCO] Búsquedas fijas recorridas una vez. Fin de la corrida enfocada.")
+            return
+        if total_viables < target_count:
+            print("\n[PAUSA] Agoté estas palabras clave. Esperando 10 segundos antes de generar nuevas ideas...")
+            time.sleep(10)
+            iteration += 1
+
+    print(f"\n======================================================")
+    print(f" Scout Logró su Meta de {target_count} trabajos viables.")
+    print(f"======================================================")
+
+if __name__ == "__main__":
+    run_scout_agent()

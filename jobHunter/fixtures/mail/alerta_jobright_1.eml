@@ -1,0 +1,35 @@
+Content-Type: multipart/alternative;
+ boundary="===============4736968360628030524=="
+MIME-Version: 1.0
+From: Jobright Alerts <alerts@jobright.ai>
+To: candidate@example.com
+Subject: New matched jobs for your profile - Jobright
+Date: Thu, 23 Oct 2026 07:00:00 +0000
+Message-ID: <alerta-jr-801@jobright.ai>
+
+--===============4736968360628030524==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+SGVyZSBhcmUgMiBuZXcgam9icyBtYXRjaGluZyB5b3VyIHByb2ZpbGU6CgoxLiBTZW5pb3IgUUEg
+QXV0b21hdGlvbiBFbmdpbmVlciBhdCBDbG91ZFNjYWxlIC0gUmVtb3RlIC0gaHR0cHM6Ly9qb2Jy
+aWdodC5haS9qb2JzL2luZm8vY3MtMTAxCjIuIFB5dGhvbiBCYWNrZW5kIERldmVsb3BlciBhdCBE
+YXRhU3RyZWFtIC0gTmV3IFlvcmssIE5ZIC0gaHR0cHM6Ly9qb2JyaWdodC5haS9qb2JzL2luZm8v
+ZHMtMjAyCgpIYXBweSBqb2IgaHVudGluZyE=
+
+--===============4736968360628030524==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGJvZHk+CjxoMj5OZXcgTWF0Y2hlZCBKb2JzIGZvciBZb3U8L2gyPgo8ZGl2IGNsYXNz
+PSJqb2ItY2FyZCI+CiAgPGgzPjxhIGhyZWY9Imh0dHBzOi8vam9icmlnaHQuYWkvam9icy9pbmZv
+L2NzLTEwMSI+U2VuaW9yIFFBIEF1dG9tYXRpb24gRW5naW5lZXI8L2E+PC9oMz4KICA8cCBjbGFz
+cz0iY29tcGFueSI+Q2xvdWRTY2FsZTwvcD4KICA8c3BhbiBjbGFzcz0ibG9jYXRpb24iPlJlbW90
+ZTwvc3Bhbj4KPC9kaXY+CjxkaXYgY2xhc3M9ImpvYi1jYXJkIj4KICA8aDM+PGEgaHJlZj0iaHR0
+cHM6Ly9qb2JyaWdodC5haS9qb2JzL2luZm8vZHMtMjAyIj5QeXRob24gQmFja2VuZCBEZXZlbG9w
+ZXI8L2E+PC9oMz4KICA8cCBjbGFzcz0iY29tcGFueSI+RGF0YVN0cmVhbTwvcD4KICA8c3BhbiBj
+bGFzcz0ibG9jYXRpb24iPk5ldyBZb3JrLCBOWTwvc3Bhbj4KPC9kaXY+CjwvYm9keT48L2h0bWw+
+
+--===============4736968360628030524==--

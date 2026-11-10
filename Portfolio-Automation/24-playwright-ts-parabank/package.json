@@ -1,0 +1,29 @@
+{
+  "name": "24-playwright-ts-parabank",
+  "version": "1.0.0",
+  "description": "Playwright + TypeScript automated testing framework for ParaBank",
+  "private": true,
+  "scripts": {
+    "test": "playwright test --project=api --project=edge",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=edge",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "test:cross-browser": "playwright test --project=edge --project=firefox --project=webkit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"playwright.config.ts\" \"global-setup.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"playwright.config.ts\" --fix",
+    "format:check": "prettier --check \"**/*.{ts,json,md,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{ts,json,md,yml,yaml}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.48.2",
+    "@types/node": "20.17.0",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "dotenv": "16.4.5",
+    "eslint": "8.57.1",
+    "prettier": "3.3.3",
+    "typescript": "5.5.4"
+  }
+}

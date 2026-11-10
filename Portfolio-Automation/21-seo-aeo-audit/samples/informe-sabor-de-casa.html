@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoría SEO &amp; AEO de Alto Impacto - http://localhost:8016/</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #818cf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    
+    /* Header */
+    .header {
+      background: #0f172a;
+      color: #fff;
+      padding: 32px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .badge-client {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .header h1 { font-size: 2rem; margin-top: 12px; color: #fff; }
+    .header p { color: #94a3b8; font-size: 1rem; margin-top: 6px; }
+
+    /* Score Grid */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .score-card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 14px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    }
+    .score-card h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 12px; }
+    .score-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .score-green { background: #dcfce7; color: #15803d; border: 3px solid #22c55e; }
+    .score-yellow { background: #fef3c7; color: #b45309; border: 3px solid #f59e0b; }
+    .score-red { background: #fee2e2; color: #b91c1c; border: 3px solid #ef4444; }
+    .score-muted { background: #f1f5f9; color: #64748b; border: 3px dashed #cbd5e1; font-size: 1.2rem; }
+
+    /* Section Cards */
+    .card {
+      background: #fff;
+      padding: 28px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+    .executive-box {
+      background: #f8fafc;
+      border-left: 5px solid #38bdf8;
+      padding: 20px;
+      border-radius: 0 10px 10px 0;
+      font-size: 1.05rem;
+      color: #334155;
+      line-height: 1.7;
+    }
+    .source-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    /* AEO Table */
+    .aeo-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .aeo-table th, .aeo-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .aeo-table th { background: #f8fafc; font-weight: 600; color: #475569; }
+    .aeo-pts { font-weight: 700; color: #0f172a; text-align: right; }
+
+    /* Issues */
+    .issue-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+    .issue-item.severity-CRITICAL { border-left: 6px solid #ef4444; }
+    .issue-item.severity-HIGH { border-left: 6px solid #f97316; }
+    .issue-item.severity-MEDIUM { border-left: 6px solid #f59e0b; }
+    .issue-item.severity-LOW { border-left: 6px solid #3b82f6; }
+
+    .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+    .issue-title { font-weight: 700; font-size: 1.05rem; color: #0f172a; }
+    .pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .pill-CRITICAL { background: #fee2e2; color: #b91c1c; }
+    .pill-HIGH { background: #ffedd5; color: #c2410c; }
+    .pill-MEDIUM { background: #fef3c7; color: #b45309; }
+    .pill-LOW { background: #dbeafe; color: #1d4ed8; }
+
+    .issue-fix {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+    .issue-fix strong { color: #0f172a; }
+
+    /* Good Points */
+    .good-list { list-style: none; }
+    .good-list li {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      color: #166534;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Pages Table */
+    .pages-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+    .pages-table th, .pages-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .pages-table th { background: #f8fafc; color: #475569; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; color: #000; }
+      .card, .header { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .score-circle { border-width: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <span class="badge-client">Informe Confidencial para Clientes</span>
+        <span style="font-size: 0.85rem; color: #94a3b8;">2026-10-14 12:46</span>
+      </div>
+      <h1>Auditoría SEO &amp; AEO (Optimización para Buscadores e IA)</h1>
+      <p><strong>Sitio Web Auditado:</strong> <a href="http://localhost:8016/" style="color: #38bdf8; text-decoration: none;" target="_blank">http://localhost:8016/</a> | <strong>Páginas Analizadas:</strong> 8</p>
+    </div>
+
+    <!-- Score Grid -->
+    <div class="score-grid">
+      <div class="score-card">
+        <h3>Puntaje Global</h3>
+        <div class="score-circle score-red">
+          35
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">Rendimiento Integral</p>
+      </div>
+
+      <div class="score-card">
+        <h3>SEO On-Page &amp; Técnico</h3>
+        <div class="score-circle score-red">
+          0
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">Visibilidad en Google</p>
+      </div>
+
+      <div class="score-card">
+        <h3>AEO (Respuestas IA)</h3>
+        <div class="score-circle score-red">
+          40
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b;">ChatGPT / Perplexity / Gemini</p>
+      </div>
+
+      <div class="score-card">
+        <h3>Lighthouse (Inicio)</h3>
+        
+          <div class="score-circle score-green">
+            89
+          </div>
+          <p style="font-size: 0.75rem; color: #64748b;">
+            A11y: <strong>95</strong> | BP: <strong>100</strong> | SEO: <strong>92</strong>
+          </p>
+        
+      </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋</span> Resumen Ejecutivo de Negocio
+      </div>
+      <div class="executive-box">
+        El sitio web http://localhost:8016/ obtiene un puntaje general de 35/100 (SEO Técnico: 0/100, AEO para IA: 40/100). El diagnóstico indica que la propiedad digital presenta barreras técnicas significativas que limitan su captación de clientes e indexación en buscadores e inteligencia artificial.<br><br>Actualmente se han detectado 3 puntos de impacto alto o crítico. En el nuevo ecosistema donde los usuarios buscan tanto en Google como en asistentes de IA (ChatGPT, Perplexity, Gemini), optimizar la estructura de datos, jerarquía de encabezados y respuestas concisas es fundamental para no perder clientes frente a la competencia.<br><br>Plan de acción inmediato recomendado:<br>• Prioridad 1 (SEO On-Page): Se encontraron 2 etiquetas <h1>. Debe existir exactamente una por página. - Solución: Conserva únicamente un <h1> principal y convierte los demás en <h2> o <h3>.<br>• Prioridad 2 (SEO On-Page): Se encontraron 2 etiquetas <h1>. Debe existir exactamente una por página. - Solución: Conserva únicamente un <h1> principal y convierte los demás en <h2> o <h3>.<br>• Prioridad 3 (SEO On-Page): Se detectaron 1 títulos duplicados entre diferentes páginas rastreadas. - Solución: Personaliza el <title> de cada página para que sea 100% único y refleje su contenido exclusivo.
+        <div class="source-tag">Fuente del resumen: Plantilla Dinámica de Consultoría</div>
+      </div>
+    </div>
+
+    <!-- AEO Details -->
+    <div class="card">
+      <div class="card-title">
+        <span>🤖</span> Desglose AEO: Preparación para Motores de IA (Puntaje: 40/100)
+      </div>
+      <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 16px;">
+        Evaluación de la capacidad del sitio para ser citado y seleccionado como fuente preferida por asistentes de inteligencia artificial (SearchGPT, Perplexity, Google Overviews).
+      </p>
+      <table class="aeo-table">
+        <thead>
+          <tr>
+            <th>Criterio AEO</th>
+            <th>Diagnóstico Detectado</th>
+            <th style="text-align: right;">Puntos</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><strong>Preguntas como encabezados</strong></td>
+            <td style="color: #475569;">Insuficiente: no se detectaron encabezados en formato de pregunta.</td>
+            <td class="aeo-pts">0 / 25</td>
+          </tr>
+          
+          <tr>
+            <td><strong>Respuestas concisas bajo cada pregunta</strong></td>
+            <td style="color: #475569;">Sin preguntas formuladas para evaluar respuestas concisas.</td>
+            <td class="aeo-pts">0 / 25</td>
+          </tr>
+          
+          <tr>
+            <td><strong>Schema FAQ / HowTo / LocalBusiness</strong></td>
+            <td style="color: #475569;">Excelente: schema de alto impacto AEO detectado (restaurant).</td>
+            <td class="aeo-pts">25 / 25</td>
+          </tr>
+          
+          <tr>
+            <td><strong>Contacto y horarios legibles como texto</strong></td>
+            <td style="color: #475569;">Parcial: se detectaron contactos, pero faltan horarios de atención legibles como texto plano.</td>
+            <td class="aeo-pts">15 / 25</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Issues by Impact -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚠️</span> Oportunidades de Mejora Ordenadas por Impacto (29)
+      </div>
+      
+        
+        <div class="issue-item severity-HIGH">
+          <div class="issue-header">
+            <span class="issue-title">Se encontraron 2 etiquetas &lt;h1&gt;. Debe existir exactamente una por página.</span>
+            <span class="pill pill-HIGH">HIGH</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Conserva únicamente un &lt;h1&gt; principal y convierte los demás en &lt;h2&gt; o &lt;h3&gt;.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-HIGH">
+          <div class="issue-header">
+            <span class="issue-title">Se encontraron 2 etiquetas &lt;h1&gt;. Debe existir exactamente una por página.</span>
+            <span class="pill pill-HIGH">HIGH</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Conserva únicamente un &lt;h1&gt; principal y convierte los demás en &lt;h2&gt; o &lt;h3&gt;.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-HIGH">
+          <div class="issue-header">
+            <span class="issue-title">Se detectaron 1 títulos duplicados entre diferentes páginas rastreadas.</span>
+            <span class="pill pill-HIGH">HIGH</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+            <p style="font-size: 0.8rem; color: #475569; margin-bottom: 6px;">
+              <strong>Detalle:</strong> {&#39;Sabor de Casa&#39;: [&#39;http://localhost:8016/&#39;, &#39;http://localhost:8016&#39;]}
+            </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Personaliza el &lt;title&gt; de cada página para que sea 100% único y refleje su contenido exclusivo.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (13 caracteres): &#39;Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (13 caracteres): &#39;Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (24 caracteres): &#39;Contacto – Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/contacto/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/contacto/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (26 caracteres): &#39;Domicilios – Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/domicilios/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/domicilios/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/eventos-y-catering/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (20 caracteres): &#39;Menú – Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/menu/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/menu/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/politica-de-privacidad/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">El título es demasiado corto (24 caracteres): &#39;Reservas – Sabor de Casa&#39;.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/reservas/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Amplía el título para alcanzar entre 30 y 60 caracteres, agregando contexto de marca o servicio.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Falta la meta descripción (&lt;meta name=&#39;description&#39;&gt;).</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> SEO On-Page | <strong>URL:</strong> http://localhost:8016/reservas/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Añade una meta descripción persuasiva de entre 70 y 160 caracteres con llamada a la acción.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Se identificaron 1 páginas en el sitemap.xml sin enlaces internos directos descubiertos.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Estructura de Enlaces | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+            <p style="font-size: 0.8rem; color: #475569; margin-bottom: 6px;">
+              <strong>Detalle:</strong> [&#39;http://localhost:8016/wp-sitemap-posts-page-1.xml&#39;]
+            </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Enlaza estas páginas desde el menú principal, footer o contenido contextual para que reciban flujo de autoridad.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">No se encontraron encabezados que respondan preguntas directas de usuarios o IAs.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Optimización para IA (AEO) | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Estructura secciones clave usando preguntas directas (con &#39;¿&#39; y &#39;?&#39;) en &lt;h2&gt; o &lt;h3&gt; para facilitar respuestas en ChatGPT y Perplexity.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-MEDIUM">
+          <div class="issue-header">
+            <span class="issue-title">Faltan horarios de atención en texto plano para que asistentes de IA respondan sobre el negocio.</span>
+            <span class="pill pill-MEDIUM">MEDIUM</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Accesibilidad de Datos de Negocio | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Incluye tanto teléfono/email como los días y rangos horarios explícitos en el pie de página o sección de contacto.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/contacto/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/domicilios/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/eventos-y-catering/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/menu/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/politica-de-privacidad/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">Faltan etiquetas Open Graph clave: og:description, og:image.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Redes Sociales y Compartición | <strong>URL:</strong> http://localhost:8016/reservas/
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Implementa los metadatos Open Graph completos para asegurar previsualizaciones atractivas al compartir en WhatsApp, LinkedIn y redes sociales.
+          </div>
+        </div>
+        
+        <div class="issue-item severity-LOW">
+          <div class="issue-header">
+            <span class="issue-title">No se encontró el archivo llms.txt ni /.well-known/llms.txt.</span>
+            <span class="pill pill-LOW">LOW</span>
+          </div>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
+            <strong>Categoría:</strong> Preparación para IA (AEO) | <strong>URL:</strong> http://localhost:8016/llms.txt
+          </p>
+          
+          <div class="issue-fix">
+            <strong>💡 Cómo solucionarlo paso a paso:</strong> Crea un archivo llms.txt en markdown con un resumen conciso del negocio y enlaces clave para crawlers de IA (Perplexity, ChatGPT Search, Gemini).
+          </div>
+        </div>
+        
+      
+    </div>
+
+    <!-- What is Good -->
+    <div class="card">
+      <div class="card-title">
+        <span>✅</span> Fortalezas Detectadas (Lo que está bien) (25)
+      </div>
+      <ul class="good-list">
+        
+        <li><span>✓</span> Archivo robots.txt presente y accesible.</li>
+        
+        <li><span>✓</span> Datos estructurados JSON-LD válidos presentes (tipo: Restaurant).</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Contacto&#39;.</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Domicilios&#39;.</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Eventos y Catering&#39;.</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Menú&#39;.</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Política de Privacidad&#39;.</li>
+        
+        <li><span>✓</span> Estructura &lt;h1&gt; única y definida: &#39;Reservas&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/contacto/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/domicilios/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/eventos-y-catering/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/menu/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/politica-de-privacidad/&#39;.</li>
+        
+        <li><span>✓</span> Etiqueta canonical presente: &#39;http://localhost:8016/reservas/&#39;.</li>
+        
+        <li><span>✓</span> Excelente: schema de alto impacto AEO detectado (restaurant).</li>
+        
+        <li><span>✓</span> Idioma del documento declarado: lang=&#39;es&#39;.</li>
+        
+        <li><span>✓</span> Jerarquía de encabezados coherente (4 niveles evaluados).</li>
+        
+        <li><span>✓</span> Jerarquía de encabezados coherente (5 niveles evaluados).</li>
+        
+        <li><span>✓</span> No se detectaron enlaces internos rotos en la página.</li>
+        
+        <li><span>✓</span> Todas las imágenes (1) tienen atributo alt definido.</li>
+        
+        <li><span>✓</span> Título optimizado (34 caracteres): &#39;Eventos y Catering – Sabor de Casa&#39;.</li>
+        
+        <li><span>✓</span> Título optimizado (38 caracteres): &#39;Política de Privacidad – Sabor de Casa&#39;.</li>
+        
+        <li><span>✓</span> robots.txt referencia la ubicación del sitemap.</li>
+        
+        <li><span>✓</span> sitemap.xml encontrado y válido (1 URLs declaradas).</li>
+        
+      </ul>
+    </div>
+
+    <!-- Crawled Pages Overview -->
+    <div class="card">
+      <div class="card-title">
+        <span>🌐</span> Inventario de Páginas Rastreadas (8)
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="pages-table">
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Estado</th>
+              <th>Tiempo</th>
+              <th>Título</th>
+              <th>H1</th>
+              <th>JSON-LD</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td><a href="http://localhost:8016/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>60.6 ms</td>
+              <td>Sabor de Casa</td>
+              <td>Inicio</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>91.5 ms</td>
+              <td>Sabor de Casa</td>
+              <td>Inicio</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/contacto/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/contacto/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>96.1 ms</td>
+              <td>Contacto – Sabor de Casa</td>
+              <td>Contacto</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/domicilios/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/domicilios/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>48.0 ms</td>
+              <td>Domicilios – Sabor de Casa</td>
+              <td>Domicilios</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/eventos-y-catering/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/eventos-y-catering/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>43.8 ms</td>
+              <td>Eventos y Catering – Sabor de Casa</td>
+              <td>Eventos y Catering</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/menu/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/menu/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>46.8 ms</td>
+              <td>Menú – Sabor de Casa</td>
+              <td>Menú</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/politica-de-privacidad/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/politica-de-privacidad/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>46.5 ms</td>
+              <td>Política de Privacidad – Sabor de Casa</td>
+              <td>Política de Privacidad</td>
+              <td>Restaurant</td>
+            </tr>
+            
+            <tr>
+              <td><a href="http://localhost:8016/reservas/" target="_blank" style="color: #0284c7; text-decoration: none;">http://localhost:8016/reservas/</a></td>
+              <td><span style="color: #16a34a; font-weight: 700;">200</span></td>
+              <td>52.2 ms</td>
+              <td>Reservas – Sabor de Casa</td>
+              <td>Reservas</td>
+              <td>Restaurant</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Auditoría generada automáticamente en 60 segundos &bull; Portfolio-Automation 21-seo-aeo-audit &bull; Generado para prospección comercial</p>
+    </div>
+  </div>
+</body>
+</html>

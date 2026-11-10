@@ -1,0 +1,23 @@
+# targets.toml — CDC Data Replication Targets (GitHub runner, 4 vCPU / Homelab)
+
+[targets]
+# End-to-end lag p95 at 500 rows/s (seconds)
+end_to_end_lag_p95_500_rps = 5.0
+
+# End-to-end lag p95 at 1,000 rows/s (seconds)
+end_to_end_lag_p95_1000_rps = 10.0
+
+# Catch-up time after a 2 min sink slowdown at 500 rows/s (seconds)
+catch_up_time_slowdown_seconds = 180.0
+
+# Rows that differ after any fault test (1M-row reconcile)
+rows_differ_after_fault = 0
+
+# Reconciler time for 1M rows (seconds)
+reconciler_time_1m_seconds = 120.0
+
+# Rows lost or repeated in the initial snapshot of 1M rows
+snapshot_1m_rows_lost_or_repeated = 0
+
+# Nightly wall clock budget (minutes)
+nightly_wall_clock_minutes = 60.0

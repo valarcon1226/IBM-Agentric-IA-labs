@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Reports</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+:root { --bg:#f6f6f4; --card:#fff; --text:#1c1c1a; --muted:#6b6b66; --line:#e2e2dd; --accent:#c2410c; --ok:#15803d; --err:#b91c1c; }
+@media (prefers-color-scheme: dark) { :root { --bg:#151514; --card:#1f1f1d; --text:#ececea; --muted:#9a9a94; --line:#33332f; --accent:#fb923c; --ok:#4ade80; --err:#f87171; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, sans-serif; }
+main { max-width:1200px; margin:0 auto; padding:24px 16px; }
+h1 { margin:0 0 16px; font-size:24px; }
+textarea, input, select, button { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+textarea { width:100%; min-height:80px; resize:vertical; }
+button { cursor:pointer; }
+button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0 16px; }
+.row input[type=search] { flex:1; min-width:200px; }
+#jobs { list-style:none; padding:0; margin:0 0 16px; font-size:13px; }
+#jobs li { padding:4px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.listo { color:var(--ok); } .error { color:var(--err); } .procesando { color:var(--accent); }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+.chip[aria-pressed=true] { background:var(--text); color:var(--bg); }
+#grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:32px 16px; }
+.card { text-align:left; padding:0; border:0; background:none; display:flex; flex-direction:column; gap:12px; }
+.thumb { position:relative; border-radius:12px; overflow:hidden; background:var(--line); aspect-ratio:16/9; }
+.thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .2s; }
+.card:hover .thumb img, .card:focus-visible .thumb img { transform:scale(1.04); }
+.card:focus-visible { outline:2px solid var(--accent); outline-offset:4px; border-radius:12px; }
+.dur { position:absolute; right:8px; bottom:8px; background:#000c; color:#fff; font-size:12px; font-weight:600; padding:1px 5px; border-radius:4px; }
+.info { display:flex; gap:12px; }
+.avatar { flex:none; width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:600; }
+.info b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.35; font-size:16px; }
+.meta { color:var(--muted); font-size:14px; }
+a.watch { background:#cc0000; color:#fff; border-radius:99px; padding:8px 16px; text-decoration:none; font-weight:600; white-space:nowrap; }
+dialog { width:min(900px, 100vw - 32px); max-height:calc(100vh - 32px); padding:0; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--text); }
+dialog::backdrop { background:#0008; }
+.dhead { position:sticky; top:0; background:var(--card); padding:12px 16px; border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center; }
+.dhead h2 { flex:1; margin:0; font-size:17px; }
+.dbody { padding:0 20px 20px; }
+.dbody table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; }
+.dbody td, .dbody th { border:1px solid var(--line); padding:4px 8px; vertical-align:top; }
+.dbody code { overflow-wrap:anywhere; }
+.dbody pre { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Video Reports</h1>
+  <label for="urls">Pega links de YouTube (uno por línea) o términos de búsqueda</label>
+  <textarea id="urls" placeholder="https://www.youtube.com/watch?v=..."></textarea>
+  <div class="row"><button class="primary" id="go">Analizar</button><span id="msg" class="meta" role="status"></span></div>
+  <ul id="jobs"></ul>
+
+  <div class="row">
+    <input type="search" id="q" placeholder="Buscar en títulos, canales y reportes" aria-label="Buscar">
+    <label>Ordenar <select id="sort">
+      <option value="added">Más recientes</option>
+      <option value="title">Título A-Z</option>
+      <option value="channel">Canal A-Z</option>
+      <option value="duration">Duración</option>
+      <option value="category">Tema</option>
+    </select></label>
+  </div>
+  <div class="chips" id="chips" aria-label="Filtrar por tema"></div>
+  <div id="grid"></div>
+</main>
+
+<dialog id="dlg">
+  <div class="dhead"><h2 id="dtitle"></h2><a id="watch" class="watch" target="_blank" rel="noopener">▶ Ver en YouTube</a><button id="close" aria-label="Cerrar">✕</button></div>
+  <div class="dbody"><article id="report"></article></div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+let videos = [], topic = "", current = null;
+const secs = d => d.split(":").reduce((a, n) => a * 60 + +n, 0);
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function loadVideos() {
+  videos = await (await fetch("/api/videos")).json();
+  const topics = [...new Set(videos.map(v => v.category))].sort();
+  $("chips").innerHTML = ["", ...topics].map(t =>
+    `<button class="chip" aria-pressed="${t === topic}" data-t="${esc(t)}">${t ? esc(t) : "Todos"} (${t ? videos.filter(v => v.category === t).length : videos.length})</button>`).join("");
+  render();
+}
+
+function render() {
+  const q = $("q").value.toLowerCase(), key = $("sort").value;
+  const list = videos
+    .filter(v => !topic || v.category === topic)
+    .filter(v => !q || (v.title + v.channel + v.report).toLowerCase().includes(q))
+    .sort((a, b) => key === "added" ? b.added - a.added
+      : key === "duration" ? secs(b.duration) - secs(a.duration)
+      : a[key].localeCompare(b[key]));
+  $("grid").innerHTML = list.map(v => `
+    <button class="card" data-i="${videos.indexOf(v)}">
+      <div class="thumb">${v.id ? `<img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy">` : ""}${v.duration ? `<span class="dur">${esc(v.duration)}</span>` : ""}</div>
+      <div class="info"><span class="avatar" aria-hidden="true">${esc((v.channel || v.title)[0].toUpperCase())}</span>
+        <div><b>${esc(v.title)}</b><span class="meta">${esc(v.channel)}<br>${esc(v.category)}</span></div></div>
+    </button>`).join("") || `<p class="meta">Nada coincide con el filtro.</p>`;
+}
+
+function openReport(v) {
+  current = v;
+  $("dtitle").textContent = v.title;
+  $("watch").hidden = !v.id;
+  $("watch").href = `https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}`;
+  $("report").innerHTML = DOMPurify.sanitize(marked.parse(v.report));
+  $("dlg").showModal();
+}
+
+$("chips").onclick = e => { const b = e.target.closest(".chip"); if (b) { topic = b.dataset.t; loadVideos(); } };
+$("grid").onclick = e => { const c = e.target.closest(".card"); if (c) openReport(videos[c.dataset.i]); };
+$("q").oninput = render;
+$("sort").onchange = render;
+$("close").onclick = () => $("dlg").close();
+$("dlg").onclick = e => { if (e.target === $("dlg")) $("dlg").close(); };
+
+let polling = null, doneCount = 0;
+async function pollJobs() {
+  const jobs = await (await fetch("/api/jobs")).json();
+  $("jobs").innerHTML = jobs.map(j => `<li><span class="${j.status.replace(" ", "")}">${esc(j.status)}</span> — ${esc(j.url)}${j.status === "error" ? `<details><summary>ver log</summary><pre>${esc(j.log)}</pre></details>` : ""}</li>`).join("");
+  const done = jobs.filter(j => j.status === "listo").length;
+  if (done !== doneCount) { doneCount = done; loadVideos(); }
+  const pending = jobs.some(j => j.status === "en cola" || j.status === "procesando");
+  if (pending && !polling) polling = setInterval(pollJobs, 4000);
+  if (!pending && polling) { clearInterval(polling); polling = null; }
+}
+
+$("go").onclick = async () => {
+  const r = await fetch("/api/analyze", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ urls: $("urls").value }) });
+  const data = await r.json();
+  $("msg").textContent = r.ok ? `${data.queued} en cola. Cada video tarda unos minutos.` : data.error;
+  if (r.ok) $("urls").value = "";
+  pollJobs();
+};
+
+loadVideos();
+pollJobs();
+</script>
+</body>
+</html>

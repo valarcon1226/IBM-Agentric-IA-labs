@@ -1,45 +1,51 @@
-# AI & LLM Engineering Portfolio
+# Valentina Alarcon · QA automation portfolio
 
-Welcome to my AI engineering portfolio. This repository contains various practical projects focusing on Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), Autonomous Agents, Vector Databases, and Multimodal AI.
+I am a QA automation engineer. This repository collects the work I use to show how I test: suites against real open-source systems, framework projects in several stacks, and automation services built around small-business use cases.
 
-## Projects Included
+Most projects live in [`Portfolio-Automation/`](Portfolio-Automation/), which has its own index with the status and evidence of every project.
 
-### 1. ?? AI Agents Fundamentals (`AI-Agents-Fundamentals`)
-A collection of scripts demonstrating the core principles of AI Agents using LangChain. Includes an **AI Math Assistant** that leverages tool-calling to solve complex mathematical queries step-by-step, and an **LCEL** (LangChain Expression Language) pipeline for executing data science tasks autonomously.
-* **Tech Stack:** LangChain, Tool Calling, LCEL.
+## Start here: QA on real open-source systems
 
-### 2. ??? AI Meeting Assistant (`AI-Meeting-Assistant`)
-An intelligent agent designed to process meeting transcripts, summarize key points, and extract actionable action items automatically.
-* **Tech Stack:** Python, LangChain, LLM Summarization.
+Each suite runs the real product in containers and checks what tends to break in production: concurrency, retries, partial failures, pagination under writes and version upgrades. Every project README says where its numbers come from and what its limits are.
 
-### 3. ?? Candidate Filter (`Candidate-Filter`)
-An HR simulation application that combines **Semantic Similarity Search** with exact **Metadata Filtering** to find ideal candidates.
-* **Tech Stack:** Chroma DB, HuggingFace Sentence Transformers, Vector Embeddings.
+| Project | System under test | What it covers | CI |
+|---|---|---|---|
+| [34 · Order integrity](Portfolio-Automation/34-commerce-order-integrity/) | Saleor 3.20 | Pagination properties, checkout retries through a fault proxy, a 50-buyer stock race, webhook delivery under failures, a 3.19 → 3.20 upgrade with checksums | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/34-commerce-order-integrity.yml/badge.svg?branch=main) |
+| [35 · Document intake](Portfolio-Automation/35-document-intake-pipeline/) | Paperless-ngx 2.14.7 | A 500-document burst with broker faults, pagination ties, search latency, a 2.14.6 → 2.14.7 migration diff, an accessibility scan | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/35-document-intake-pipeline.yml/badge.svg?branch=main) |
+| [36 · CDC replication](Portfolio-Automation/36-cdc-data-replication/) | Postgres → Debezium → Redpanda → Postgres | Lag under load, a slow sink, a killed worker, poison records, live schema changes and a 1M-row snapshot, each verified by a reconciler that has its own tests | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/36-cdc-data-replication.yml/badge.svg?branch=main) |
+| [37 · Identity and access](Portfolio-Automation/37-identity-access/) | Keycloak 26 | OIDC with PKCE and negative cases, token replay, TOTP and lockout on three browsers, an SMTP outage, load shedding, a 25 → 26 upgrade | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/37-identity-access.yml/badge.svg?branch=main) |
+| [38 · LLM platform](Portfolio-Automation/38-llm-platform-evals/) | LiteLLM + Open WebUI + Ollama | Spend and budget accounting, rate limits, retries, a stream cut observed at three layers, and a RAG evaluation with a pre-registered protocol | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/38-llm-platform-evals.yml/badge.svg?branch=main) |
 
-### 4. ?? Document Ingestion Pipeline (`doc_ingest`)
-A complete document processing and ingestion pipeline for building RAG systems. It handles parsing, chunking, and embedding documents into a Vector DB, powered by background watchdog agents that update the database when new files are added.
-* **Tech Stack:** Chroma, SentenceTransformers, Watchdog, LangChain.
+## Test automation frameworks
 
-### 5. ?? Enterprise QA Agent (`Enterprise-QA-Agent`)
-A robust RAG-based Question Answering agent tailored for enterprise documents. It allows users to query internal company policies or manuals using natural language, providing accurate answers with citations. Includes a web interface built with Gradio.
-* **Tech Stack:** LangChain, Gradio, RAG.
+| Project | Stack | Notes | CI |
+|---|---|---|---|
+| [24 · ParaBank](Portfolio-Automation/24-playwright-ts-parabank/) | Playwright, TypeScript | UI flows verified against the REST API, page objects as fixtures, a table of designed versus automated scenarios | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/24-playwright-ts-parabank.yml/badge.svg?branch=main) |
+| [26 · Juice Shop](Portfolio-Automation/26-cypress-juice-shop/) | Cypress, TypeScript | Login, catalog, checkout, API and network-failure tests | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/26-cypress-juice-shop.yml/badge.svg?branch=main) |
+| [27 · API contract quality](Portfolio-Automation/27-api-contract-quality/) | Pact, Schemathesis, Newman | Consumer contracts and fuzzing against my own services; it found two defects in project 13, fixed since | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/27-api-contract-quality.yml/badge.svg?branch=main) |
+| [19 · Java suite](Portfolio-Automation/19-qa-java-suite/) | Java 21, Selenium, Cucumber, REST Assured, Allure | 35 cases, page objects shared by JUnit tests and Cucumber steps | Runs in Docker |
+| [15 · Python suite](Portfolio-Automation/15-qa-showcase/) | Python, Playwright, httpx | API and UI tests, including five that pin known bugs of the demo site | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/15-qa-showcase.yml/badge.svg?branch=main) |
+| [18 · Agent evals](Portfolio-Automation/18-mcp-agent-evals/) | MCP, pytest, Ollama | A tool server plus 30 evaluation cases for a tool-using agent | Local |
 
-### 6. ?? Food Search Chatbot (`Food-Search-Chatbot`)
-A conversational AI chatbot that helps users find food recipes or restaurant recommendations based on semantic search through a customized dataset.
-* **Tech Stack:** Python, Vector Search.
+## Automation services
 
-### 7. ?? Multimodal Generators (`Multimodal-Generators`)
-Projects utilizing multimodal AI capabilities. Includes an **AI Storyteller** that generates narratives, and a script interacting with DALL-E (or similar models) to generate images based on text prompts.
-* **Tech Stack:** Multimodal LLMs, Image Generation APIs.
+Backend and automation projects, each with code, tests and a README that states its limits. The full list with evidence is in the [portfolio index](Portfolio-Automation/README.md). A few to start with:
 
-### 8. ?? YouTube RAG Analyzer (`YouTube-RAG-Analyzer`)
-An intelligent tool that extracts transcripts from YouTube videos and uses RAG to allow users to ask questions, generate summaries, and extract specific information directly from video content.
-* **Tech Stack:** YouTube Transcript API, LangChain, RAG.
+- [13 · WhatsApp restaurant assistant](Portfolio-Automation/13-whatsapp-restaurant-assistant/) with its [web chat widget](Portfolio-Automation/22-web-chat-widget/)
+- [20 · E-commerce order automation](Portfolio-Automation/20-ecommerce-order-automation/): signed webhooks, idempotency and an admin panel
+- [14 · n8n automation pack](Portfolio-Automation/14-n8n-automation-pack/), tested against a real n8n
+- [04 · Data cleaning API](Portfolio-Automation/04-data-cleaning-api/), [11 · Monitoring](Portfolio-Automation/11-monitoring-dashboard/) and [12 · CI/CD pipeline](Portfolio-Automation/12-ci-cd-pipeline/)
 
-### 9. ?? Advanced RAG Techniques (`Advanced-RAG-Techniques`)
-Implementations of advanced retrieval techniques to improve RAG performance, including custom retrievers using **LlamaIndex** and **FAISS**, as well as context-aware retrieval optimization.
-* **Tech Stack:** LlamaIndex, FAISS, Advanced RAG.
+## Other work in this repository
 
-## Setup Instructions
+- [`YouTube-RAG-Analyzer`](YouTube-RAG-Analyzer/): turns videos into fact-checked notes using free LLM tiers.
+- [`doc_ingest`](doc_ingest/): local document ingestion and question answering with Ollama.
+- [`jobHunter`](jobHunter/): my own job-search automation. A personal tool, still without a README.
+- [`Homelab`](Homelab/): notes on the server that runs my automations.
+- Coursework from the IBM RAG and Agentic AI certificate, kept for reference: [`AI-Agents-Fundamentals`](AI-Agents-Fundamentals/), [`Advanced-RAG-Techniques`](Advanced-RAG-Techniques/), [`Candidate-Filter`](Candidate-Filter/), [`Enterprise-QA-Agent`](Enterprise-QA-Agent/), [`Food-Search-Chatbot`](Food-Search-Chatbot/) and [`Multimodal-Generators`](Multimodal-Generators/). They are short lab scripts that need IBM watsonx or OpenAI credentials.
 
-Each project is self-contained. Navigate to any project directory and follow the instructions in its respective `README.md` to install dependencies and run the scripts.
+## How to read the evidence
+
+- A CI badge shows the last run on `main`. Workflows are in [`.github/workflows`](.github/workflows/). The heavier suites (resilience, migration, performance) run in scheduled nightly jobs.
+- Each findings document separates what was measured from the explanation, and says so when a cause is not confirmed.
+- Versions of the systems under test are pinned in every compose file, so a result can be reproduced.

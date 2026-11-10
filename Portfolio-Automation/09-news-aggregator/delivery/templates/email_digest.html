@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Boletín Diario de Inteligencia</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #24292e;
+      background-color: #f6f8fa;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .header {
+      background: #0d1117;
+      color: #ffffff;
+      padding: 24px;
+      text-align: left;
+    }
+    .header h1 {
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      margin: 0;
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .content {
+      padding: 24px;
+    }
+    .category-section {
+      margin-bottom: 28px;
+      border-bottom: 1px solid #eaecef;
+      padding-bottom: 18px;
+    }
+    .category-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .category-title {
+      font-size: 18px;
+      color: #0969da;
+      margin: 0 0 14px 0;
+      display: inline-block;
+      border-bottom: 2px solid #0969da;
+      padding-bottom: 4px;
+    }
+    .article-item {
+      margin-bottom: 18px;
+    }
+    .article-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+    .article-title a {
+      color: #1f2328;
+      text-decoration: none;
+    }
+    .article-title a:hover {
+      color: #0969da;
+      text-decoration: underline;
+    }
+    .article-meta {
+      font-size: 12px;
+      color: #57606a;
+      margin-bottom: 6px;
+    }
+    .article-summary {
+      background-color: #f6f8fa;
+      border-left: 3px solid #0969da;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #333;
+      margin: 6px 0;
+      white-space: pre-line;
+    }
+    .article-duplicates {
+      font-size: 12px;
+      color: #6e7781;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .footer {
+      background-color: #f6f8fa;
+      border-top: 1px solid #e1e4e8;
+      padding: 16px 24px;
+      font-size: 12px;
+      color: #6e7781;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Boletín Diario de Inteligencia</h1>
+      <p>Reporte consolidado &middot; {{ digest_date }} &middot; Audiencia: {{ target_audience }}</p>
+    </div>
+    <div class="content">
+      {% if clustered_articles %}
+        {% for category, articles in clustered_articles.items() %}
+          <div class="category-section">
+            <h2 class="category-title">{{ category }}</h2>
+            {% for article in articles %}
+              <div class="article-item">
+                <div class="article-title">
+                  <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">{{ article.title }}</a>
+                </div>
+                <div class="article-meta">
+                  Fuente: <strong>{{ article.source_name }}</strong> &middot; {{ article.published_date }}
+                </div>
+                <div class="article-summary">
+                  {{ article.ai_summary }}
+                </div>
+                {% if article.duplicates %}
+                  <div class="article-duplicates">
+                    Otras fuentes con cobertura similar:
+                    {% for dup in article.duplicates %}
+                      <span><a href="{{ dup.url }}">{{ dup.source_name }}</a>{% if not loop.last %}, {% endif %}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color: #6e7781; font-style: italic;">No hay artículos nuevos registrados para este periodo.</p>
+      {% endif %}
+    </div>
+    <div class="footer">
+      News Aggregator &amp; Intelligence Reporter &middot; Generado automáticamente
+    </div>
+  </div>
+</body>
+</html>

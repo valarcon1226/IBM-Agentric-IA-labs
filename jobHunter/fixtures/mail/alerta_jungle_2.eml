@@ -1,0 +1,29 @@
+Content-Type: multipart/alternative;
+ boundary="===============0823812463991829825=="
+MIME-Version: 1.0
+From: Welcome to the Jungle <notifications@welcometothejungle.com>
+To: candidate@example.com
+Subject: Welcome to the Jungle - Nueva vacante para ti
+Date: Thu, 23 Oct 2026 08:30:00 +0000
+Message-ID: <alerta-wttj-804@welcometothejungle.com>
+
+--===============0823812463991829825==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+TnVldmEgdmFjYW50ZToKRGF0YSBFbmdpbmVlciBlbiBBbGFuOiBodHRwczovL3d3dy53ZWxjb21l
+dG90aGVqdW5nbGUuY29tL2VuL2NvbXBhbmllcy9hbGFuL2pvYnMvZGF0YS1lbmctMw==
+
+--===============0823812463991829825==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGJvZHk+CjxkaXYgY2xhc3M9ImpvYi1jb250YWluZXIiPgogIDxoMj48YSBocmVmPSJo
+dHRwczovL3d3dy53ZWxjb21ldG90aGVqdW5nbGUuY29tL2VuL2NvbXBhbmllcy9hbGFuL2pvYnMv
+ZGF0YS1lbmctMyI+RGF0YSBFbmdpbmVlcjwvYT48L2gyPgogIDxzcGFuIGNsYXNzPSJjb21wYW55
+Ij5BbGFuPC9zcGFuPgogIDxzcGFuIGNsYXNzPSJsb2NhdGlvbiI+UmVtb3RlPC9zcGFuPgo8L2Rp
+dj4KPC9ib2R5PjwvaHRtbD4=
+
+--===============0823812463991829825==--

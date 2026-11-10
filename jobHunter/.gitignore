@@ -1,0 +1,14 @@
+# Lista blanca: el repo es público y esta carpeta tiene .env, sesiones de login, jobs.db, CVs y
+# el perfil personal. Se ignora todo y solo se versiona el código.
+/*
+!/.gitignore
+!/*.py
+/sync_cvs_drive.py
+!/requirements.txt
+!/skill_estimates_curated.json
+!/COMO_USARLO.md
+!/INSTALAR_CON_IA.md
+!/CV_TEMPLATE/
+/CV_TEMPLATE/*
+!/CV_TEMPLATE/cv_template.html
+!/fixtures/

@@ -1,0 +1,146 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pricemonitor}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-pricemonitor}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  demo-store:
+    image: nginx:alpine
+    ports:
+      - "127.0.0.1:8087:80"
+    volumes:
+      - ./demo-store/html:/usr/share/nginx/html
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  webhook-sink:
+    image: mendhak/http-https-echo:latest
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8007:8000"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pricemonitor}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      SYNC_DATABASE_URL: ${SYNC_DATABASE_URL:-postgresql+psycopg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      API_TOKEN: ${API_TOKEN:-change_me_api_token}
+      WEBHOOK_ALERT_URL: ${WEBHOOK_ALERT_URL:-http://webhook-sink:8080/alerts}
+      IN_DOCKER: "true"
+      ALLOW_PRIVATE_TARGETS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      demo-store:
+        condition: service_healthy
+      webhook-sink:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build: .
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pricemonitor}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      SYNC_DATABASE_URL: ${SYNC_DATABASE_URL:-postgresql+psycopg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      API_TOKEN: ${API_TOKEN:-change_me_api_token}
+      WEBHOOK_ALERT_URL: ${WEBHOOK_ALERT_URL:-http://webhook-sink:8080/alerts}
+      IN_DOCKER: "true"
+      ALLOW_PRIVATE_TARGETS: "true"
+    volumes:
+      - ./demo-store/html:/app/demo-store/html
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      demo-store:
+        condition: service_healthy
+      webhook-sink:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('worker healthy')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  beat:
+    build: .
+    command: ["celery", "-A", "app.workers.celery_app", "beat", "--loglevel=info"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pricemonitor}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      SYNC_DATABASE_URL: ${SYNC_DATABASE_URL:-postgresql+psycopg://postgres:change_me_postgres_password@postgres:5432/pricemonitor}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      IN_DOCKER: "true"
+      ALLOW_PRIVATE_TARGETS: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('beat healthy')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  dashboard:
+    build: .
+    command: ["streamlit", "run", "app/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    ports:
+      - "127.0.0.1:8507:8501"
+    environment:
+      API_BASE_URL: http://api:8000
+      API_TOKEN: ${API_TOKEN:-change_me_api_token}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

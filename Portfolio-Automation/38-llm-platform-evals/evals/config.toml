@@ -1,0 +1,19 @@
+[model]
+tag = "qwen3:4b-instruct-2507-q4_K_M"
+digest = "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0"
+base_url = "http://127.0.0.1:11434"
+
+[corpus]
+repo = "kubernetes/website"
+commit = "7fde177e22dc98390a6d55d215dd0301b5f6d0bb"
+path = "content/en/docs/concepts"
+
+[eval]
+temperature = 0.0
+seed = 42
+dev_count = 30
+test_answerable_count = 96
+test_unanswerable_count = 24
+total_count = 150
+runs = 3
+regression_threshold = 0.03

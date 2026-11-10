@@ -1,0 +1,19 @@
+Content-Type: multipart/mixed; boundary="===============3183913510038239033=="
+MIME-Version: 1.0
+From: Python Weekly <newsletter@pythonweekly.com>
+To: candidate@example.com
+Subject: Python Weekly - Issue 650: What's new in Python 3.14
+Date: Thu, 23 Oct 2026 10:00:00 +0000
+Message-ID: <otro-news-701@pythonweekly.com>
+
+--===============3183913510038239033==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+V2VsY29tZSB0byBpc3N1ZSA2NTAgb2YgUHl0aG9uIFdlZWtseS4KCkFydGljbGVzOgotIEdldHRp
+bmcgc3RhcnRlZCB3aXRoIHRoZSBuZXcgR0lMIGZlYXR1cmVzCi0gQmVuY2htYXJraW5nIEZhc3RB
+UEkgd2l0aCB1dgoKQ2xpY2sgaGVyZSB0byB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbWFpbGluZyBs
+aXN0Lg==
+
+--===============3183913510038239033==--

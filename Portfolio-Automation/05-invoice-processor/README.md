@@ -46,27 +46,31 @@ flowchart TD
 - **Storage**: MinIO
 
 ## 4. Environment Variables
-Ensure the following variables are configured in `.env`:
+Ensure the following variables are configured in `.env` (copied from `.env.example`):
 
 ```ini
 # Database
-DATABASE_URL=postgresql://user:password@db:5432/invoices
+DATABASE_URL=postgresql://user:change_me_db_password@postgres:5432/invoices
+POSTGRES_USER=user
+POSTGRES_PASSWORD=change_me_db_password
+POSTGRES_DB=invoices
 
 # Redis / Celery
 REDIS_URL=redis://redis:6379/0
 
-# MinIO
+# MinIO Object Storage
 MINIO_ENDPOINT=minio:9000
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=change_me_minio_password
 MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
+MINIO_SECRET_KEY=change_me_minio_password
 MINIO_BUCKET=invoices-bucket
+MINIO_SECURE=false
 
-# Application Configuration
-TESSERACT_CMD=/usr/bin/tesseract
-MAX_SYNC_PAGES=3
-
-# Integrations (Optional)
-GOOGLE_SHEETS_CREDENTIALS=path/to/service-account.json
+# API Security & Engine
+API_BEARER_TOKEN=change_me_bearer_token
+MAX_SYNC_PAGES=1
+TESSERACT_CMD=tesseract
 ```
 
 ## 5. Database Schema
@@ -111,36 +115,67 @@ CREATE INDEX idx_invoices_created_at ON invoices(created_at);
 
 ## 6. API Endpoints
 
-### 6.1 POST /api/v1/invoices/process (Synchronous)
-Processes a single-page invoice immediately.
+All invoice API endpoints require Bearer authentication:
+`-H "Authorization: Bearer change_me_bearer_token"`
+
+### 6.0 GET /health
+Health check endpoint (no auth required).
 ```bash
-curl -X POST "http://localhost:8000/api/v1/invoices/process" \
-  -F "file=@invoice_single.pdf"
+curl -X GET "http://127.0.0.1:8005/health"
+```
+**Response:**
+```json
+{
+  "status": "healthy",
+  "service": "05-invoice-processor",
+  "database": "connected",
+  "minio": "connected",
+  "redis": "connected"
+}
+```
+
+### 6.1 POST /api/v1/invoices/process (Synchronous)
+Processes a single-page invoice immediately. Accepts PDF, PNG, JPG and TIFF up to 10 MB (415 / 413 otherwise); a PDF with more than `MAX_SYNC_PAGES` pages gets a 422 pointing to the async endpoint.
+```bash
+curl -X POST "http://127.0.0.1:8005/api/v1/invoices/process" \
+  -H "Authorization: Bearer change_me_bearer_token" \
+  -F "file=@tests/fixtures/factura_1_limpia.pdf"
 ```
 **Response:**
 ```json
 {
   "invoice_id": "abc12345-6789-def0-1234-56789abcdef0",
-  "issuer_name": "Tech Corp",
-  "total": 1500.00,
+  "original_filename": "factura_1_limpia.pdf",
+  "issuer_name": "ACME Soluciones SAS",
+  "issuer_vat": "900123456-8",
+  "invoice_number": "FE-1024",
+  "invoice_date": "2026-03-15",
+  "subtotal": 1000000.0,
+  "tax_rate": 19.0,
+  "tax_amount": 190000.0,
+  "total": 1190000.0,
+  "currency": "COP",
   "is_valid": true,
   "validation_errors": [],
+  "status": "COMPLETED",
   "line_items": [
-    {"description": "Consulting Services", "quantity": 10, "unit_price": 150.0, "line_total": 1500.00}
+    {"description": "Servicio de desarrollo", "quantity": 1.0, "unit_price": 600000.0, "line_total": 600000.0},
+    {"description": "Soporte mensual", "quantity": 1.0, "unit_price": 400000.0, "line_total": 400000.0}
   ]
 }
 ```
 
 ### 6.2 POST /api/v1/invoices/upload (Asynchronous)
-Uploads a large/multi-page invoice for background OCR processing.
+Uploads a multi-page invoice for background Celery processing.
 ```bash
-curl -X POST "http://localhost:8000/api/v1/invoices/upload" \
-  -F "file=@massive_invoice_100_pages.pdf"
+curl -X POST "http://127.0.0.1:8005/api/v1/invoices/upload" \
+  -H "Authorization: Bearer change_me_bearer_token" \
+  -F "file=@tests/fixtures/factura_3_multipage.pdf"
 ```
 **Response:**
 ```json
 {
-  "job_id": "job-9876-5432-10",
+  "job_id": "5f64d08f-e9bb-43e7-8fd4-95ebfa22ec46",
   "status": "PENDING",
   "message": "Invoice queued for asynchronous processing."
 }
@@ -149,22 +184,24 @@ curl -X POST "http://localhost:8000/api/v1/invoices/upload" \
 ### 6.3 GET /api/v1/invoices/jobs/{job_id}
 Poll status of an async OCR job.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/invoices/jobs/job-9876-5432-10"
+curl -X GET "http://127.0.0.1:8005/api/v1/invoices/jobs/5f64d08f-e9bb-43e7-8fd4-95ebfa22ec46" \
+  -H "Authorization: Bearer change_me_bearer_token"
 ```
 **Response:**
 ```json
 {
-  "job_id": "job-9876-5432-10",
-  "status": "PROCESSING",
-  "progress": "50%",
-  "message": "Extracting text from page 50 of 100"
+  "job_id": "5f64d08f-e9bb-43e7-8fd4-95ebfa22ec46",
+  "status": "COMPLETED",
+  "invoice_id": "848e3e4a-b50e-4361-9a7c-6e693170a469",
+  "error": null
 }
 ```
 
 ### 6.4 GET /api/v1/invoices
 List all processed invoices with pagination.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/invoices?page=1&limit=10"
+curl -X GET "http://127.0.0.1:8005/api/v1/invoices?page=1&limit=10" \
+  -H "Authorization: Bearer change_me_bearer_token"
 ```
 **Response:**
 ```json
@@ -172,13 +209,14 @@ curl -X GET "http://localhost:8000/api/v1/invoices?page=1&limit=10"
   "data": [
     {
       "invoice_id": "abc12345-...",
-      "issuer_name": "Tech Corp",
-      "total": 1500.00,
+      "issuer_name": "ACME Soluciones SAS",
+      "total": 1190000.00,
       "is_valid": true,
-      "created_at": "2026-09-21T11:00:00Z"
+      "status": "COMPLETED",
+      "created_at": "2026-10-14T16:20:00Z"
     }
   ],
-  "total_records": 150,
+  "total_records": 6,
   "page": 1,
   "limit": 10
 }
@@ -187,99 +225,46 @@ curl -X GET "http://localhost:8000/api/v1/invoices?page=1&limit=10"
 ### 6.5 GET /api/v1/invoices/{id}
 Retrieve full details of a specific invoice.
 ```bash
-curl -X GET "http://localhost:8000/api/v1/invoices/abc12345-6789-def0-1234-56789abcdef0"
-```
-**Response:**
-```json
-{
-  "invoice_id": "abc12345-6789-def0-1234-56789abcdef0",
-  "original_filename": "invoice_single.pdf",
-  "minio_key": "invoices/2026/09/invoice_single.pdf",
-  "issuer_name": "Tech Corp",
-  "issuer_vat": "US123456789",
-  "recipient_name": "Acme Inc",
-  "invoice_date": "2026-09-15",
-  "subtotal": 1250.00,
-  "tax_rate": 20.0,
-  "tax_amount": 250.00,
-  "total": 1500.00,
-  "is_valid": true,
-  "validation_errors": [],
-  "line_items": [
-    {
-      "description": "Consulting Services",
-      "quantity": 10,
-      "unit_price": 125.00,
-      "line_total": 1250.00
-    }
-  ]
-}
+curl -X GET "http://127.0.0.1:8005/api/v1/invoices/abc12345-6789-def0-1234-56789abcdef0" \
+  -H "Authorization: Bearer change_me_bearer_token"
 ```
 
 ### 6.6 POST /api/v1/invoices/export
-Export data to CSV or Google Sheets.
+Export processed invoices to a CSV file.
 ```bash
-curl -X POST "http://localhost:8000/api/v1/invoices/export" \
+curl -X POST "http://127.0.0.1:8005/api/v1/invoices/export" \
+  -H "Authorization: Bearer change_me_bearer_token" \
   -H "Content-Type: application/json" \
-  -d '{"format": "google_sheets", "sheet_id": "1BxiMVs0XRYFgCE...", "start_date": "2026-09-01", "end_date": "2026-09-30"}'
-```
-**Response:**
-```json
-{
-  "status": "SUCCESS",
-  "exported_records": 42,
-  "destination": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRYFgCE..."
-}
+  -d '{"format": "csv", "delimiter": ","}' \
+  --output facturas_exportadas.csv
 ```
 
 ## 7. Validation Rules
-- **Tax Verification**: `subtotal * tax_rate == tax_amount` (with minor rounding tolerance)
-- **Total Verification**: `subtotal + tax_amount == total`
-- **VAT Format**: Regex validation for country-specific VAT numbers (e.g., EU VAT patterns).
-- **Required Fields**: Issuer, Total, Date must exist for the invoice to be flagged `is_valid=true`.
+- **DIAN NIT Check**: Validates Colombian NIT verification digit using module 11 weighted algorithm.
+- **Tax Verification**: `subtotal * tax_rate ≈ tax_amount` (with rounding tolerance).
+- **Total Verification**: `subtotal + tax_amount ≈ total`.
+- **Line Items Verification**: `sum(line_total) ≈ subtotal`.
+- **Required Fields**: Issuer name, total, and invoice date must be present for `is_valid=true`.
 
 ## 8. Docker Services & Setup
-CRITICAL: The Dockerfile must install `tesseract-ocr` and `poppler-utils`.
+Port assignment: API mapped to `127.0.0.1:8005:8005`. Postgres, Redis, and MinIO are kept internal on the Docker network.
 
-```dockerfile
-# Snippet for Dockerfile
-FROM python:3.11-slim
-RUN apt-get update && apt-get install -y tesseract-ocr poppler-utils && rm -rf /var/lib/apt/lists/*
-# ... rest of Dockerfile
-```
+```bash
+# Build and run containers
+docker compose up -d --build
 
-```yaml
-version: '3.8'
-services:
-  api:
-    build: .
-    ports: ["8000:8000"]
-    depends_on: [db, minio, redis]
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/invoices
-      - MINIO_ENDPOINT=minio:9000
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
-  worker:
-    build: .
-    command: celery -A app.core.celery_app worker --loglevel=info
-    depends_on: [db, minio, redis]
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/invoices
-      - MINIO_ENDPOINT=minio:9000
-      - REDIS_URL=redis://redis:6379/0
-      - PYTHONPATH=/app
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=invoices
-  redis:
-    image: redis:7-alpine
-  minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
+# Inspect status
+docker compose ps
+
+# Run integration tests (real Tesseract OCR) in a throwaway container with the dev dependencies
+docker compose run --rm --no-deps -v ./tests:/app/tests -v ./requirements-dev.txt:/app/requirements-dev.txt \
+  -v ./pyproject.toml:/app/pyproject.toml api sh -c "pip install -q -r requirements-dev.txt && python -m pytest -m integration -q"
+
+# Run E2E test script
+python scripts/verificar_api_e2e.py
+
+# Stop and clean up containers and volumes
+docker compose down -v
 ```
 
 ## 9. File Structure
@@ -287,44 +272,53 @@ services:
 05-invoice-processor/
 ├── app/
 │   ├── api/
-│   │   ├── routes.py
-│   │   └── dependencies.py
+│   │   ├── dependencies.py
+│   │   └── routes.py
 │   ├── core/
 │   │   ├── celery_app.py
-│   │   ├── ocr_engine.py
-│   │   └── config.py
-│   ├── services/
-│   │   ├── extractor.py
-│   │   ├── validator.py
-│   │   └── exporter.py
+│   │   ├── config.py
+│   │   └── ocr_engine.py
 │   ├── models/
-│   │   └── database.py
+│   │   ├── database.py
+│   │   └── schemas.py
+│   ├── services/
+│   │   ├── exporter.py
+│   │   ├── extractor.py
+│   │   ├── storage.py
+│   │   └── validator.py
 │   └── main.py
+├── scripts/
+│   ├── generar_facturas.py
+│   └── verificar_api_e2e.py
 ├── tests/
 │   ├── fixtures/
-│   │   ├── raw_text_1.txt
-│   │   └── invoice_sample.pdf
-│   ├── test_ocr_engine.py
+│   │   ├── factura_1_limpia.pdf
+│   │   ├── factura_2_ruido.pdf
+│   │   ├── factura_3_multipage.pdf
+│   │   ├── factura_4_descuadre.pdf
+│   │   ├── factura_5_sin_nit.pdf
+│   │   ├── factura_6_ingles.pdf
+│   │   └── raw_text_*.txt
+│   ├── conftest.py
+│   ├── test_api.py
 │   ├── test_extractor.py
-│   └── test_api.py
-├── Dockerfile
+│   ├── test_integration.py
+│   └── test_validator.py
+├── .dockerignore
+├── .env.example
+├── .gitignore
 ├── docker-compose.yml
+├── Dockerfile
+├── EXECUTION_PLAN.md
+├── init-db.sql
+├── pyproject.toml
+├── README.md
+├── requirements-dev.txt
 └── requirements.txt
 ```
 
-## 10. Implementation Steps
-1. **Repo skeleton + infra** — Create the tree from section 9; `docker-compose.yml` with all services. Ensure Dockerfile includes `tesseract-ocr` and `poppler-utils`. *Verify:* `docker compose up -d` → healthy; `tesseract --version` runs inside container.
-2. **Schema** — Apply `invoices`/`line_items` tables via SQL init file.
-3. **OCR pipeline (Standalone)** — Build `core/ocr_engine.py`: `pdf2image` → `pytesseract` → raw text. Write `tests/test_ocr_engine.py`. E.g., ensure it properly handles multi-page PDFs by joining text.
-4. **Regex extraction (Unit-tested)** — Implement `services/extractor.py` operating purely on plain strings. Tests should use raw text fixtures, avoiding OCR overhead during testing.
-5. **Validation rules** — Implement `services/validator.py` enforcing rules (math checks, VAT regex).
-6. **Storage wiring** — Save original PDF and raw `.txt` sidecar to MinIO. Store DB records.
-7. **Async Celery setup** — Wire `app/core/celery_app.py`. Implement background task for files > `MAX_SYNC_PAGES` limit.
-8. **Endpoint wiring** — Implement all endpoints documented in section 6.
-9. **Full stack smoke test** — End-to-end processing of a sample PDF through the API, verifying DB record and MinIO artifacts.
-
-## 11. Testing Strategy
-1. **Sample Invoices:** Store 5-10 PDFs in `tests/fixtures/`, covering clean, noisy, and mathematically incorrect cases.
-2. **Unit Tests (Fast):** Test regex extractors against pre-extracted `raw_text_X.txt` fixtures. Test business rules with mocked Python dicts.
-3. **Integration Tests (Slow):** E2E file upload, verifying Celery queueing (or sync processing), OCR execution, and DB persistence.
-
+## 10. Testing Strategy
+1. **Sample Invoices**: Synthetic PDFs in `tests/fixtures/` generated with ReportLab covering clean, noise, multi-page, arithmetic errors, missing NIT, and English international invoices.
+2. **Unit Tests (Fast)**: Pre-extracted `raw_text_*.txt` fixtures test regex extractors and business validators in milliseconds.
+3. **Integration Tests**: Tested inside the container running Tesseract OCR, Poppler, PostgreSQL, MinIO, and Celery.
+4. **E2E Script**: `scripts/verificar_api_e2e.py` runs against live stack testing all endpoints and fixtures.
