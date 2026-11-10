@@ -1,6 +1,6 @@
 # Project 36: Change-Data-Capture (CDC) Replication Suite
 
-Production-grade resilience, data integrity, and zero-downtime schema evolution testing suite for high-throughput **Change Data Capture (CDC)** pipelines powered by **PostgreSQL 16**, **Debezium 2.7.3/2.6.2 (Kafka Connect)**, and **Redpanda v24.2.7**.
+Resilience, data integrity and schema evolution test suite for **Change Data Capture (CDC)** pipelines powered by **PostgreSQL 16**, **Debezium 2.7.3/2.6.2 (Kafka Connect)**, and **Redpanda v24.2.7**.
 
 ---
 
@@ -61,11 +61,11 @@ flowchart LR
 
 | Concern | How It Is Tested |
 |---|---|
-| **Backpressure** | Injected 200 ms latency via Toxiproxy between Connect and Warehouse for 2 minutes under a 500 rows/s workload. Consumer lag grew from 1,972 to 22,535 messages in Redpanda. Upon removing the fault, the sink caught up to baseline in 62.33 s ($\le$ 180 s target). Full reconciliation confirmed 0 differences across 1,178,501 rows. |
+| **Backpressure** | Injected 200 ms latency via Toxiproxy between Connect and Warehouse for 2 minutes under a 500 rows/s workload. Consumer lag grew while the fault was active. After removing it the sink caught up within the target and a full reconciliation found 0 differences (measured values in section 4). |
 | **Retries & Crashes** | Executed ungraceful `docker kill cdc-connect` 60 seconds into active workload. After container restart, the sink absorbed 2,130 redelivered messages via idempotent upsert with 0 data loss. Source database restart mid-stream proved zero replication slot offset corruption. |
 | **Partial Failures & DLQ** | Injected 3 malformed poison records into `cdc.public.ledger` during 1,000 valid business transactions. 1,000 valid rows reached warehouse; exactly 3 corrupt records were isolated into `dlq_ledger` with diagnostic headers (`__connect.errors.*`), while the connector remained in `RUNNING` state. |
-| **Pagination & Snapshot** | Preloaded 1,000,000 rows into source database. Debezium initial snapshot bootstrapped and replicated all 1M rows in 285.28 s. Keyset reconciler verified all 1M rows in 3.48 s ($\le$ 120 s target) with 0 lost and 0 repeated rows. |
-| **Schema Migrations** | Tested 4 live online migration patterns under a 200 rows/s continuous workload: (1) Add nullable + backfill + SET NOT NULL, (2) Column rename via Expand/Contract, (3) Type widening (INT to BIGINT), and (4) Add column with DEFAULT. Upgraded Debezium Connect image from 2.6.2 (N-1) to 2.7.3 (N) live with only 13.48 s downtime and 0 re-snapshots. |
+| **Pagination & Snapshot** | Preloaded 1,000,000 rows into source database. Debezium initial snapshot bootstrapped and replicated all 1M rows. The keyset reconciler verified them with 0 lost and 0 repeated rows (times in section 4). |
+| **Schema Migrations** | Tested 4 live online migration patterns under a 200 rows/s continuous workload: (1) Add nullable + backfill + SET NOT NULL, (2) Column rename via Expand/Contract, (3) Type widening (INT to BIGINT), and (4) Add column with DEFAULT. Upgraded Debezium Connect image from 2.6.2 (N-1) to 2.7.3 (N) live with no re-snapshot (downtime in section 4). |
 
 ---
 

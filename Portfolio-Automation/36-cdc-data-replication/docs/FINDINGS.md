@@ -7,7 +7,7 @@ Defects, unexpected behaviors, and architectural edge cases identified during qu
 ### FINDING-001: Debezium JDBC Sink Connector Lacks KIP-610 ErrantRecordReporter Support for SQL Constraint Violations
 - **Component:** `io.debezium.connector.jdbc.JdbcSinkConnector` (Debezium 2.7.3.Final / 2.6.2.Final)
 - **Severity:** High
-- **Upstream Issue:** [DBZ-7877 / GitHub #984](https://github.com/debezium/debezium/issues/984)
+- **Upstream Issue:** [DBZ-7877](https://issues.redhat.com/browse/DBZ-7877). The ticket was closed as Obsolete on 2025-12-11 with no fix version, so this needs a re-check on a current Debezium release
 - **Observed Behavior:**
   When a message payload arrives at the warehouse database that violates a relational constraint (such as a PostgreSQL `CHECK` constraint or tighter column length limit not present on the source), the JDBC Sink connector fails the entire batch and crashes the task into `FAILED` state:
   ```text
