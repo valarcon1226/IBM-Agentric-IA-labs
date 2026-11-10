@@ -1,6 +1,6 @@
 # Bug Reports — Discovered During API Quality & Contract Verification
 
-> **Note**: In accordance with the rules of the QA batch (`docs/tasks/_reglas-qa.md`), apps of other projects (13, 20, 22) are strictly **READ-ONLY**. These bugs were observed during live test execution and are fully documented here with exact steps and reproduction evidence without modifying the source repositories.
+> **Note**: these bugs were found while testing projects 13 and 20 from the outside, without changing their code at the time. The two Project 13 bugs were fixed later; each report shows its current status.
 
 ---
 
