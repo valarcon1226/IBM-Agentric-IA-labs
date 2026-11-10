@@ -98,3 +98,29 @@ async def test_tools_spec_carries_the_parameter_schema():
         by_name["crear_reserva"]["properties"]
     )
     assert all(params.get("type") == "object" for params in by_name.values())
+
+
+@pytest.mark.asyncio
+async def test_tools_spec_parameters_have_descriptions():
+    """All parameters of the 5 tools must carry non-empty descriptions into the LLM spec."""
+    spec = await RestaurantAgent(server=mcp_server, llm=FakeLLM())._get_tools_spec()
+    by_name = {s["function"]["name"]: s["function"]["parameters"] for s in spec}
+    expected_tools = {
+        "consultar_menu": {"categoria", "plato"},
+        "consultar_horario": {"dia"},
+        "crear_reserva": {"nombre", "telefono", "fecha", "hora", "personas"},
+        "estado_pedido": {"id_pedido"},
+        "zonas_domicilio": {"zona"},
+    }
+    assert set(expected_tools.keys()) <= set(by_name.keys())
+
+    for tool_name, expected_params in expected_tools.items():
+        props = by_name[tool_name].get("properties", {})
+        assert expected_params <= set(props.keys())
+        for param in expected_params:
+            desc = props[param].get("description")
+            assert desc and isinstance(desc, str) and desc.strip(), (
+                f"Param '{param}' of tool '{tool_name}' must have a non-empty description"
+            )
+
+    assert "plato_fuerte" in by_name["consultar_menu"]["properties"]["categoria"]["description"]

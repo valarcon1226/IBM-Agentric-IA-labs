@@ -1,0 +1,268 @@
+"""Prueba End-to-End del Agente Aplicador (AP-4 de APPLICATOR_PLAN.md).
+
+Sirve fixtures/forms/ con python -m http.server, Edge headless REAL (sin mocks del navegador ni del lector)
+llena el formulario hecho a mano (custom_form.html) y el de Greenhouse (greenhouse.html) con un banco ficticio (Ana Perez Rios),
+y se detiene antes de enviar en modo 'revisar'.
+Verifica:
+1. Valores escritos y verificados en cada campo.
+2. Capturas de pantalla creadas en applications/<job_id>/paso-1.png.
+3. Estado final de la vacante ('Lista para enviar').
+4. Filas auditadas en application_answers en una copia temporal de jobs.db.
+"""
+import functools
+import http.server
+import os
+import shutil
+import sqlite3
+import sys
+import tempfile
+import threading
+from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# 1. Perfil activo ficticio
+import yaml
+# Perfil ficticio (Ana Perez Rios) en una carpeta temporal: el test no depende de ningún perfil real.
+import atexit
+import json
+import shutil
+_PROFILE_DIR = tempfile.mkdtemp(prefix="jobhunter_answers_test_")
+atexit.register(shutil.rmtree, _PROFILE_DIR, ignore_errors=True)
+yaml.safe_dump({
+    "datos_personales": {
+        "nombre_legal": "Ana Perez Rios", "email": "ana.perez@example.com", "telefono": "+57 300 000 0000",
+        "ciudad": "Bogotá", "pais": "Colombia", "zona_horaria": "UTC-5", "pronombres": "She/Her",
+        "linkedin": "https://www.linkedin.com/in/ana-perez-demo", "github": "https://github.com/ana-perez-demo",
+        "portafolio": "https://github.com/ana-perez-demo",
+    },
+    "eeo_voluntario": {"genero": "Female", "raza_etnicidad": "Prefiero no decir",
+                       "discapacidad": "Prefiero no decir", "veterano": "No"},
+    "preguntas_frecuentes": {"como_se_entero_de_la_vacante": "LinkedIn", "mayor_de_18": True,
+                             "acepta_verificacion_de_antecedentes": True, "la_han_despedido_alguna_vez": False,
+                             "trabajo_antes_en_esta_empresa": False},
+    "autorizacion_de_trabajo": {"autorizada_para_trabajar_en_colombia": True,
+                                "autorizada_para_trabajar_en_estados_unidos": False,
+                                "autorizada_para_trabajar_en_la_ue": False, "necesita_patrocinio_de_visa": False,
+                                "modalidad": "Solo remoto", "dispuesta_a_mudarse": False},
+    "disponibilidad": {"preaviso": "1 semana"},
+    "experiencia": {"anos_totales_profesional": 3.5, "anos_qa_automation": 3.5, "anos_python": 3,
+                    "anos_playwright": 2, "anos_selenium": 2, "anos_llms_agentes_ia": 1,
+                    "anos_javascript_typescript": 1, "nivel_educativo": "Pregrado"},
+    "idiomas": {"espanol": "Nativo", "ingles": "C1", "frances": "no"},
+    "salario": {"expectativa_anual_usd": "30000", "minimo_aceptable": "1000 USD/mes"},
+    "respuestas_modelo": {"por_que_te_interesa_este_tipo_de_rol": "???"},
+}, open(os.path.join(_PROFILE_DIR, "answers.yaml"), "w", encoding="utf-8"), allow_unicode=True)
+json.dump({"experience": [{"company_name": "Acme Corp", "current_role": "QA Automation Engineer"}],
+           "education": [{"institution": "Universidad Ejemplo"}]},
+          open(os.path.join(_PROFILE_DIR, "master_profile.json"), "w", encoding="utf-8"))
+os.environ["JOBHUNTER_PROFILE"] = _PROFILE_DIR  # ruta absoluta: profile_paths la usa tal cual
+
+import profile_paths
+
+# 2. Configurar base de datos temporal
+temp_dir = tempfile.mkdtemp(prefix="jobhunter_ap4_test_")
+temp_db_path = os.path.join(temp_dir, "jobs_test.db")
+real_db = profile_paths.resolve("jobs.db")
+if os.path.exists(real_db):
+    shutil.copy2(real_db, temp_db_path)
+
+os.environ["JOBHUNTER_DB_PATH"] = temp_db_path
+
+import database
+database.init_db()
+
+import form_filler
+import applicator_agent
+from applicator_agent import apply_to_job
+from database import get_application_answers, get_job_by_url
+
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "forms"
+assert FIXTURES_DIR.is_dir(), f"No existe la carpeta de fixtures: {FIXTURES_DIR}"
+
+
+# 3. Servidor HTTP local para servir fixtures
+class _QuietHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(FIXTURES_DIR), **kwargs)
+
+    def log_message(self, format, *args):
+        pass  # Silenciar logs HTTP
+
+
+httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _QuietHandler)
+port = httpd.server_address[1]
+srv_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+srv_thread.start()
+
+# Asegurar un PDF de prueba en CVs_Listos
+cv_test_dir = profile_paths.resolve("CVs_Listos")
+os.makedirs(cv_test_dir, exist_ok=True)
+test_cv_path = os.path.join(cv_test_dir, "Ana_Perez.pdf")
+if not os.path.exists(test_cv_path):
+    with open(test_cv_path, "wb") as f:
+        # Minimal valid PDF header
+        f.write(b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 0>>endobj\nxref\n0 3\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\ntrailer<</Size 3/Root 1 0 R>>\nstartxref\n102\n%%EOF\n")
+
+# Funciones mock para LLM en tests (rápidas y deterministas)
+mock_llm_text = lambda f, j, b, p: f"Respuesta generada para: {f.label}"
+mock_llm_classifier = lambda f: "ninguna"
+
+try:
+    # =======================================================================
+    # TEST 1: Formulario Hecho a Mano (custom_form.html)
+    # Radios en fieldset, combobox, campo obligatorio con *, textarea
+    # =======================================================================
+    custom_url = f"http://127.0.0.1:{port}/custom_form.html"
+    job_1_id = 9101
+
+    conn = sqlite3.connect(temp_db_path)
+    conn.execute("DELETE FROM jobs WHERE id = ?", (job_1_id,))
+    conn.execute("DELETE FROM application_answers WHERE job_id = ?", (job_1_id,))
+    conn.execute("""
+        INSERT INTO jobs (id, url, title, company, status, apply_url, cv_path, match_percentage)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (job_1_id, custom_url, "Full Stack Engineer", "Handcrafted Corp", "CV Generado", custom_url, test_cv_path, 90))
+    conn.commit()
+    conn.close()
+
+    job1 = get_job_by_url(custom_url)
+    assert job1 is not None, "No se encontró job1 en la base de datos temporal"
+
+    # Ejecutar postulación en modo 'revisar'
+    status_1 = apply_to_job(
+        job1,
+        mode="revisar",
+        llm_classifier_fn=mock_llm_classifier,
+        llm_text_fn=mock_llm_text,
+    )
+
+    # 1.1 Estado final debe ser 'Lista para enviar'
+    assert status_1 == "Lista para enviar", f"Esperaba 'Lista para enviar', obtuve '{status_1}'"
+
+    # 1.2 Verificar estado en DB
+    job1_updated = get_job_by_url(custom_url)
+    assert job1_updated["status"] == "Lista para enviar", f"Estado en DB incorrecto: {job1_updated['status']}"
+
+    # 1.3 Verificar captura de pantalla
+    shot1_path = Path(profile_paths.resolve("applications")) / str(job_1_id) / "paso-1.png"
+    assert shot1_path.is_file(), f"No se generó la captura de pantalla: {shot1_path}"
+    assert shot1_path.stat().st_size > 1000, f"Captura vacía o corrupta: {shot1_path.stat().st_size} bytes"
+
+    # 1.4 Verificar filas en application_answers
+    answers_1 = get_application_answers(job_1_id)
+    assert len(answers_1) >= 4, f"Se esperaban al menos 4 respuestas auditadas, se encontraron {len(answers_1)}"
+
+    ans_by_key_1 = {a["answer_key"]: a for a in answers_1}
+
+    # applicant_name -> Ana Perez Rios
+    assert "applicant_name" in ans_by_key_1, "No se auditó applicant_name"
+    assert "Ana Perez Rios" in ans_by_key_1["applicant_name"]["value"], ans_by_key_1["applicant_name"]
+    assert ans_by_key_1["applicant_name"]["source"] == "bank"
+
+    # applicant_email -> ana.perez@example.com
+    assert "applicant_email" in ans_by_key_1, "No se auditó applicant_email"
+    assert ans_by_key_1["applicant_email"]["value"] == "ana.perez@example.com"
+    assert ans_by_key_1["applicant_email"]["source"] == "bank"
+
+    # authorized_us -> No
+    assert "authorized_us" in ans_by_key_1, "No se auditó authorized_us"
+    assert ans_by_key_1["authorized_us"]["value"] == "No"
+    assert ans_by_key_1["authorized_us"]["source"] == "bank"
+
+
+    # =======================================================================
+    # TEST 2: Formulario de Greenhouse (greenhouse.html)
+    # Formulario complejo real con react-select, comboboxes, campos de texto y upload
+    # =======================================================================
+    greenhouse_url = f"http://127.0.0.1:{port}/greenhouse.html"
+    job_2_id = 9102
+
+    conn = sqlite3.connect(temp_db_path)
+    conn.execute("DELETE FROM jobs WHERE id = ?", (job_2_id,))
+    conn.execute("DELETE FROM application_answers WHERE job_id = ?", (job_2_id,))
+    conn.execute("""
+        INSERT INTO jobs (id, url, title, company, status, apply_url, cv_path, match_percentage)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (job_2_id, greenhouse_url, "QA Automation Analyst", "Canonical", "CV Generado", greenhouse_url, test_cv_path, 95))
+    conn.commit()
+    conn.close()
+
+    job2 = get_job_by_url(greenhouse_url)
+    assert job2 is not None, "No se encontró job2 en la base de datos temporal"
+
+    # Ejecutar postulación en modo 'revisar'
+    status_2 = apply_to_job(
+        job2,
+        mode="revisar",
+        llm_classifier_fn=mock_llm_classifier,
+        llm_text_fn=mock_llm_text,
+    )
+
+    # 2.1 Estado final debe ser 'Lista para enviar'
+    assert status_2 == "Lista para enviar", f"Esperaba 'Lista para enviar', obtuve '{status_2}'"
+
+    # 2.2 Verificar estado en DB
+    job2_updated = get_job_by_url(greenhouse_url)
+    assert job2_updated["status"] == "Lista para enviar", f"Estado en DB incorrecto: {job2_updated['status']}"
+
+    # 2.3 Verificar captura de pantalla
+    shot2_path = Path(profile_paths.resolve("applications")) / str(job_2_id) / "paso-1.png"
+    assert shot2_path.is_file(), f"No se generó la captura de pantalla: {shot2_path}"
+    assert shot2_path.stat().st_size > 1000, f"Captura vacía o corrupta: {shot2_path.stat().st_size} bytes"
+
+    # 2.4 Verificar filas en application_answers
+    answers_2 = get_application_answers(job_2_id)
+    assert len(answers_2) >= 15, f"Se esperaban al menos 15 respuestas auditadas en Greenhouse, se encontraron {len(answers_2)}"
+
+    ans_by_key_2 = {a["answer_key"]: a for a in answers_2}
+
+    # First Name -> Ana
+    assert "first_name" in ans_by_key_2, f"No se auditó first_name: {list(ans_by_key_2.keys())}"
+    assert ans_by_key_2["first_name"]["value"] == "Ana"
+    assert ans_by_key_2["first_name"]["source"] == "bank"
+
+    # Last Name -> Perez Rios
+    assert "last_name" in ans_by_key_2, "No se auditó last_name"
+    assert ans_by_key_2["last_name"]["value"] == "Perez Rios"
+    assert ans_by_key_2["last_name"]["source"] == "bank"
+
+    # Email -> ana.perez@example.com
+    assert "email" in ans_by_key_2, "No se auditó email"
+    assert ans_by_key_2["email"]["value"] == "ana.perez@example.com"
+    assert ans_by_key_2["email"]["source"] == "bank"
+
+    # Country -> Colombia
+    assert "country" in ans_by_key_2, "No se auditó country"
+    assert ans_by_key_2["country"]["value"] == "Colombia"
+    assert ans_by_key_2["country"]["source"] == "bank"
+
+    print("ok")
+
+finally:
+    httpd.shutdown()
+    try:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    except Exception:
+        pass
+
+# Grupo "marca todas las que apliquen" (Palantir): el aplicador marca cada opción elegida y verifica en Edge real
+from playwright.sync_api import sync_playwright
+from form_reader import parse_html
+from form_filler import fill
+from answer_engine import Answer
+_langs_html = """<form><fieldset><legend>Language Skill(s) (Check all that apply)</legend>
+<label><input type=checkbox name=lang value=eng> English (ENG)</label>
+<label><input type=checkbox name=lang value=spa> Spanish (SPA)</label>
+<label><input type=checkbox name=lang value=fra> French (FRA)</label></fieldset></form>"""
+_group = next(x for x in parse_html(_langs_html) if x.kind == "checkbox")
+with sync_playwright() as _p:
+    _b = _p.chromium.launch(channel="msedge", headless=True)
+    _pg = _b.new_page()
+    _pg.set_content(_langs_html)
+    assert fill(_pg, _group, Answer(["English (ENG)", "Spanish (SPA)"], "bank", False))
+    assert [_pg.is_checked(f"input[value={v}]") for v in ("eng", "spa", "fra")] == [True, True, False]
+    _b.close()
+print("ok - casillas multiples")

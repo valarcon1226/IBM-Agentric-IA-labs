@@ -9,9 +9,10 @@ from __future__ import annotations
 import argparse
 import sys
 import unicodedata
+from typing import Annotated
 
 from mcp.server.mcpserver import MCPServer
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from app.db import crear_reserva_db, init_db, obtener_pedido_db
 from app.knowledge import (
@@ -49,7 +50,16 @@ def _strip_accents(text: str) -> str:
     name="consultar_menu",
     description="Consulta los platos del menú, precios en COP, ingredientes y alérgenos.",
 )
-def consultar_menu(categoria: str | None = None, plato: str | None = None) -> dict:
+def consultar_menu(
+    categoria: Annotated[
+        str | None,
+        Field(description="Categoría a filtrar: plato_fuerte, entrada, postre, bebida"),
+    ] = None,
+    plato: Annotated[
+        str | None,
+        Field(description="Nombre o parte del nombre del plato a consultar"),
+    ] = None,
+) -> dict:
     """Consulta los platos del menú de Sabor de Casa."""
     try:
         ConsultarMenuInput(categoria=categoria, plato=plato)
@@ -102,7 +112,12 @@ def consultar_menu(categoria: str | None = None, plato: str | None = None) -> di
     name="consultar_horario",
     description="Consulta los horarios de atención y días de operación del restaurante.",
 )
-def consultar_horario(dia: str | None = None) -> dict:
+def consultar_horario(
+    dia: Annotated[
+        str | None,
+        Field(description="Día de la semana a consultar (ej. lunes, martes, sábado, festivo)"),
+    ] = None,
+) -> dict:
     """Consulta el horario de atención para un día específico o general."""
     try:
         ConsultarHorarioInput(dia=dia)
@@ -174,11 +189,26 @@ def consultar_horario(dia: str | None = None) -> dict:
     description="Crea una reserva de mesa validando fecha, hora, personas (máx 12) y cupo.",
 )
 def crear_reserva(
-    nombre: str,
-    telefono: str,
-    fecha: str,
-    hora: str,
-    personas: int,
+    nombre: Annotated[
+        str,
+        Field(description="Nombre completo de la persona que reserva"),
+    ],
+    telefono: Annotated[
+        str,
+        Field(description="Número de teléfono o WhatsApp de contacto"),
+    ],
+    fecha: Annotated[
+        str,
+        Field(description="Fecha de la reserva en formato AAAA-MM-DD"),
+    ],
+    hora: Annotated[
+        str,
+        Field(description="Hora de la reserva en formato HH:MM (ej. 13:00)"),
+    ],
+    personas: Annotated[
+        int,
+        Field(description="Número de personas (máximo 12)"),
+    ],
 ) -> dict:
     """Crea una reserva en el restaurante Sabor de Casa tras validar políticas."""
     try:
@@ -212,7 +242,12 @@ def crear_reserva(
     name="estado_pedido",
     description="Consulta el estado actual de un pedido a domicilio por su número identificador.",
 )
-def estado_pedido(id_pedido: int) -> dict:
+def estado_pedido(
+    id_pedido: Annotated[
+        int,
+        Field(description="Identificador numérico del pedido"),
+    ],
+) -> dict:
     """Consulta el estado de un pedido en la base de datos."""
     try:
         EstadoPedidoInput(id_pedido=id_pedido)
@@ -246,7 +281,14 @@ def estado_pedido(id_pedido: int) -> dict:
     name="zonas_domicilio",
     description="Consulta la cobertura de domicilios en Bogotá, costos por zona y tiempos.",
 )
-def zonas_domicilio(zona: str | None = None) -> dict:
+def zonas_domicilio(
+    zona: Annotated[
+        str | None,
+        Field(
+            description="Nombre de la zona o barrio en Bogotá para verificar cobertura y costo"
+        ),
+    ] = None,
+) -> dict:
     """Consulta las zonas de domicilio de Sabor de Casa."""
     try:
         ZonasDomicilioInput(zona=zona)

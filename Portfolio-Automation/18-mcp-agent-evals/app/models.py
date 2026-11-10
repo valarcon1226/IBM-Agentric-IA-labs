@@ -9,13 +9,13 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class CrearReservaInput(BaseModel):
-    nombre: str = Field(..., min_length=2, description="Nombre completo de la persona que reserva")
+    nombre: str = Field(..., min_length=2)
     telefono: str = Field(
-        ..., min_length=7, description="Número de teléfono o WhatsApp de contacto"
+        ..., min_length=7
     )
-    fecha: str = Field(..., description="Fecha de la reserva en formato AAAA-MM-DD")
-    hora: str = Field(..., description="Hora de la reserva en formato HH:MM (ej. 13:00)")
-    personas: int = Field(..., description="Número de personas (máximo 12)")
+    fecha: str
+    hora: str
+    personas: int
 
     @field_validator("fecha")
     @classmethod
@@ -99,29 +99,17 @@ class CrearReservaInput(BaseModel):
 
 
 class ConsultarMenuInput(BaseModel):
-    categoria: str | None = Field(
-        None,
-        description="Categoría a filtrar: plato_fuerte, entrada, postre, bebida",
-    )
-    plato: str | None = Field(
-        None,
-        description="Nombre o parte del nombre del plato a consultar",
-    )
+    categoria: str | None = None
+    plato: str | None = None
 
 
 class ConsultarHorarioInput(BaseModel):
-    dia: str | None = Field(
-        None,
-        description="Día de la semana a consultar (ej. lunes, martes, sábado, festivo)",
-    )
+    dia: str | None = None
 
 
 class EstadoPedidoInput(BaseModel):
-    id_pedido: int = Field(..., gt=0, description="Identificador numérico del pedido")
+    id_pedido: int = Field(..., gt=0)
 
 
 class ZonasDomicilioInput(BaseModel):
-    zona: str | None = Field(
-        None,
-        description="Nombre de la zona o barrio en Bogotá para verificar cobertura y costo",
-    )
+    zona: str | None = None
