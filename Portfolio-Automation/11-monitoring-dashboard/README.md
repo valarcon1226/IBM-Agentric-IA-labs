@@ -3,7 +3,7 @@
 ## 1. Problem Statement
 Running a distributed automation and API stack requires deep visibility into service health, latency SLAs, error rates, and key business indicators. Without centralized observability, diagnosing production issues across microservices, databases, and background tasks is slow and reactive.
 
-This project delivers a complete, autonomous, and production-grade observability stack featuring Prometheus metrics, Alertmanager alerting routes, Grafana visualization dashboards, and Loki/Promtail log aggregation, validated against an instrumented FastAPI application and synthetic traffic generator.
+This project delivers a complete observability stack featuring Prometheus metrics, Alertmanager alerting routes, Grafana visualization dashboards, and Loki/Promtail log aggregation, validated against an instrumented FastAPI application and synthetic traffic generator.
 
 ## 2. Tech Stack & Components
 * **Metrics Database:** Prometheus `v3.2.1`

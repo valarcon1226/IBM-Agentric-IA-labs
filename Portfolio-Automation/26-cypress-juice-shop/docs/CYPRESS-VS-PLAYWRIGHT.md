@@ -1,6 +1,6 @@
 # Comparative Technical Analysis: Cypress vs. Playwright
 
-This document provides a factual, evidence-based architectural comparison between **Cypress** and **Playwright**. Both frameworks are evaluated using the identical user journey against OWASP Juice Shop:
+This document is a qualitative comparison between **Cypress** and **Playwright**. Both are shown with the same user journey against OWASP Juice Shop. No timings were measured.
 
 > **Target Flow**: Authenticate via UI credentials and add the first catalog product to the shopping basket.
 

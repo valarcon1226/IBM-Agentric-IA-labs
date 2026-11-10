@@ -1,6 +1,6 @@
 # Suite de Automatización QA en Java (Proyecto 19)
 
-Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada para satisfacer los estándares técnicos y de arquitectura de un rol Senior de QA Automation. Cubre pruebas de interfaz de usuario (UI), pruebas de servicios web (API REST), pruebas basadas en comportamiento (BDD con Cucumber), reproducción controlada de defectos conocidos y generación de reportes ejecutivos interactivos con Allure.
+Suite de pruebas automatizadas en **Java 21**. Cubre pruebas de interfaz de usuario (UI), pruebas de servicios web (API REST), pruebas basadas en comportamiento (BDD con Cucumber), reproducción controlada de defectos conocidos y generación de reportes ejecutivos interactivos con Allure.
 
 ---
 
@@ -16,7 +16,7 @@ Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada p
 
 3. **Automatización de APIs REST con RestAssured:**
    - Flujo CRUD completo contra la API de [Restful Booker](https://restful-booker.herokuapp.com): autenticación (`/auth`), creación, lectura, actualización (`PUT`/`PATCH`) y eliminación (`DELETE`).
-   - Casos negativos exhaustivos (códigos HTTP 403 Forbidden por token inválido y 404 Not Found por recurso inexistente).
+   - Casos negativos (códigos HTTP 403 Forbidden por token inválido y 404 Not Found por recurso inexistente).
    - Control de tasa de peticiones (*rate limiting* preventivo: máximo 1 petición por segundo).
 
 4. **BDD y especificación viva con Cucumber:**
@@ -26,7 +26,7 @@ Suite integral de pruebas automatizadas desarrollada en **Java 21**, diseñada p
 5. **Aislamiento y portabilidad con Docker:**
    - Ejecución sin dependencias locales de Java o Maven mediante contenedores independientes (`selenium/standalone-edge` y contenedor de ejecución `maven:3.9-eclipse-temurin-21`).
 
-6. **Integración Continua (CI/CD) y Reportería Ejecutiva:**
+6. **Integración continua (CI/CD) y reportes:**
    - Pipelines listos para GitHub Actions y Azure DevOps en la carpeta `ci/`.
    - Reporte interactivo Allure con historial, categorización de pruebas y capturas.
 

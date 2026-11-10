@@ -1,6 +1,6 @@
 # ParaBank Automated Quality Engineering Framework
 
-> Enterprise-grade End-to-End, API, and Visual Regression testing framework built with **Playwright Test** and **TypeScript** (Strict Mode) against the **ParaBank** banking system.
+> End-to-end, API and visual regression test suite built with **Playwright Test** and **TypeScript** (Strict Mode) against the **ParaBank** banking system.
 
 [![Playwright](https://img.shields.io/badge/Playwright-1.48.2-2EAD33?logo=playwright)](https://playwright.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.4_Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)

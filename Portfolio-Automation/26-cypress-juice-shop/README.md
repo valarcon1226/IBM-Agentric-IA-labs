@@ -6,7 +6,7 @@
 [![TypeScript](<https://img.shields.io/badge/typescript-v5.5.4%20(strict)-blue.svg>)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An enterprise-grade, deterministic automated testing framework built with **Cypress 13**, **TypeScript (Strict Mode)**, **ESLint**, and **Prettier** validating the **OWASP Juice Shop** (`v17.1.1`) e-commerce platform.
+A deterministic automated test suite built with **Cypress 13**, **TypeScript (Strict Mode)**, **ESLint**, and **Prettier** validating the **OWASP Juice Shop** (`v17.1.1`) e-commerce platform.
 
 ---
 
@@ -22,8 +22,8 @@ An enterprise-grade, deterministic automated testing framework built with **Cypr
   - `cy.addToBasketByApi()`: Fast basket seeding.
 - **Fault Injection & Resilience**: Verification of application behavior under simulated HTTP 500 server errors and network latency using `cy.intercept()`.
 - **Target Browser**: **Microsoft Edge** (`--browser edge` / `channel: "msedge"`) primary; **Mozilla Firefox** secondary. No Chrome / Chromium.
-- **Defect Inventory**: 4 real, validated vulnerabilities and bugs documented with concrete steps and captured payloads in [`docs/BUG-REPORTS.md`](docs/BUG-REPORTS.md).
-- **Benchmarking**: Rigorous, evidence-based comparative benchmark implementing the identical checkout flow across Cypress and Playwright in [`docs/CYPRESS-VS-PLAYWRIGHT.md`](docs/CYPRESS-VS-PLAYWRIGHT.md).
+- **Defect inventory**: 4 known vulnerabilities of Juice Shop, an intentionally vulnerable app, reproduced and documented with concrete steps and captured payloads in [`docs/BUG-REPORTS.md`](docs/BUG-REPORTS.md).
+- **Cypress vs Playwright notes**: the same login-and-add-to-basket flow written in both tools, with a qualitative comparison and no timing measurements, in [`docs/CYPRESS-VS-PLAYWRIGHT.md`](docs/CYPRESS-VS-PLAYWRIGHT.md).
 
 ---
 

@@ -1,6 +1,6 @@
 # Sabor de Casa — MCP Server & LLM Agent Evaluation Suite
 
-Production-grade Model Context Protocol (MCP) server and automated agent evaluation framework for **Sabor de Casa**, a traditional Colombian restaurant in Bogotá. Built using the official Python MCP SDK (`mcp`), SQLite persistence, live domain knowledge extraction, and a deterministic 30-case evaluation harness designed for Forward Deployed AI Engineer and Agentic QA workflows.
+Model Context Protocol (MCP) server and automated agent evaluation framework for **Sabor de Casa**, a traditional Colombian restaurant in Bogotá. Built using the official Python MCP SDK (`mcp`), SQLite persistence, live domain knowledge extraction, and a deterministic 30-case evaluation harness designed for Forward Deployed AI Engineer and Agentic QA workflows.
 
 ---
 

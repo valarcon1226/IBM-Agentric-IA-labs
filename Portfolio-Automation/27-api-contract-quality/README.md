@@ -1,6 +1,6 @@
 # API Quality & Contract Testing Engineering (Project 27)
 
-> **Enterprise API Quality Assurance**: Consumer-Driven Contracts (Pact JS v3), Property-Based OpenAPI Fuzzing (Schemathesis), and Automated Regression Testing (Postman / Newman) with Dockerized Pact Broker and CI/CD Gates.
+> **API quality checks**: Consumer-Driven Contracts (Pact JS v3), Property-Based OpenAPI Fuzzing (Schemathesis), and Automated Regression Testing (Postman / Newman) with Dockerized Pact Broker and CI/CD Gates.
 
 ---
 
@@ -25,7 +25,7 @@ This project implements a multi-tier API quality engineering framework verifying
    - Automated Newman execution with JUnit XML report generation for CI/CD ingestion.
 
 4. **Honest Defect Discovery**:
-   - Discovered 2 authentic defects in Project 13 (Docker container path collision and PostgreSQL `VARCHAR(20)` overflow) and 7 schema discrepancies in Project 20, recorded in `docs/BUG-REPORTS.md`.
+   - Discovered 2 authentic defects in Project 13 (Docker container path collision and PostgreSQL `VARCHAR(20)` overflow) and 7 schema discrepancies in Project 20, recorded in `docs/BUG-REPORTS.md`. Both Project 13 defects were later fixed in that project.
 
 ---
 
