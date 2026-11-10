@@ -1,0 +1,3842 @@
+{
+ "GOLD-006": {
+  "run": [
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "services-networking/network-policies.md",
+   "services-networking/_index.md"
+  ],
+  "k5": [
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "services-networking/network-policies.md",
+   "services-networking/_index.md"
+  ],
+  "wide5": [
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md",
+   "services-networking/network-policies.md",
+   "services-networking/_index.md"
+  ],
+  "k5_distances": [
+   0.2687,
+   0.3133,
+   0.4313,
+   0.4635,
+   0.489
+  ],
+  "wide5_distances": [
+   0.2687,
+   0.3133,
+   0.4313,
+   0.4635,
+   0.489
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-007": {
+  "run": [
+   "cluster-administration/observability.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md"
+  ],
+  "k5": [
+   "cluster-administration/observability.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md"
+  ],
+  "wide5": [
+   "cluster-administration/observability.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md"
+  ],
+  "k5_distances": [
+   0.2404,
+   0.2571,
+   0.2684,
+   0.295,
+   0.2993
+  ],
+  "wide5_distances": [
+   0.2404,
+   0.2571,
+   0.2684,
+   0.295,
+   0.2993
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-008": {
+  "run": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md"
+  ],
+  "k5": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md"
+  ],
+  "wide5": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md"
+  ],
+  "k5_distances": [
+   0.1989,
+   0.2019,
+   0.2163,
+   0.2285,
+   0.2395
+  ],
+  "wide5_distances": [
+   0.1989,
+   0.2019,
+   0.2163,
+   0.2285,
+   0.2395
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-009": {
+  "run": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "wide5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5_distances": [
+   0.1947,
+   0.2216,
+   0.2726,
+   0.3387,
+   0.3438
+  ],
+  "wide5_distances": [
+   0.1947,
+   0.2216,
+   0.2726,
+   0.3387,
+   0.3438
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-010": {
+  "run": [
+   "cluster-administration/compatibility-version.md",
+   "overview/kubernetes-api.md",
+   "cluster-administration/compatibility-version.md",
+   "overview/kubectl.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md"
+  ],
+  "k5": [
+   "cluster-administration/compatibility-version.md",
+   "overview/kubernetes-api.md",
+   "cluster-administration/compatibility-version.md",
+   "overview/kubectl.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md"
+  ],
+  "wide5": [
+   "cluster-administration/compatibility-version.md",
+   "overview/kubernetes-api.md",
+   "cluster-administration/compatibility-version.md",
+   "overview/kubectl.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md"
+  ],
+  "k5_distances": [
+   0.2557,
+   0.2626,
+   0.2655,
+   0.3272,
+   0.3297
+  ],
+  "wide5_distances": [
+   0.2557,
+   0.2626,
+   0.2655,
+   0.3272,
+   0.3297
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-021": {
+  "run": [
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md"
+  ],
+  "k5": [
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md"
+  ],
+  "wide5": [
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md",
+   "services-networking/endpoint-slices.md"
+  ],
+  "k5_distances": [
+   0.3597,
+   0.3779,
+   0.3931,
+   0.4131,
+   0.4159
+  ],
+  "wide5_distances": [
+   0.3597,
+   0.3779,
+   0.3931,
+   0.4131,
+   0.4159
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-023": {
+  "run": [
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "workloads/pods/_index.md",
+   "security/linux-kernel-security-constraints.md"
+  ],
+  "k5": [
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "workloads/pods/_index.md",
+   "security/linux-kernel-security-constraints.md"
+  ],
+  "wide5": [
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "workloads/pods/_index.md",
+   "security/linux-kernel-security-constraints.md"
+  ],
+  "k5_distances": [
+   0.2165,
+   0.2252,
+   0.2892,
+   0.3004,
+   0.3051
+  ],
+  "wide5_distances": [
+   0.2165,
+   0.2252,
+   0.2892,
+   0.3004,
+   0.3051
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-024": {
+  "run": [
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md"
+  ],
+  "k5": [
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md"
+  ],
+  "wide5": [
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md",
+   "workloads/pods/pod-qos.md"
+  ],
+  "k5_distances": [
+   0.4177,
+   0.491,
+   0.5115,
+   0.5183,
+   0.528
+  ],
+  "wide5_distances": [
+   0.4177,
+   0.491,
+   0.5115,
+   0.5183,
+   0.528
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-025": {
+  "run": [
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md"
+  ],
+  "k5": [
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md"
+  ],
+  "wide5": [
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md",
+   "policy/resource-quotas.md"
+  ],
+  "k5_distances": [
+   0.2731,
+   0.3427,
+   0.3594,
+   0.3909,
+   0.3933
+  ],
+  "wide5_distances": [
+   0.2731,
+   0.3427,
+   0.3594,
+   0.3909,
+   0.3933
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-026": {
+  "run": [
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md"
+  ],
+  "k5": [
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md"
+  ],
+  "wide5": [
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md",
+   "workloads/pods/probes.md"
+  ],
+  "k5_distances": [
+   0.3818,
+   0.4107,
+   0.4317,
+   0.4439,
+   0.457
+  ],
+  "wide5_distances": [
+   0.3818,
+   0.4107,
+   0.4317,
+   0.4439,
+   0.457
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-027": {
+  "run": [
+   "containers/images.md",
+   "configuration/secret.md",
+   "containers/images.md",
+   "configuration/secret.md",
+   "configuration/secret.md"
+  ],
+  "k5": [
+   "containers/images.md",
+   "configuration/secret.md",
+   "containers/images.md",
+   "configuration/secret.md",
+   "configuration/secret.md"
+  ],
+  "wide5": [
+   "containers/images.md",
+   "configuration/secret.md",
+   "containers/images.md",
+   "configuration/secret.md",
+   "configuration/secret.md"
+  ],
+  "k5_distances": [
+   0.4368,
+   0.4602,
+   0.461,
+   0.4823,
+   0.4832
+  ],
+  "wide5_distances": [
+   0.4368,
+   0.4602,
+   0.461,
+   0.4823,
+   0.4832
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-028": {
+  "run": [
+   "workloads/pods/downward-api.md",
+   "workloads/pods/downward-api.md",
+   "storage/volumes.md",
+   "workloads/pods/downward-api.md",
+   "containers/container-environment.md"
+  ],
+  "k5": [
+   "workloads/pods/downward-api.md",
+   "workloads/pods/downward-api.md",
+   "storage/volumes.md",
+   "workloads/pods/downward-api.md",
+   "containers/container-environment.md"
+  ],
+  "wide5": [
+   "workloads/pods/downward-api.md",
+   "workloads/pods/downward-api.md",
+   "storage/volumes.md",
+   "workloads/pods/downward-api.md",
+   "containers/container-environment.md"
+  ],
+  "k5_distances": [
+   0.2462,
+   0.2689,
+   0.3205,
+   0.3214,
+   0.3323
+  ],
+  "wide5_distances": [
+   0.2462,
+   0.2689,
+   0.3205,
+   0.3214,
+   0.3323
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-029": {
+  "run": [
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/_index.md"
+  ],
+  "k5": [
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/_index.md"
+  ],
+  "wide5": [
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/cloud-native-security.md",
+   "security/_index.md"
+  ],
+  "k5_distances": [
+   0.3762,
+   0.4554,
+   0.4839,
+   0.4867,
+   0.487
+  ],
+  "wide5_distances": [
+   0.3762,
+   0.4554,
+   0.4839,
+   0.4867,
+   0.487
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-030": {
+  "run": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "storage/storage-classes.md",
+   "storage/volume-snapshot-classes.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "k5": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "storage/storage-classes.md",
+   "storage/volume-snapshot-classes.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "wide5": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "storage/storage-classes.md",
+   "storage/volume-snapshot-classes.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "k5_distances": [
+   0.4603,
+   0.4731,
+   0.4837,
+   0.5436,
+   0.5705
+  ],
+  "wide5_distances": [
+   0.4603,
+   0.4731,
+   0.4837,
+   0.5436,
+   0.5705
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-032": {
+  "run": [
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md"
+  ],
+  "k5": [
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md"
+  ],
+  "wide5": [
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md",
+   "services-networking/network-policies.md"
+  ],
+  "k5_distances": [
+   0.3036,
+   0.3964,
+   0.4411,
+   0.443,
+   0.4432
+  ],
+  "wide5_distances": [
+   0.3036,
+   0.3964,
+   0.4411,
+   0.443,
+   0.4432
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-034": {
+  "run": [
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicationcontroller.md"
+  ],
+  "k5": [
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicationcontroller.md"
+  ],
+  "wide5": [
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicaset.md",
+   "workloads/controllers/replicationcontroller.md"
+  ],
+  "k5_distances": [
+   0.3609,
+   0.4557,
+   0.4914,
+   0.5176,
+   0.5198
+  ],
+  "wide5_distances": [
+   0.3609,
+   0.4557,
+   0.4914,
+   0.5176,
+   0.5198
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-036": {
+  "run": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/ttlafterfinished.md",
+   "workloads/controllers/cron-jobs.md",
+   "workloads/controllers/job.md"
+  ],
+  "k5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/ttlafterfinished.md",
+   "workloads/controllers/cron-jobs.md",
+   "workloads/controllers/job.md"
+  ],
+  "wide5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/ttlafterfinished.md",
+   "workloads/controllers/cron-jobs.md",
+   "workloads/controllers/job.md"
+  ],
+  "k5_distances": [
+   0.4766,
+   0.5626,
+   0.5762,
+   0.5861,
+   0.6008
+  ],
+  "wide5_distances": [
+   0.4766,
+   0.5626,
+   0.5762,
+   0.5861,
+   0.6008
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-038": {
+  "run": [
+   "scheduling-eviction/kube-scheduler.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/ephemeral-storage.md"
+  ],
+  "k5": [
+   "scheduling-eviction/kube-scheduler.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/ephemeral-storage.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/kube-scheduler.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/storage-capacity.md",
+   "storage/ephemeral-storage.md"
+  ],
+  "k5_distances": [
+   0.2898,
+   0.4255,
+   0.4439,
+   0.4811,
+   0.4827
+  ],
+  "wide5_distances": [
+   0.2898,
+   0.4255,
+   0.4439,
+   0.4811,
+   0.4827
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-041": {
+  "run": [
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md"
+  ],
+  "k5": [
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md"
+  ],
+  "wide5": [
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md"
+  ],
+  "k5_distances": [
+   0.3354,
+   0.3888,
+   0.3945,
+   0.4586,
+   0.5085
+  ],
+  "wide5_distances": [
+   0.3354,
+   0.3888,
+   0.3945,
+   0.4586,
+   0.497
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-042": {
+  "run": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md"
+  ],
+  "k5": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md"
+  ],
+  "k5_distances": [
+   0.2702,
+   0.2968,
+   0.3708,
+   0.382,
+   0.421
+  ],
+  "wide5_distances": [
+   0.2702,
+   0.2968,
+   0.3708,
+   0.382,
+   0.421
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-044": {
+  "run": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "services-networking/gateway.md",
+   "cluster-administration/flow-control.md",
+   "architecture/mixed-version-proxy.md"
+  ],
+  "k5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "services-networking/gateway.md",
+   "cluster-administration/flow-control.md",
+   "architecture/mixed-version-proxy.md"
+  ],
+  "wide5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "services-networking/gateway.md",
+   "cluster-administration/flow-control.md",
+   "architecture/mixed-version-proxy.md"
+  ],
+  "k5_distances": [
+   0.4738,
+   0.4856,
+   0.496,
+   0.4971,
+   0.5005
+  ],
+  "wide5_distances": [
+   0.4738,
+   0.4856,
+   0.496,
+   0.4971,
+   0.5005
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": false,
+  "facts_in_wide5": 0
+ },
+ "GOLD-045": {
+  "run": [
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-standards.md"
+  ],
+  "k5": [
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-standards.md"
+  ],
+  "wide5": [
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-admission.md",
+   "security/pod-security-standards.md"
+  ],
+  "k5_distances": [
+   0.1663,
+   0.206,
+   0.2206,
+   0.2463,
+   0.2718
+  ],
+  "wide5_distances": [
+   0.1663,
+   0.206,
+   0.2206,
+   0.2463,
+   0.2718
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-047": {
+  "run": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "scheduling-eviction/taint-and-toleration.md"
+  ],
+  "k5": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "scheduling-eviction/taint-and-toleration.md"
+  ],
+  "wide5": [
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "cluster-administration/node-shutdown.md",
+   "scheduling-eviction/taint-and-toleration.md"
+  ],
+  "k5_distances": [
+   0.3482,
+   0.355,
+   0.3987,
+   0.4,
+   0.4028
+  ],
+  "wide5_distances": [
+   0.3482,
+   0.355,
+   0.3987,
+   0.4,
+   0.4028
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-048": {
+  "run": [
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/_index.md"
+  ],
+  "k5": [
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/_index.md"
+  ],
+  "wide5": [
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/_index.md"
+  ],
+  "k5_distances": [
+   0.2479,
+   0.281,
+   0.382,
+   0.383,
+   0.403
+  ],
+  "wide5_distances": [
+   0.2479,
+   0.281,
+   0.382,
+   0.383,
+   0.403
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-049": {
+  "run": [
+   "services-networking/gateway.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/_index.md",
+   "overview/_index.md",
+   "security/service-accounts.md"
+  ],
+  "k5": [
+   "services-networking/gateway.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/_index.md",
+   "overview/_index.md",
+   "security/service-accounts.md"
+  ],
+  "wide5": [
+   "services-networking/gateway.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/_index.md",
+   "overview/_index.md",
+   "security/service-accounts.md"
+  ],
+  "k5_distances": [
+   0.475,
+   0.5368,
+   0.5425,
+   0.5461,
+   0.5518
+  ],
+  "wide5_distances": [
+   0.475,
+   0.5368,
+   0.5425,
+   0.5461,
+   0.5518
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-050": {
+  "run": [
+   "configuration/configmap.md",
+   "configuration/configmap.md",
+   "configuration/configmap.md",
+   "configuration/secret.md",
+   "configuration/configmap.md"
+  ],
+  "k5": [
+   "configuration/configmap.md",
+   "configuration/configmap.md",
+   "configuration/secret.md",
+   "configuration/configmap.md",
+   "configuration/configmap.md"
+  ],
+  "wide5": [
+   "configuration/configmap.md",
+   "configuration/configmap.md",
+   "configuration/configmap.md",
+   "storage/volumes.md",
+   "configuration/secret.md"
+  ],
+  "k5_distances": [
+   0.3429,
+   0.5724,
+   0.5885,
+   0.5915,
+   0.599
+  ],
+  "wide5_distances": [
+   0.3429,
+   0.5724,
+   0.5763,
+   0.5876,
+   0.5885
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-051": {
+  "run": [
+   "configuration/secret.md",
+   "security/secrets-good-practices.md",
+   "configuration/secret.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md"
+  ],
+  "k5": [
+   "configuration/secret.md",
+   "security/secrets-good-practices.md",
+   "configuration/secret.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md"
+  ],
+  "wide5": [
+   "configuration/secret.md",
+   "security/secrets-good-practices.md",
+   "configuration/secret.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md"
+  ],
+  "k5_distances": [
+   0.3162,
+   0.3589,
+   0.4493,
+   0.4702,
+   0.4836
+  ],
+  "wide5_distances": [
+   0.3162,
+   0.3589,
+   0.4493,
+   0.4702,
+   0.4836
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-052": {
+  "run": [
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md"
+  ],
+  "k5": [
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md"
+  ],
+  "wide5": [
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md",
+   "extend-kubernetes/operator.md"
+  ],
+  "k5_distances": [
+   0.1489,
+   0.2754,
+   0.2832,
+   0.3065,
+   0.3248
+  ],
+  "wide5_distances": [
+   0.1489,
+   0.2754,
+   0.2832,
+   0.3065,
+   0.3248
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-053": {
+  "run": [
+   "storage/ephemeral-volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volumes.md",
+   "storage/volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5": [
+   "storage/ephemeral-volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/ephemeral-volumes.md"
+  ],
+  "wide5": [
+   "storage/ephemeral-volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volumes.md",
+   "storage/volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5_distances": [
+   0.2814,
+   0.3246,
+   0.367,
+   0.3725,
+   0.3746
+  ],
+  "wide5_distances": [
+   0.2814,
+   0.3246,
+   0.363,
+   0.367,
+   0.3725
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-054": {
+  "run": [
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5": [
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "wide5": [
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5_distances": [
+   0.3783,
+   0.4014,
+   0.4338,
+   0.4362,
+   0.438
+  ],
+  "wide5_distances": [
+   0.3783,
+   0.4014,
+   0.4338,
+   0.4362,
+   0.438
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-055": {
+  "run": [
+   "services-networking/topology-aware-routing.md",
+   "services-networking/gateway.md",
+   "services-networking/topology-aware-routing.md",
+   "services-networking/_index.md",
+   "services-networking/gateway.md"
+  ],
+  "k5": [
+   "services-networking/topology-aware-routing.md",
+   "services-networking/gateway.md",
+   "services-networking/topology-aware-routing.md",
+   "services-networking/_index.md",
+   "services-networking/gateway.md"
+  ],
+  "wide5": [
+   "services-networking/topology-aware-routing.md",
+   "services-networking/gateway.md",
+   "services-networking/topology-aware-routing.md",
+   "services-networking/_index.md",
+   "services-networking/gateway.md"
+  ],
+  "k5_distances": [
+   0.3425,
+   0.3973,
+   0.4632,
+   0.4823,
+   0.4982
+  ],
+  "wide5_distances": [
+   0.3425,
+   0.3973,
+   0.4632,
+   0.4823,
+   0.4982
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-056": {
+  "run": [
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md"
+  ],
+  "k5": [
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/kube-scheduler.md"
+  ],
+  "k5_distances": [
+   0.2475,
+   0.2504,
+   0.2637,
+   0.2731,
+   0.2786
+  ],
+  "wide5_distances": [
+   0.2475,
+   0.2504,
+   0.2637,
+   0.2731,
+   0.2786
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-057": {
+  "run": [
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md"
+  ],
+  "k5": [
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md"
+  ],
+  "wide5": [
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/custom-resources.md"
+  ],
+  "k5_distances": [
+   0.3448,
+   0.3461,
+   0.3674,
+   0.3888,
+   0.4246
+  ],
+  "wide5_distances": [
+   0.3448,
+   0.3461,
+   0.3674,
+   0.3888,
+   0.4246
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-058": {
+  "run": [
+   "containers/container-lifecycle-hooks.md",
+   "containers/container-environment.md",
+   "containers/container-lifecycle-hooks.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "k5": [
+   "containers/container-lifecycle-hooks.md",
+   "containers/container-environment.md",
+   "containers/container-lifecycle-hooks.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "wide5": [
+   "containers/container-lifecycle-hooks.md",
+   "containers/container-environment.md",
+   "containers/container-lifecycle-hooks.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "k5_distances": [
+   0.4504,
+   0.4521,
+   0.5361,
+   0.5443,
+   0.5629
+  ],
+  "wide5_distances": [
+   0.4504,
+   0.4521,
+   0.5361,
+   0.5443,
+   0.5629
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-061": {
+  "run": [
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md"
+  ],
+  "k5": [
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md"
+  ],
+  "wide5": [
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-lifecycle.md",
+   "workloads/pods/pod-condition.md",
+   "workloads/pods/pod-condition.md"
+  ],
+  "k5_distances": [
+   0.3031,
+   0.306,
+   0.3068,
+   0.31,
+   0.3372
+  ],
+  "wide5_distances": [
+   0.3031,
+   0.306,
+   0.3068,
+   0.31,
+   0.3372
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-062": {
+  "run": [
+   "windows/intro.md",
+   "architecture/controller.md",
+   "windows/_index.md",
+   "architecture/_index.md",
+   "architecture/_index.md"
+  ],
+  "k5": [
+   "windows/intro.md",
+   "architecture/controller.md",
+   "architecture/_index.md",
+   "architecture/_index.md",
+   "cluster-administration/compatibility-version.md"
+  ],
+  "wide5": [
+   "windows/intro.md",
+   "architecture/controller.md",
+   "windows/_index.md",
+   "architecture/_index.md",
+   "architecture/_index.md"
+  ],
+  "k5_distances": [
+   0.383,
+   0.4,
+   0.4253,
+   0.4338,
+   0.4401
+  ],
+  "wide5_distances": [
+   0.383,
+   0.4,
+   0.4005,
+   0.4253,
+   0.4338
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-068": {
+  "run": [
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md"
+  ],
+  "k5": [
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md"
+  ],
+  "wide5": [
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md",
+   "workloads/autoscaling/horizontal-pod-autoscale.md"
+  ],
+  "k5_distances": [
+   0.3616,
+   0.3843,
+   0.4571,
+   0.489,
+   0.5198
+  ],
+  "wide5_distances": [
+   0.3616,
+   0.3843,
+   0.4571,
+   0.489,
+   0.5198
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-069": {
+  "run": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "workloads/controllers/statefulset.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "workloads/controllers/statefulset.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "wide5": [
+   "storage/persistent-volumes.md",
+   "storage/storage-classes.md",
+   "workloads/controllers/statefulset.md",
+   "storage/persistent-volumes.md",
+   "storage/persistent-volumes.md"
+  ],
+  "k5_distances": [
+   0.3213,
+   0.379,
+   0.3848,
+   0.4198,
+   0.4318
+  ],
+  "wide5_distances": [
+   0.3213,
+   0.379,
+   0.3848,
+   0.4198,
+   0.4318
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-070": {
+  "run": [
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "security/service-accounts.md"
+  ],
+  "k5": [
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "security/service-accounts.md"
+  ],
+  "wide5": [
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "overview/working-with-objects/namespaces.md",
+   "security/service-accounts.md"
+  ],
+  "k5_distances": [
+   0.2749,
+   0.2954,
+   0.2978,
+   0.3043,
+   0.3423
+  ],
+  "wide5_distances": [
+   0.2749,
+   0.2954,
+   0.2978,
+   0.3043,
+   0.3423
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-071": {
+  "run": [
+   "security/linux-kernel-security-constraints.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-standards.md"
+  ],
+  "k5": [
+   "security/linux-kernel-security-constraints.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-standards.md"
+  ],
+  "wide5": [
+   "security/linux-kernel-security-constraints.md",
+   "security/security-checklist.md",
+   "security/application-security-checklist.md",
+   "security/security-checklist.md",
+   "security/pod-security-standards.md"
+  ],
+  "k5_distances": [
+   0.3756,
+   0.4151,
+   0.4355,
+   0.5003,
+   0.5068
+  ],
+  "wide5_distances": [
+   0.3756,
+   0.4151,
+   0.4355,
+   0.5003,
+   0.5068
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-072": {
+  "run": [
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md"
+  ],
+  "k5": [
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/topology-aware-scheduling.md"
+  ],
+  "k5_distances": [
+   0.5143,
+   0.5942,
+   0.6198,
+   0.6457,
+   0.6507
+  ],
+  "wide5_distances": [
+   0.5143,
+   0.5942,
+   0.6198,
+   0.6457,
+   0.6507
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-073": {
+  "run": [
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/sidecar-containers.md",
+   "configuration/_index.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "k5": [
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/sidecar-containers.md",
+   "configuration/_index.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "wide5": [
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/sidecar-containers.md",
+   "configuration/_index.md",
+   "workloads/pods/sidecar-containers.md",
+   "workloads/pods/pod-lifecycle.md"
+  ],
+  "k5_distances": [
+   0.3867,
+   0.3965,
+   0.403,
+   0.4104,
+   0.4271
+  ],
+  "wide5_distances": [
+   0.3867,
+   0.3965,
+   0.403,
+   0.4104,
+   0.4271
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-074": {
+  "run": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/observability.md"
+  ],
+  "k5": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/dra.md"
+  ],
+  "wide5": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/observability.md",
+   "cluster-administration/observability.md"
+  ],
+  "k5_distances": [
+   0.354,
+   0.3621,
+   0.3717,
+   0.3866,
+   0.3961
+  ],
+  "wide5_distances": [
+   0.354,
+   0.3621,
+   0.3717,
+   0.3795,
+   0.3866
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-075": {
+  "run": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/scheduler-perf-tuning.md"
+  ],
+  "k5": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/scheduler-perf-tuning.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/kube-scheduler.md",
+   "scheduling-eviction/scheduler-perf-tuning.md",
+   "scheduling-eviction/resource-bin-packing.md",
+   "scheduling-eviction/scheduler-perf-tuning.md"
+  ],
+  "k5_distances": [
+   0.2953,
+   0.3756,
+   0.4167,
+   0.4391,
+   0.4418
+  ],
+  "wide5_distances": [
+   0.2953,
+   0.3756,
+   0.4167,
+   0.437,
+   0.4391
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-076": {
+  "run": [
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "extend-kubernetes/_index.md",
+   "overview/kubectl.md"
+  ],
+  "k5": [
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "extend-kubernetes/_index.md",
+   "overview/kubectl.md"
+  ],
+  "wide5": [
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "configuration/organize-cluster-access-kubeconfig.md",
+   "extend-kubernetes/_index.md",
+   "overview/kubectl.md"
+  ],
+  "k5_distances": [
+   0.2073,
+   0.2458,
+   0.2729,
+   0.3411,
+   0.3436
+  ],
+  "wide5_distances": [
+   0.2073,
+   0.2458,
+   0.2729,
+   0.3411,
+   0.3436
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-077": {
+  "run": [
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md"
+  ],
+  "k5": [
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md"
+  ],
+  "wide5": [
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md",
+   "overview/working-with-objects/annotations.md"
+  ],
+  "k5_distances": [
+   0.4109,
+   0.4477,
+   0.5037,
+   0.5047,
+   0.5336
+  ],
+  "wide5_distances": [
+   0.4109,
+   0.4477,
+   0.5037,
+   0.5047,
+   0.5336
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-078": {
+  "run": [
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md"
+  ],
+  "k5": [
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md"
+  ],
+  "wide5": [
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md",
+   "cluster-administration/swap-memory-management.md"
+  ],
+  "k5_distances": [
+   0.2294,
+   0.2532,
+   0.2797,
+   0.3017,
+   0.3074
+  ],
+  "wide5_distances": [
+   0.2294,
+   0.2532,
+   0.2797,
+   0.3017,
+   0.3074
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-079": {
+  "run": [
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/common-labels.md"
+  ],
+  "k5": [
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/common-labels.md"
+  ],
+  "wide5": [
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md",
+   "overview/working-with-objects/common-labels.md"
+  ],
+  "k5_distances": [
+   0.5275,
+   0.5397,
+   0.5557,
+   0.5947,
+   0.6118
+  ],
+  "wide5_distances": [
+   0.5275,
+   0.5397,
+   0.5557,
+   0.5947,
+   0.6118
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-081": {
+  "run": [
+   "services-networking/endpoint-slices.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "cluster-administration/flow-control.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/scheduling-framework.md"
+  ],
+  "k5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md"
+  ],
+  "wide5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md"
+  ],
+  "k5_distances": [
+   0.4475,
+   0.5677,
+   0.5731,
+   0.5767,
+   0.5861
+  ],
+  "wide5_distances": [
+   0.4475,
+   0.5677,
+   0.5731,
+   0.5767,
+   0.5861
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-082": {
+  "run": [
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md"
+  ],
+  "k5": [
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md"
+  ],
+  "wide5": [
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "policy/limit-range.md",
+   "security/multi-tenancy.md",
+   "policy/limit-range.md"
+  ],
+  "k5_distances": [
+   0.3814,
+   0.3936,
+   0.4743,
+   0.5259,
+   0.5281
+  ],
+  "wide5_distances": [
+   0.3814,
+   0.3936,
+   0.4743,
+   0.5123,
+   0.5259
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-083": {
+  "run": [
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md"
+  ],
+  "k5": [
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md"
+  ],
+  "wide5": [
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md",
+   "policy/pid-limiting.md"
+  ],
+  "k5_distances": [
+   0.2163,
+   0.2388,
+   0.2579,
+   0.2642,
+   0.27
+  ],
+  "wide5_distances": [
+   0.2163,
+   0.2388,
+   0.2579,
+   0.2642,
+   0.27
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-085": {
+  "run": [
+   "scheduling-eviction/assign-pod-node.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "k5": [
+   "scheduling-eviction/assign-pod-node.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/assign-pod-node.md",
+   "scheduling-eviction/podgroup-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "k5_distances": [
+   0.2849,
+   0.3055,
+   0.326,
+   0.3292,
+   0.3376
+  ],
+  "wide5_distances": [
+   0.2849,
+   0.3055,
+   0.326,
+   0.3292,
+   0.3376
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-086": {
+  "run": [
+   "services-networking/dns-pod-service.md",
+   "overview/working-with-objects/namespaces.md",
+   "services-networking/dns-pod-service.md",
+   "workloads/controllers/statefulset.md",
+   "services-networking/dns-pod-service.md"
+  ],
+  "k5": [
+   "services-networking/dns-pod-service.md",
+   "overview/working-with-objects/namespaces.md",
+   "services-networking/dns-pod-service.md",
+   "workloads/controllers/statefulset.md",
+   "services-networking/dns-pod-service.md"
+  ],
+  "wide5": [
+   "services-networking/dns-pod-service.md",
+   "overview/working-with-objects/namespaces.md",
+   "services-networking/dns-pod-service.md",
+   "workloads/pods/pod-hostname.md",
+   "workloads/controllers/statefulset.md"
+  ],
+  "k5_distances": [
+   0.3744,
+   0.3813,
+   0.3927,
+   0.4003,
+   0.4011
+  ],
+  "wide5_distances": [
+   0.3744,
+   0.3813,
+   0.3927,
+   0.3954,
+   0.4003
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-087": {
+  "run": [
+   "security/rbac-good-practices.md",
+   "security/application-security-checklist.md",
+   "security/multi-tenancy.md",
+   "security/secrets-good-practices.md",
+   "security/security-checklist.md"
+  ],
+  "k5": [
+   "security/rbac-good-practices.md",
+   "security/application-security-checklist.md",
+   "security/multi-tenancy.md",
+   "security/secrets-good-practices.md",
+   "security/security-checklist.md"
+  ],
+  "wide5": [
+   "security/rbac-good-practices.md",
+   "security/application-security-checklist.md",
+   "security/multi-tenancy.md",
+   "security/secrets-good-practices.md",
+   "security/security-checklist.md"
+  ],
+  "k5_distances": [
+   0.3298,
+   0.4021,
+   0.4041,
+   0.4355,
+   0.4601
+  ],
+  "wide5_distances": [
+   0.3298,
+   0.4021,
+   0.4041,
+   0.4355,
+   0.4601
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-090": {
+  "run": [
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md"
+  ],
+  "k5": [
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "scheduling-eviction/topology-aware-scheduling.md",
+   "scheduling-eviction/topology-spread-constraints.md"
+  ],
+  "k5_distances": [
+   0.5422,
+   0.5822,
+   0.5852,
+   0.586,
+   0.5956
+  ],
+  "wide5_distances": [
+   0.5422,
+   0.5822,
+   0.5852,
+   0.586,
+   0.5956
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-092": {
+  "run": [
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "k5": [
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "wide5": [
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "extend-kubernetes/compute-storage-net/device-plugins.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "k5_distances": [
+   0.2324,
+   0.2588,
+   0.2746,
+   0.3227,
+   0.3388
+  ],
+  "wide5_distances": [
+   0.2324,
+   0.2588,
+   0.2746,
+   0.3227,
+   0.3388
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-097": {
+  "run": [
+   "extend-kubernetes/compute-storage-net/_index.md",
+   "cluster-administration/networking.md",
+   "extend-kubernetes/_index.md",
+   "architecture/_index.md",
+   "cluster-administration/addons.md"
+  ],
+  "k5": [
+   "extend-kubernetes/compute-storage-net/_index.md",
+   "cluster-administration/networking.md",
+   "extend-kubernetes/_index.md",
+   "architecture/_index.md",
+   "cluster-administration/addons.md"
+  ],
+  "wide5": [
+   "extend-kubernetes/compute-storage-net/_index.md",
+   "cluster-administration/networking.md",
+   "extend-kubernetes/_index.md",
+   "architecture/_index.md",
+   "cluster-administration/addons.md"
+  ],
+  "k5_distances": [
+   0.2385,
+   0.2483,
+   0.273,
+   0.3137,
+   0.3186
+  ],
+  "wide5_distances": [
+   0.2385,
+   0.2483,
+   0.273,
+   0.3137,
+   0.3186
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": false,
+  "facts_in_wide5": 2
+ },
+ "GOLD-098": {
+  "run": [
+   "security/pod-security-standards.md",
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/controlling-access.md",
+   "security/security-checklist.md"
+  ],
+  "k5": [
+   "security/pod-security-standards.md",
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/controlling-access.md",
+   "security/security-checklist.md"
+  ],
+  "wide5": [
+   "security/linux-kernel-security-constraints.md",
+   "security/pod-security-standards.md",
+   "security/security-checklist.md",
+   "security/security-checklist.md",
+   "security/controlling-access.md"
+  ],
+  "k5_distances": [
+   0.5117,
+   0.5351,
+   0.5373,
+   0.5465,
+   0.5579
+  ],
+  "wide5_distances": [
+   0.4776,
+   0.5117,
+   0.5351,
+   0.5373,
+   0.5465
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-099": {
+  "run": [
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress-controllers.md"
+  ],
+  "k5": [
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress-controllers.md"
+  ],
+  "wide5": [
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress.md",
+   "services-networking/ingress-controllers.md"
+  ],
+  "k5_distances": [
+   0.2094,
+   0.4044,
+   0.4182,
+   0.4279,
+   0.4524
+  ],
+  "wide5_distances": [
+   0.2094,
+   0.4044,
+   0.4182,
+   0.4279,
+   0.4524
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-100": {
+  "run": [
+   "architecture/cgroups.md",
+   "containers/runtime-class.md",
+   "containers/runtime-class.md",
+   "workloads/pods/user-namespaces.md",
+   "storage/volumes.md"
+  ],
+  "k5": [
+   "architecture/cgroups.md",
+   "containers/runtime-class.md",
+   "containers/runtime-class.md",
+   "workloads/pods/user-namespaces.md",
+   "storage/volumes.md"
+  ],
+  "wide5": [
+   "architecture/cgroups.md",
+   "containers/runtime-class.md",
+   "containers/runtime-class.md",
+   "workloads/pods/user-namespaces.md",
+   "storage/volumes.md"
+  ],
+  "k5_distances": [
+   0.3297,
+   0.3733,
+   0.3926,
+   0.4328,
+   0.4627
+  ],
+  "wide5_distances": [
+   0.3297,
+   0.3733,
+   0.3926,
+   0.4328,
+   0.4627
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": false,
+  "facts_in_wide5": 0
+ },
+ "GOLD-101": {
+  "run": [
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md",
+   "resource-management/pod-level-resource-managers.md"
+  ],
+  "k5": [
+   "scheduling-eviction/pod-overhead.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/pod-overhead.md",
+   "workloads/pods/_index.md",
+   "scheduling-eviction/pod-overhead.md",
+   "workloads/pods/_index.md",
+   "workloads/pods/_index.md"
+  ],
+  "k5_distances": [
+   0.3946,
+   0.4015,
+   0.4141,
+   0.4278,
+   0.4417
+  ],
+  "wide5_distances": [
+   0.3946,
+   0.4015,
+   0.4032,
+   0.4141,
+   0.4278
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-102": {
+  "run": [
+   "overview/working-with-objects/names.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "workloads/controllers/job.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "overview/working-with-objects/labels.md"
+  ],
+  "k5": [
+   "overview/working-with-objects/names.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "workloads/controllers/job.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "overview/working-with-objects/labels.md"
+  ],
+  "wide5": [
+   "overview/working-with-objects/names.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "workloads/controllers/job.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "overview/working-with-objects/labels.md"
+  ],
+  "k5_distances": [
+   0.594,
+   0.6036,
+   0.6648,
+   0.6765,
+   0.6781
+  ],
+  "wide5_distances": [
+   0.594,
+   0.6036,
+   0.6648,
+   0.6765,
+   0.6781
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-103": {
+  "run": [
+   "storage/dynamic-provisioning.md",
+   "storage/dynamic-provisioning.md",
+   "storage/volumes.md",
+   "storage/storage-classes.md",
+   "storage/volumes.md"
+  ],
+  "k5": [
+   "storage/dynamic-provisioning.md",
+   "storage/dynamic-provisioning.md",
+   "storage/volumes.md",
+   "storage/storage-classes.md",
+   "storage/volumes.md"
+  ],
+  "wide5": [
+   "storage/dynamic-provisioning.md",
+   "storage/dynamic-provisioning.md",
+   "storage/volumes.md",
+   "storage/storage-classes.md",
+   "storage/volumes.md"
+  ],
+  "k5_distances": [
+   0.262,
+   0.3215,
+   0.3954,
+   0.4084,
+   0.4133
+  ],
+  "wide5_distances": [
+   0.262,
+   0.3215,
+   0.3954,
+   0.4084,
+   0.4133
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-105": {
+  "run": [
+   "cluster-administration/flow-control.md",
+   "workloads/pods/disruptions.md",
+   "workloads/workload-api/disruption-and-priority.md",
+   "workloads/workload-api/workloadbuilder.md",
+   "workloads/workload-api/workloadbuilder.md"
+  ],
+  "k5": [
+   "workloads/pods/disruptions.md",
+   "workloads/pods/disruptions.md",
+   "workloads/pods/disruptions.md",
+   "workloads/pods/disruptions.md",
+   "workloads/workload-api/disruption-and-priority.md"
+  ],
+  "wide5": [
+   "workloads/pods/disruptions.md",
+   "workloads/pods/disruptions.md",
+   "cluster-administration/flow-control.md",
+   "workloads/pods/disruptions.md",
+   "workloads/pods/disruptions.md"
+  ],
+  "k5_distances": [
+   0.5847,
+   0.5977,
+   0.6076,
+   0.6127,
+   0.631
+  ],
+  "wide5_distances": [
+   0.5847,
+   0.5977,
+   0.6054,
+   0.6076,
+   0.6127
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-106": {
+  "run": [
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "architecture/self-healing.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "k5": [
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "architecture/self-healing.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "wide5": [
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "architecture/self-healing.md",
+   "cluster-administration/node-autoscaling.md"
+  ],
+  "k5_distances": [
+   0.2138,
+   0.2472,
+   0.2496,
+   0.2623,
+   0.2703
+  ],
+  "wide5_distances": [
+   0.2138,
+   0.2472,
+   0.2496,
+   0.2623,
+   0.2703
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-107": {
+  "run": [
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshot-classes.md"
+  ],
+  "k5": [
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshot-classes.md"
+  ],
+  "wide5": [
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshots.md",
+   "storage/volume-snapshot-classes.md"
+  ],
+  "k5_distances": [
+   0.355,
+   0.4012,
+   0.4054,
+   0.4157,
+   0.4329
+  ],
+  "wide5_distances": [
+   0.355,
+   0.4012,
+   0.4054,
+   0.4157,
+   0.4329
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-108": {
+  "run": [
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "k5": [
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "wide5": [
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/dra-observability.md"
+  ],
+  "k5_distances": [
+   0.3295,
+   0.3493,
+   0.3643,
+   0.4044,
+   0.4148
+  ],
+  "wide5_distances": [
+   0.3295,
+   0.3493,
+   0.3643,
+   0.4044,
+   0.4148
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-111": {
+  "run": [
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/hardening-guide/authentication-mechanisms.md"
+  ],
+  "k5": [
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/hardening-guide/authentication-mechanisms.md"
+  ],
+  "wide5": [
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/service-accounts.md",
+   "security/hardening-guide/authentication-mechanisms.md"
+  ],
+  "k5_distances": [
+   0.4778,
+   0.482,
+   0.4838,
+   0.4921,
+   0.4976
+  ],
+  "wide5_distances": [
+   0.4778,
+   0.482,
+   0.4838,
+   0.4921,
+   0.4976
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-112": {
+  "run": [
+   "workloads/pods/_index.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/statefulset.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/controllers/statefulset.md"
+  ],
+  "k5": [
+   "workloads/pods/_index.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/statefulset.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/controllers/statefulset.md"
+  ],
+  "wide5": [
+   "workloads/pods/_index.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/statefulset.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/controllers/statefulset.md"
+  ],
+  "k5_distances": [
+   0.4946,
+   0.5023,
+   0.5084,
+   0.5183,
+   0.5225
+  ],
+  "wide5_distances": [
+   0.4946,
+   0.5023,
+   0.5084,
+   0.5183,
+   0.5225
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-113": {
+  "run": [
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md"
+  ],
+  "k5": [
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md"
+  ],
+  "wide5": [
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md",
+   "security/multi-tenancy.md"
+  ],
+  "k5_distances": [
+   0.4188,
+   0.4548,
+   0.4834,
+   0.5167,
+   0.5171
+  ],
+  "wide5_distances": [
+   0.4188,
+   0.4548,
+   0.4834,
+   0.5167,
+   0.5171
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-114": {
+  "run": [
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "workloads/autoscaling.md"
+  ],
+  "k5": [
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "workloads/autoscaling.md"
+  ],
+  "wide5": [
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "cluster-administration/node-autoscaling.md",
+   "workloads/autoscaling.md",
+   "workloads/autoscaling.md"
+  ],
+  "k5_distances": [
+   0.3416,
+   0.3688,
+   0.3995,
+   0.4041,
+   0.4059
+  ],
+  "wide5_distances": [
+   0.3416,
+   0.3688,
+   0.3995,
+   0.4041,
+   0.4059
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-116": {
+  "run": [
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md"
+  ],
+  "k5": [
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md"
+  ],
+  "wide5": [
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md",
+   "overview/working-with-objects/finalizers.md"
+  ],
+  "k5_distances": [
+   0.2435,
+   0.3636,
+   0.3838,
+   0.4104,
+   0.416
+  ],
+  "wide5_distances": [
+   0.2435,
+   0.3636,
+   0.3838,
+   0.4104,
+   0.416
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-122": {
+  "run": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md"
+  ],
+  "k5": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md"
+  ],
+  "wide5": [
+   "cluster-administration/system-metrics.md",
+   "cluster-administration/system-metrics.md",
+   "overview/working-with-objects/common-labels.md",
+   "overview/working-with-objects/labels.md",
+   "overview/working-with-objects/names.md"
+  ],
+  "k5_distances": [
+   0.6043,
+   0.6149,
+   0.6897,
+   0.6926,
+   0.7076
+  ],
+  "wide5_distances": [
+   0.6043,
+   0.6149,
+   0.6897,
+   0.6926,
+   0.7076
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-123": {
+  "run": [
+   "resource-management/resource-managers.md",
+   "resource-management/pod-level-resource-managers.md",
+   "policy/_index.md",
+   "resource-management/resource-managers.md",
+   "architecture/nodes.md"
+  ],
+  "k5": [
+   "resource-management/resource-managers.md",
+   "resource-management/pod-level-resource-managers.md",
+   "policy/_index.md",
+   "resource-management/resource-managers.md",
+   "architecture/nodes.md"
+  ],
+  "wide5": [
+   "resource-management/resource-managers.md",
+   "resource-management/pod-level-resource-managers.md",
+   "policy/_index.md",
+   "resource-management/resource-managers.md",
+   "architecture/nodes.md"
+  ],
+  "k5_distances": [
+   0.3284,
+   0.3383,
+   0.3454,
+   0.3736,
+   0.3783
+  ],
+  "wide5_distances": [
+   0.3284,
+   0.3383,
+   0.3454,
+   0.3736,
+   0.3783
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-124": {
+  "run": [
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/topology-aware-routing.md"
+  ],
+  "k5": [
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/topology-aware-routing.md"
+  ],
+  "wide5": [
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service-traffic-policy.md",
+   "services-networking/service.md",
+   "services-networking/service.md",
+   "services-networking/network-policies.md"
+  ],
+  "k5_distances": [
+   0.3982,
+   0.3997,
+   0.4725,
+   0.4867,
+   0.5128
+  ],
+  "wide5_distances": [
+   0.3982,
+   0.3997,
+   0.4725,
+   0.4867,
+   0.5073
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-125": {
+  "run": [
+   "architecture/_index.md",
+   "architecture/controller.md",
+   "architecture/_index.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md"
+  ],
+  "k5": [
+   "architecture/_index.md",
+   "architecture/controller.md",
+   "architecture/_index.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md"
+  ],
+  "wide5": [
+   "architecture/_index.md",
+   "architecture/controller.md",
+   "architecture/_index.md",
+   "architecture/control-plane-node-communication.md",
+   "architecture/control-plane-node-communication.md"
+  ],
+  "k5_distances": [
+   0.2473,
+   0.3244,
+   0.3284,
+   0.334,
+   0.3342
+  ],
+  "wide5_distances": [
+   0.2473,
+   0.3244,
+   0.3284,
+   0.334,
+   0.3342
+  ],
+  "gold_in_wide5": false,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-127": {
+  "run": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/workload-api/disruption-and-priority.md",
+   "workloads/workload-api/_index.md",
+   "workloads/workload-api/workloadbuilder.md"
+  ],
+  "k5": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/workload-api/disruption-and-priority.md",
+   "workloads/autoscaling.md",
+   "workloads/workload-api/_index.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/scheduling-framework.md",
+   "scheduling-eviction/scheduling-framework.md",
+   "workloads/workload-api/disruption-and-priority.md",
+   "workloads/autoscaling.md",
+   "workloads/workload-api/_index.md"
+  ],
+  "k5_distances": [
+   0.4038,
+   0.4569,
+   0.4662,
+   0.4864,
+   0.4941
+  ],
+  "wide5_distances": [
+   0.4038,
+   0.4569,
+   0.4662,
+   0.4864,
+   0.4941
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-128": {
+  "run": [
+   "workloads/workload-api/_index.md",
+   "scheduling-eviction/pod-scheduling-readiness.md",
+   "workloads/pods/scheduling-group.md",
+   "workloads/podgroup-api/_index.md",
+   "workloads/_index.md"
+  ],
+  "k5": [
+   "workloads/workload-api/_index.md",
+   "scheduling-eviction/pod-scheduling-readiness.md",
+   "workloads/pods/scheduling-group.md",
+   "workloads/podgroup-api/_index.md",
+   "workloads/_index.md"
+  ],
+  "wide5": [
+   "workloads/workload-api/_index.md",
+   "scheduling-eviction/pod-scheduling-readiness.md",
+   "workloads/pods/scheduling-group.md",
+   "workloads/podgroup-api/_index.md",
+   "workloads/_index.md"
+  ],
+  "k5_distances": [
+   0.2931,
+   0.3312,
+   0.3316,
+   0.3449,
+   0.3498
+  ],
+  "wide5_distances": [
+   0.2931,
+   0.3312,
+   0.3316,
+   0.3449,
+   0.3498
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-130": {
+  "run": [
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/_index.md",
+   "workloads/pods/disruptions.md"
+  ],
+  "k5": [
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/_index.md",
+   "workloads/pods/disruptions.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/api-eviction.md",
+   "scheduling-eviction/_index.md",
+   "workloads/pods/disruptions.md"
+  ],
+  "k5_distances": [
+   0.2549,
+   0.2672,
+   0.2936,
+   0.3362,
+   0.3471
+  ],
+  "wide5_distances": [
+   0.2549,
+   0.2672,
+   0.2936,
+   0.3362,
+   0.3471
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-131": {
+  "run": [
+   "storage/volume-attributes-classes.md",
+   "policy/resource-quotas.md",
+   "storage/volume-attributes-classes.md",
+   "storage/volume-populators-and-data-sources.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "k5": [
+   "storage/volume-attributes-classes.md",
+   "policy/resource-quotas.md",
+   "storage/volume-attributes-classes.md",
+   "storage/volume-populators-and-data-sources.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "wide5": [
+   "storage/volume-attributes-classes.md",
+   "policy/resource-quotas.md",
+   "storage/volume-attributes-classes.md",
+   "storage/volume-populators-and-data-sources.md",
+   "storage/volume-attributes-classes.md"
+  ],
+  "k5_distances": [
+   0.3699,
+   0.3919,
+   0.434,
+   0.4342,
+   0.4452
+  ],
+  "wide5_distances": [
+   0.3699,
+   0.3919,
+   0.434,
+   0.4342,
+   0.4452
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-132": {
+  "run": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md"
+  ],
+  "k5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md"
+  ],
+  "wide5": [
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md",
+   "workloads/controllers/job.md"
+  ],
+  "k5_distances": [
+   0.408,
+   0.4728,
+   0.4824,
+   0.4882,
+   0.5069
+  ],
+  "wide5_distances": [
+   0.408,
+   0.4728,
+   0.4824,
+   0.4882,
+   0.5069
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-133": {
+  "run": [
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md"
+  ],
+  "k5": [
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md"
+  ],
+  "wide5": [
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/system-logs.md",
+   "cluster-administration/logging.md",
+   "cluster-administration/logging.md"
+  ],
+  "k5_distances": [
+   0.2249,
+   0.2489,
+   0.3262,
+   0.3419,
+   0.3957
+  ],
+  "wide5_distances": [
+   0.2249,
+   0.2489,
+   0.3262,
+   0.3419,
+   0.3957
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-134": {
+  "run": [
+   "workloads/workload-api/workloadbuilder.md",
+   "cluster-administration/flow-control.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5": [
+   "workloads/workload-api/workloadbuilder.md",
+   "cluster-administration/flow-control.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "security/linux-kernel-security-constraints.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "wide5": [
+   "workloads/workload-api/workloadbuilder.md",
+   "workloads/controllers/statefulset.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/deployment.md",
+   "architecture/controller.md"
+  ],
+  "k5_distances": [
+   0.6056,
+   0.653,
+   0.674,
+   0.6743,
+   0.6864
+  ],
+  "wide5_distances": [
+   0.6056,
+   0.6251,
+   0.6265,
+   0.6291,
+   0.6447
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-135": {
+  "run": [
+   "workloads/pods/ephemeral-containers.md",
+   "storage/ephemeral-volumes.md",
+   "workloads/pods/ephemeral-containers.md",
+   "workloads/pods/ephemeral-containers.md",
+   "security/multi-tenancy.md"
+  ],
+  "k5": [
+   "workloads/pods/ephemeral-containers.md",
+   "storage/ephemeral-volumes.md",
+   "workloads/pods/ephemeral-containers.md",
+   "workloads/pods/ephemeral-containers.md",
+   "security/multi-tenancy.md"
+  ],
+  "wide5": [
+   "workloads/pods/ephemeral-containers.md",
+   "storage/ephemeral-volumes.md",
+   "workloads/pods/ephemeral-containers.md",
+   "workloads/pods/ephemeral-containers.md",
+   "security/multi-tenancy.md"
+  ],
+  "k5_distances": [
+   0.4071,
+   0.4623,
+   0.5032,
+   0.5076,
+   0.5096
+  ],
+  "wide5_distances": [
+   0.4071,
+   0.4623,
+   0.5032,
+   0.5076,
+   0.5096
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-137": {
+  "run": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "workloads/controllers/cron-jobs.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "wide5": [
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "cluster-administration/flow-control.md",
+   "workloads/controllers/cron-jobs.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5_distances": [
+   0.5291,
+   0.5536,
+   0.564,
+   0.5685,
+   0.6
+  ],
+  "wide5_distances": [
+   0.5291,
+   0.5536,
+   0.564,
+   0.5685,
+   0.5997
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-139": {
+  "run": [
+   "storage/projected-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volume-pvc-datasource.md"
+  ],
+  "k5": [
+   "storage/projected-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volume-pvc-datasource.md"
+  ],
+  "wide5": [
+   "storage/projected-volumes.md",
+   "storage/persistent-volumes.md",
+   "storage/volumes.md",
+   "storage/ephemeral-volumes.md",
+   "storage/volume-pvc-datasource.md"
+  ],
+  "k5_distances": [
+   0.4891,
+   0.595,
+   0.6075,
+   0.6326,
+   0.6429
+  ],
+  "wide5_distances": [
+   0.4891,
+   0.595,
+   0.6075,
+   0.6326,
+   0.6429
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 3
+ },
+ "GOLD-140": {
+  "run": [
+   "workloads/pods/_index.md",
+   "workloads/pods/static-pods.md",
+   "security/api-server-bypass-risks.md",
+   "security/api-server-bypass-risks.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "k5": [
+   "workloads/pods/_index.md",
+   "workloads/pods/static-pods.md",
+   "security/api-server-bypass-risks.md",
+   "security/api-server-bypass-risks.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "wide5": [
+   "workloads/pods/_index.md",
+   "workloads/pods/static-pods.md",
+   "security/api-server-bypass-risks.md",
+   "security/api-server-bypass-risks.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "k5_distances": [
+   0.2954,
+   0.3097,
+   0.3133,
+   0.3519,
+   0.3779
+  ],
+  "wide5_distances": [
+   0.2954,
+   0.3097,
+   0.3133,
+   0.3519,
+   0.3779
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-141": {
+  "run": [
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md"
+  ],
+  "k5": [
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md",
+   "scheduling-eviction/node-pressure-eviction.md"
+  ],
+  "k5_distances": [
+   0.3616,
+   0.4059,
+   0.4464,
+   0.4912,
+   0.4984
+  ],
+  "wide5_distances": [
+   0.3616,
+   0.4059,
+   0.4464,
+   0.4912,
+   0.4984
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-142": {
+  "run": [
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "resource-management/resource-managers.md"
+  ],
+  "k5": [
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "resource-management/resource-managers.md"
+  ],
+  "wide5": [
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "configuration/manage-resources-containers.md",
+   "resource-management/resource-managers.md",
+   "workloads/pods/_index.md"
+  ],
+  "k5_distances": [
+   0.3405,
+   0.3691,
+   0.3772,
+   0.3815,
+   0.394
+  ],
+  "wide5_distances": [
+   0.3405,
+   0.3691,
+   0.3772,
+   0.3815,
+   0.3909
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-143": {
+  "run": [
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md"
+  ],
+  "k5": [
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md"
+  ],
+  "wide5": [
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/apiserver-aggregation.md",
+   "extend-kubernetes/api-extension/custom-resources.md",
+   "extend-kubernetes/api-extension/_index.md"
+  ],
+  "k5_distances": [
+   0.4268,
+   0.4458,
+   0.5124,
+   0.5124,
+   0.5265
+  ],
+  "wide5_distances": [
+   0.4268,
+   0.4458,
+   0.5124,
+   0.5124,
+   0.5265
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-144": {
+  "run": [
+   "scheduling-eviction/topology-spread-constraints.md",
+   "overview/working-with-objects/labels.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/job.md",
+   "overview/working-with-objects/labels.md"
+  ],
+  "k5": [
+   "windows/user-guide.md",
+   "windows/intro.md",
+   "windows/user-guide.md",
+   "windows/intro.md",
+   "windows/user-guide.md"
+  ],
+  "wide5": [
+   "windows/user-guide.md",
+   "windows/intro.md",
+   "windows/user-guide.md",
+   "scheduling-eviction/topology-spread-constraints.md",
+   "windows/intro.md"
+  ],
+  "k5_distances": [
+   0.4078,
+   0.4233,
+   0.4312,
+   0.4804,
+   0.4888
+  ],
+  "wide5_distances": [
+   0.4078,
+   0.4233,
+   0.4312,
+   0.4723,
+   0.4804
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-145": {
+  "run": [
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/daemonset.md",
+   "overview/_index.md",
+   "workloads/management.md",
+   "workloads/controllers/deployment.md"
+  ],
+  "k5": [
+   "overview/_index.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/daemonset.md",
+   "overview/_index.md",
+   "workloads/management.md"
+  ],
+  "wide5": [
+   "overview/_index.md",
+   "workloads/controllers/deployment.md",
+   "workloads/controllers/daemonset.md",
+   "workloads/controllers/replicaset.md",
+   "overview/_index.md"
+  ],
+  "k5_distances": [
+   0.4709,
+   0.5023,
+   0.5243,
+   0.5331,
+   0.5456
+  ],
+  "wide5_distances": [
+   0.4709,
+   0.5023,
+   0.5243,
+   0.5277,
+   0.5331
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 0
+ },
+ "GOLD-146": {
+  "run": [
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "architecture/leases.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "k5": [
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "architecture/leases.md",
+   "cluster-administration/flow-control.md"
+  ],
+  "wide5": [
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "cluster-administration/coordinated-leader-election.md",
+   "architecture/leases.md"
+  ],
+  "k5_distances": [
+   0.5303,
+   0.554,
+   0.6,
+   0.6583,
+   0.6649
+  ],
+  "wide5_distances": [
+   0.5303,
+   0.554,
+   0.6,
+   0.6419,
+   0.6583
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-148": {
+  "run": [
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/how-dra-works.md",
+   "resource-management/dynamic-resource-allocation/_index.md"
+  ],
+  "k5": [
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/how-dra-works.md",
+   "resource-management/dynamic-resource-allocation/_index.md"
+  ],
+  "wide5": [
+   "resource-management/dynamic-resource-allocation/dra-api.md",
+   "resource-management/dynamic-resource-allocation/_index.md",
+   "resource-management/dynamic-resource-allocation/dra-features.md",
+   "resource-management/dynamic-resource-allocation/how-dra-works.md",
+   "resource-management/dynamic-resource-allocation/_index.md"
+  ],
+  "k5_distances": [
+   0.3101,
+   0.3506,
+   0.3579,
+   0.3603,
+   0.3869
+  ],
+  "wide5_distances": [
+   0.3101,
+   0.3506,
+   0.3579,
+   0.3603,
+   0.3869
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 1
+ },
+ "GOLD-149": {
+  "run": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md"
+  ],
+  "k5": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md"
+  ],
+  "wide5": [
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "resource-management/dynamic-resource-allocation/device-taints.md",
+   "scheduling-eviction/taint-and-toleration.md"
+  ],
+  "k5_distances": [
+   0.4367,
+   0.5227,
+   0.525,
+   0.542,
+   0.5855
+  ],
+  "wide5_distances": [
+   0.4367,
+   0.5227,
+   0.525,
+   0.542,
+   0.5758
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ },
+ "GOLD-150": {
+  "run": [
+   "workloads/controllers/daemonset.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/daemonset.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "k5": [
+   "workloads/controllers/daemonset.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/daemonset.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "wide5": [
+   "workloads/controllers/daemonset.md",
+   "scheduling-eviction/taint-and-toleration.md",
+   "workloads/controllers/_index.md",
+   "workloads/controllers/daemonset.md",
+   "workloads/controllers/daemonset.md"
+  ],
+  "k5_distances": [
+   0.3798,
+   0.4144,
+   0.4502,
+   0.514,
+   0.5178
+  ],
+  "wide5_distances": [
+   0.3798,
+   0.4144,
+   0.4502,
+   0.514,
+   0.5178
+  ],
+  "gold_in_wide5": true,
+  "gold_in_wide_top5_documents": true,
+  "facts_in_wide5": 2
+ }
+}
