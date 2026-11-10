@@ -4,14 +4,14 @@ This document tracks defects, deviations, and behavioral limitations identified 
 
 ---
 
-## FINDING-001: LiteLLM Router Bypasses Upstream Retry-After Duration on 429 Errors
+## FINDING-001: Retry-After Is Applied Per Deployment, So a Provider Quota Shared by Several Deployments Keeps Being Hit (By Design)
 
 - **Component:** LiteLLM Proxy Router (`litellm/router.py:async_function_with_retries` and `_time_to_sleep_before_retry`)
 - **SUT Version:** `ghcr.io/berriai/litellm:main-v1.59.8`
-- **Severity:** Medium (Upstream Concurrency / Provider Compliance)
+- **Severity:** Low (documented LiteLLM design; an operational risk when several deployments share one provider quota)
 - **Target / Expectation:** When an upstream LLM provider returns HTTP 429 with `Retry-After: 2`, the gateway must pause for at least 2.0 seconds before dispatching the retry attempt.
 - **Measured Result:** Retry attempt dispatched after **0.02 seconds** ($\Delta t < 0.1\text{ s} \ll 2.0\text{ s}$).
-- **Status:** SUT remains unpatched per measurement rules. Test marked `xfail(strict=True, raises=AssertionError, reason="FINDING-001")`.
+- **Status:** By design in LiteLLM. The test stays `xfail(strict=True, raises=AssertionError, reason="FINDING-001")` to pin the behaviour for the shared-quota case.
 
 ### Reproduction Steps
 1. Deploy LiteLLM proxy with multiple deployments configured under model group `fake-primary` (`fake-gpt-primary-1`, `fake-gpt-primary-2`, `fake-gpt-primary-3`) and fallback `fake-fallback`.
@@ -34,6 +34,13 @@ elif (
     return 0
 ```
 Because `fake-gpt-primary-2` is available in the model group, LiteLLM ignores the upstream's rate limit backoff signal and immediately hammers the second deployment within 20 milliseconds (`wait_time = 0.02s`). Furthermore, if only a single deployment exists, `should_retry_this_error` raises `RateLimitError` immediately upon cooldown without performing any retry.
+
+### Why this is a trade-off and not a defect
+The router does this on purpose. Its docstring in `litellm/router.py` (`_time_to_sleep_before_retry`, v1.59.8) says: "It should instantly retry only when: 1. there are healthy deployments in the same model group 2. there are fallbacks for the completion call".
+
+In this reproduction the three deployments of `fake-primary` point to the same fake upstream. That models several keys or regions that draw on one provider quota: an instant retry on another deployment hits the same limit again. When the deployments are independent, the instant retry is the intended behaviour.
+
+Not covered yet: a model group with a single deployment, where the `Retry-After` header should be honoured.
 
 ### Evidence
 Attempt log recorded by `tests/fake_upstream.py`:

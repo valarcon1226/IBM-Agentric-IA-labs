@@ -57,11 +57,11 @@ In accordance with homelab deployment constraints:
 
 ### 1. Environment & Stack Startup (Homelab)
 
-In the homelab host (`ssh valentina@192.168.1.15` inside `~/qa/38-llm-platform-evals`):
+In the homelab host (`ssh <user>@<homelab-host>` inside `~/qa/38-llm-platform-evals`):
 
 ```bash
 # 1. Export master key (never committed to repo or .env)
-export LITELLM_MASTER_KEY="sk-master-key-evals-homelab-1234"
+export LITELLM_MASTER_KEY="<your-master-key>"
 
 # 2. Start the isolated container stack (postgres, litellm, open-webui)
 docker compose up -d --wait
@@ -100,10 +100,10 @@ The Layer 3 UI test requires Microsoft Edge and Playwright, run from the laptop 
 
 ```bash
 # On Laptop (Terminal 1 - Establish SSH tunnel to Open WebUI and LiteLLM):
-ssh -N -L 8088:127.0.0.1:8088 -L 4000:127.0.0.1:4000 valentina@192.168.1.15
+ssh -N -L 8088:127.0.0.1:8088 -L 4000:127.0.0.1:4000 <user>@<homelab-host>
 
 # On Laptop (Terminal 2 - Execute Layer 3 Playwright Edge test):
-export LITELLM_MASTER_KEY="sk-master-key-evals-homelab-1234"
+export LITELLM_MASTER_KEY="<your-master-key>"
 export OPENWEBUI_BASE_URL="http://127.0.0.1:8088"
 export LITELLM_BASE_URL="http://127.0.0.1:4000"
 uv run pytest tests/resilience/test_stream_cut.py -k test_stream_cut_layer3_openwebui_edge_ui -v
