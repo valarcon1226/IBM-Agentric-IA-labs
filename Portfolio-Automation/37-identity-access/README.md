@@ -23,7 +23,7 @@ Evaluates OAuth 2.0 / OpenID Connect Core 1.0, PKCE S256, refresh token rotation
 
 ## Measured Quality Targets (`targets.toml`)
 
-Numbers from the nightly job, started by hand with `workflow_dispatch`, in run [39543095736](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39543095736) on a GitHub `ubuntu-latest` runner (PR gate 9m14s, nightly 11m09s). The PR gate also passed in runs [39539664683](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39539664683) and [39541739365](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39541739365).
+Numbers from the nightly job, started by hand with `workflow_dispatch`, in run [39543095736](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39543095736) on a GitHub `ubuntu-latest` runner (PR gate 9m14s, nightly 11m09s). The PR gate also passed in runs [39539664683](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39539664683) and [39541739365](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39541739365).
 
 | Metric / Requirement | Target | Measured on CI | Result | Test |
 |---|---|---|---|---|
@@ -34,7 +34,7 @@ Numbers from the nightly job, started by hand with `workflow_dispatch`, in run [
 | Lockout after failed attempts (Edge, Firefox, WebKit) | exactly 3 | 3 | PASS | [`tests/ui/test_mfa_lockout.py`](tests/ui/test_mfa_lockout.py) |
 | Baseline users missed in a 10k walk with 300 created mid-walk | 0 | 0 missed, 300 repeated (FIND-008) | PASS | [`tests/api/test_pagination.py`](tests/api/test_pagination.py) |
 | Partial import of 1,000 users with 50 conflicts (SKIP, OVERWRITE, FAIL) | FAIL is all-or-nothing | 3/3 policies as specified | PASS | [`tests/api/test_partial_import.py`](tests/api/test_partial_import.py) |
-| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | 16.54 s in the nightly job, run [40781905121](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40781905121) (10k users, 20/20 TOTP logins preserved, OIDC flow verified) | PASS | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
+| Major upgrade 25.0.6 → 26.0.5 | ≤ 300 s | 16.54 s in the nightly job, run [40781905121](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/40781905121) (10k users, 20/20 TOTP logins preserved, OIDC flow verified) | PASS | [`tests/migration/test_upgrade.py`](tests/migration/test_upgrade.py) |
 
 Other load numbers from the same run (p95): `client_credentials` 10.99 ms at 10 rps and 6.76 ms at 100 rps (~94 rps reached). A password login takes about 40 ms, so with one request in flight the loop tops out near 26 rps: the 50 and 100 rps login steps reached ~26 and ~27 rps (p95 45.36 ms and 42.08 ms). They show latency, not capacity at those rates.
 

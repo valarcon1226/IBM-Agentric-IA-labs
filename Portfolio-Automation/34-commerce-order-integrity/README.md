@@ -35,7 +35,7 @@ Every production concern is evaluated against real open-source software:
 
 ## 3. Numerical Targets & Measured SLA Performance
 
-> **Where the numbers come from:** GitHub Actions on `ubuntu-latest` (4 vCPU, 16 GB), the hardware the targets assume. PR gate: [run 39147961900](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147961900). Nightly job (resilience, migration, perf), started by hand with `workflow_dispatch`: [run 39147962708](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147962708), whose `nightly-metrics` artifact holds `results/metrics.json`. Rows marked *local* were measured on the laptop on 2026-10-17 because the CI log does not print them.
+> **Where the numbers come from:** GitHub Actions on `ubuntu-latest` (4 vCPU, 16 GB), the hardware the targets assume. PR gate: [run 39147961900](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39147961900). Nightly job (resilience, migration, perf), started by hand with `workflow_dispatch`: [run 39147962708](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39147962708), whose `nightly-metrics` artifact holds `results/metrics.json`. Rows marked *local* were measured on the laptop on 2026-10-17 because the CI log does not print them.
 
 | Target | Target value (`targets.toml`) | Measured | Result |
 |---|---|---|---|

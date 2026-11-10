@@ -71,7 +71,7 @@ flowchart LR
 
 ## 4. Numerical Targets & Measured SLA Performance
 
-> **Where the numbers come from:** GitHub Actions on `ubuntu-latest`. PR gate: [run 39506590337](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39506590337); full nightly suite: [run 39535851349](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39535851349). Test runs save raw metrics in `results/` (uploaded as the run's `nightly-metrics` artifact) and update the requirements matrix in [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md). The figures in section 3 come from the earlier laptop runs.
+> **Where the numbers come from:** GitHub Actions on `ubuntu-latest`. PR gate: [run 39506590337](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39506590337); full nightly suite: [run 39535851349](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/39535851349). Test runs save raw metrics in `results/` (uploaded as the run's `nightly-metrics` artifact) and update the requirements matrix in [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md). The figures in section 3 come from the earlier laptop runs.
 
 | Metric / Target | Target Value (`targets.toml`) | Measured Value (CI) | Result |
 |---|---|---|---|

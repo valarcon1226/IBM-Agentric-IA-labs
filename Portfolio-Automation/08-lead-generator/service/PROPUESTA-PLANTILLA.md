@@ -12,7 +12,7 @@ Hola [Nombre del cliente / "allí"],
 
 Entiendo que necesitas una lista limpia y confiable de prospectos B2B en el sector de **[Nicho o industria]** para **[Ciudad / Región]**, sin perder tiempo con datos duplicados, correos rebotados o números inválidos.
 
-No hago recolección manual lenta ni compro bases de datos recicladas que queman tu dominio. Cuento con un **motor automatizado propio de extracción y validación B2B** (puedes ver la arquitectura y código en mi portafolio: `https://github.com/valarcon1226/IBM-Agentric-IA-labs/tree/main/Portfolio-Automation/08-lead-generator`).
+No hago recolección manual lenta ni compro bases de datos recicladas que queman tu dominio. Cuento con un **motor automatizado propio de extracción y validación B2B** (puedes ver la arquitectura y código en mi portafolio: `https://github.com/valarcon1226/qa-automation-portfolio/tree/main/Portfolio-Automation/08-lead-generator`).
 
 ### Lo que recibirás exactamente:
 Un archivo consolidado en **Excel (.xlsx) y CSV** estructurado en cuatro hojas de trabajo:
@@ -54,7 +54,7 @@ Hi [Client Name / "there"],
 
 I understand you are looking for a clean, highly qualified B2B prospect list targeting **[Industry/Niche]** in **[City/Country]**, without dealing with bounce-heavy emails, duplicate records, or dead phone numbers.
 
-I do not do slow manual copy-pasting, nor do I sell outdated scraped lists that damage your email sender reputation. I developed a **custom automated B2B extraction and enrichment pipeline** (you can review the engine architecture and code directly in my public GitHub portfolio: `https://github.com/valarcon1226/IBM-Agentric-IA-labs/tree/main/Portfolio-Automation/08-lead-generator`).
+I do not do slow manual copy-pasting, nor do I sell outdated scraped lists that damage your email sender reputation. I developed a **custom automated B2B extraction and enrichment pipeline** (you can review the engine architecture and code directly in my public GitHub portfolio: `https://github.com/valarcon1226/qa-automation-portfolio/tree/main/Portfolio-Automation/08-lead-generator`).
 
 ### What you will receive:
 A ready-to-use **Excel (.xlsx) and CSV** workbook structured across four dedicated worksheets:
