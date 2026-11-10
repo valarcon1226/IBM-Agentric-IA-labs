@@ -35,7 +35,7 @@ Every production concern is evaluated against real open-source software:
 
 ## 3. Numerical Targets & Measured SLA Performance
 
-> **Where the numbers come from:** GitHub Actions on `ubuntu-latest` (4 vCPU, 16 GB), the hardware the targets assume. PR gate: [run 39147961900](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147961900). Nightly (resilience, migration, perf): [run 39147962708](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147962708), whose `nightly-metrics` artifact holds `results/metrics.json`. Rows marked *local* were measured on the laptop on 2026-10-17 because the CI log does not print them.
+> **Where the numbers come from:** GitHub Actions on `ubuntu-latest` (4 vCPU, 16 GB), the hardware the targets assume. PR gate: [run 39147961900](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147961900). Nightly job (resilience, migration, perf), started by hand with `workflow_dispatch`: [run 39147962708](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/39147962708), whose `nightly-metrics` artifact holds `results/metrics.json`. Rows marked *local* were measured on the laptop on 2026-10-17 because the CI log does not print them.
 
 | Target | Target value (`targets.toml`) | Measured | Result |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Detailed evidence, source code citations, reproduction steps, and SQL queries ar
 - **Component:** `saleor.warehouse.management.allocate_stocks` / `saleor.checkout.complete_checkout`
 - **Severity:** High
 - **Status:** Documented / Marked `@pytest.mark.xfail(strict=True, reason="FINDING-001")`
-- **Root Cause:** In `ghcr.io/saleor/saleor:3.20`, file `saleor/warehouse/management.py` (lines 121–136), `stocks_id = (stock.pop("id") for stock in stocks)` is created as a single-use generator expression. The reservation availability check evaluates and exhausts the generator in `_prepare_stock_to_reserved_quantity_map`. The subsequent database query `Allocation.objects.filter(stock_id__in=stocks_id)` receives an empty sequence, rendering the allocation check ineffective under high concurrency.
+- **Root cause:** not confirmed. An earlier explanation (a single-use generator in `saleor/warehouse/management.py`) does not apply to this setup, because that code path only runs when stock reservations are enabled. Details in [`docs/FINDINGS.md`](docs/FINDINGS.md).
 - **Evidence:** 20 race runs of 50 concurrent buyers competing for 5 units caused 18 oversold units in 10 of 20 runs, driving inventory balances negative (down to -3).
 
 ### FINDING-002: Intra-Batch Duplicate Slug in `productBulkCreate` Triggers Unhandled IntegrityError

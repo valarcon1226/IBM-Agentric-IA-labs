@@ -14,36 +14,23 @@ In accordance with QA policy:
 - **Component:** `saleor.warehouse.management.allocate_stocks` / `saleor.checkout.complete_checkout`
 - **SUT Version:** `Saleor 3.20` (image: `ghcr.io/saleor/saleor:3.20`, commit `ffb3e4267c`)
 - **Severity:** High (Inventory corruption and financial breach due to unfulfillable orders)
-- **Status:** Open / Documented
+- **Status:** Open. Behaviour measured, root cause not confirmed, not reported upstream yet
 
 ### Description
 Under concurrent checkout completions where 50 buyers race for the last 5 available units of a product variant, Saleor 3.20 allowed up to 8 orders to complete successfully, driving inventory into negative balance (`remaining_stock` down to `-3`). Across 20 test iterations, oversells occurred in 10 runs for a total of 18 oversold units, calculated directly from the database (`quantity_allocated - quantity` per variant).
 
-### Root Cause Analysis
-In `saleor/warehouse/management.py` (lines 121–136 of Saleor 3.20 image `ghcr.io/saleor/saleor:3.20`):
-```python
-    stocks = list(
-        stock_select_for_update_for_existing_qs(stocks)
-        .filter(**filter_lookup)
-        .values("id", "product_variant", "pk", "quantity", "warehouse_id")
-    )
-    stocks_id = (stock.pop("id") for stock in stocks)
+### Root cause: not confirmed
+The oversell is measured. Its cause is not established yet.
 
-    quantity_reservation_for_stocks: dict = _prepare_stock_to_reserved_quantity_map(
-        checkout_lines, check_reservations, stocks_id
-    )
+An earlier version of this document blamed the single-use generator `stocks_id` in `saleor/warehouse/management.py` (lines 121-136 of the 3.20 image). It said `_prepare_stock_to_reserved_quantity_map` exhausts the generator, so the next query, `Allocation.objects.filter(stock_id__in=stocks_id)`, sees no stocks. That explanation does not hold for this setup:
+- `_prepare_stock_to_reserved_quantity_map` only iterates `stocks_id` when `check_reservations` is true. This suite never enables stock reservations, and they are off by default in Saleor.
+- If existing allocations were ignored on every call, the oversell would be deterministic. It appears in about half of the runs, which points to a narrow race window.
 
-    quantity_allocation_list = list(
-        Allocation.objects.filter(
-            stock_id__in=stocks_id,
-            quantity_allocated__gt=0,
-        )
-...
-```
-1. `stocks_id` is instantiated as a single-use generator expression `(stock.pop("id") for stock in stocks)`.
-2. When `_prepare_stock_to_reserved_quantity_map` evaluates `stocks_id`, the generator is consumed.
-3. Subsequent evaluation in `Allocation.objects.filter(stock_id__in=stocks_id)` receives an exhausted generator, generating an empty IN-clause `WHERE stock_id IN ()`.
-4. As a result, existing allocations are not calculated into the stock availability check within concurrent worker threads, allowing concurrent transactions to pass validation and allocate stock beyond the warehouse limit.
+What is known:
+- The result is read from the database (`warehouse_stock.quantity_allocated` minus `quantity`) and from the orders the API returned, so it does not depend on the test's own bookkeeping.
+- The variant under test is created with direct SQL inserts and price 0 (`create_fresh_variant_with_stock_5` in `tests/resilience/test_stock_race.py`). A reproduction with a variant created through the API is still pending, to rule out the fixture.
+
+Next steps: reproduce with reservations on and off, with an API-created variant, and on the current Saleor release. Then report it upstream with the script.
 
 ### Steps to Reproduce
 1. In PostgreSQL, configure a product variant with `warehouse_stock.quantity = 5` and `warehouse_stock.quantity_allocated = 0`.
