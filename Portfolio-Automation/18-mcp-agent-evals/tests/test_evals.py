@@ -55,3 +55,15 @@ async def test_suite_survives_llm_errors(monkeypatch, tmp_path):
     assert res["total_cases"] == 30
     assert res["passed_cases"] == 0
     assert (tmp_path / "eval.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_runs_do_not_share_reservations(tmp_path):
+    """Each run starts from an empty database.
+
+    Reservations kept from earlier runs would fill the 40-seat slots and make a valid booking
+    fail on the fourth run.
+    """
+    for _ in range(4):
+        res = await run_eval_suite(model_name="fake", reports_dir=tmp_path)
+        assert res["passed_cases"] == 30
