@@ -6,7 +6,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.4_Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-24-339933?logo=node.js)](https://nodejs.org/)
 [![Browsers](https://img.shields.io/badge/Browsers-Edge_%7C_Firefox_%7C_WebKit-0078D7)](https://playwright.dev/docs/browsers)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 

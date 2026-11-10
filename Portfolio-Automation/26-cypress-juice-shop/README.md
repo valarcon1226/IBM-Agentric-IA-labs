@@ -1,10 +1,9 @@
 # 26 · Cypress + TypeScript Automation Suite over OWASP Juice Shop
 
-[![CI - Cypress Juice Shop](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/26-cypress-juice-shop.yml/badge.svg)](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/26-cypress-juice-shop.yml)
+[![CI - Cypress Juice Shop](https://github.com/valarcon1226/qa-automation-portfolio/actions/workflows/26-cypress-juice-shop.yml/badge.svg)](https://github.com/valarcon1226/qa-automation-portfolio/actions/workflows/26-cypress-juice-shop.yml)
 [![Node.js](https://img.shields.io/badge/node-v20%2B-green.svg)](https://nodejs.org/)
 [![Cypress](https://img.shields.io/badge/cypress-v13.17.0-brightgreen.svg)](https://www.cypress.io/)
 [![TypeScript](<https://img.shields.io/badge/typescript-v5.5.4%20(strict)-blue.svg>)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A deterministic automated test suite built with **Cypress 13**, **TypeScript (Strict Mode)**, **ESLint**, and **Prettier** validating the **OWASP Juice Shop** (`v17.1.1`) e-commerce platform.
 

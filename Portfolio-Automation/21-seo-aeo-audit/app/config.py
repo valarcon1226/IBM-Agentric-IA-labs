@@ -9,7 +9,7 @@ class AuditConfig:
 
     user_agent: str = (
         "Mozilla/5.0 (compatible; PortfolioAuditBot/1.0; "
-        "+https://github.com/valarcon1226/IBM-Agentric-IA-labs; SEO-AEO-Auditor)"
+        "+https://github.com/valarcon1226/qa-automation-portfolio; SEO-AEO-Auditor)"
     )
     request_timeout: float = 12.0
     crawl_delay_seconds: float = 0.05

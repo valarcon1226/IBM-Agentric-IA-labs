@@ -125,7 +125,7 @@ uv run pytest -v
 
 All tests write benchmark and quality metrics into `results/metrics.json` and `results/evals.json`, validated against targets defined in `targets.toml`.
 
-**Where the numbers come from:** the artifacts of CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133) (GitHub `ubuntu-latest`, 2026-10-28, nightly job started by hand with `workflow_dispatch`). The two migration rows come from an earlier run, because that run did not export the migration metrics.
+**Where the numbers come from:** the artifacts of CI run [40749407133](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/40749407133) (GitHub `ubuntu-latest`, 2026-10-28, nightly job started by hand with `workflow_dispatch`). The two migration rows come from an earlier run, because that run did not export the migration metrics.
 
 | Metric / Requirement | Target Baseline | Measured Result | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |

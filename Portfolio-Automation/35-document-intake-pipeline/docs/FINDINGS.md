@@ -10,7 +10,7 @@ This document tracks defects, unexpected behaviors, and target deviations identi
 - **SUT Version:** `ghcr.io/paperless-ngx/paperless-ngx:2.14.7`
 - **Severity:** High (Accessibility / Compliance)
 - **Target:** `a11y_violations_critical_count = 0` (in `targets.toml`)
-- **Measured Result:** 7 critical/serious violations (`a11y_violations_critical_count = 7` in the metrics artifact of CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133))
+- **Measured Result:** 7 critical/serious violations (`a11y_violations_critical_count = 7` in the metrics artifact of CI run [40749407133](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/40749407133))
 - **Status:** Documented, marked `xfail(strict=True, reason="FINDING-001")` per measurement rules. SUT remains unpatched.
 
 ### Reproduction Steps
@@ -33,7 +33,7 @@ axe-core detected 7 critical and serious accessibility violations in the documen
 7. `[SERIOUS] listitem`: `<li>` elements inside dynamic filter menus are not properly contained in `<ul>` or `<ol>`.
 
 ### Evidence
-`tests/ui/test_document_flow.py::test_04_axe_core_accessibility_scan` prints one line per violation whose impact is `critical` or `serious`, and records how many there are. CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133) recorded `a11y_violations_critical_count = 7` (artifact `nightly-results-5`, file `metrics.json`). The seven rule ids are the ones listed above.
+`tests/ui/test_document_flow.py::test_04_axe_core_accessibility_scan` prints one line per violation whose impact is `critical` or `serious`, and records how many there are. CI run [40749407133](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/40749407133) recorded `a11y_violations_critical_count = 7` (artifact `nightly-results-5`, file `metrics.json`). The seven rule ids are the ones listed above.
 
 ---
 
