@@ -17,15 +17,15 @@ GOLDEN_PATH = PROJECT_DIR / "evals" / "golden.jsonl"
 CORPUS_DIR = PROJECT_DIR / "corpus" / "markdown"
 
 
-def test_golden_dataset_example_mode() -> None:
-    """Verifies that the drafted 20-item example dataset passes all validation rules."""
-    summary = validate_golden_dataset(GOLDEN_PATH, CORPUS_DIR, mode="examples")
+def test_golden_dataset_full_mode() -> None:
+    """The committed 150-item golden set passes every validation rule of the protocol."""
+    summary = validate_golden_dataset(GOLDEN_PATH, CORPUS_DIR, mode="full")
     assert summary["status"] == "VALID"
-    assert summary["total_items"] == 20
-    assert summary["answerable_total"] == 10
-    assert summary["unanswerable_total"] == 10
-    assert summary["dev_split"]["total"] == 10
-    assert summary["test_split"]["total"] == 10
+    assert summary["total_items"] == 150
+    assert summary["answerable_total"] == 116
+    assert summary["unanswerable_total"] == 34
+    assert summary["dev_split"]["total"] == 30
+    assert summary["test_split"]["total"] == 120
 
 
 def test_validate_item_invalid_split() -> None:
@@ -91,7 +91,8 @@ def test_validate_item_unanswerable_with_gold_paths() -> None:
 def test_full_mode_fails_on_partial_set(tmp_path: Path) -> None:
     """Verifies that full mode validation fails when presented with fewer than 150 items."""
     partial_file = tmp_path / "partial.jsonl"
-    partial_file.write_text(GOLDEN_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    first_twenty = GOLDEN_PATH.read_text(encoding="utf-8").splitlines()[:20]
+    partial_file.write_text("\n".join(first_twenty) + "\n", encoding="utf-8")
 
     with pytest.raises(GoldenValidationError) as exc_info:
         validate_golden_dataset(partial_file, mode="full")
