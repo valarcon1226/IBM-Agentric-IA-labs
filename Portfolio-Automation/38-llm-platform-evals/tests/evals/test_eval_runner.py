@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from evals import run as runner
 
 REFUSAL = "I don't know based on the provided documentation."
@@ -39,23 +41,40 @@ class FakeClient:
     def top_sources(self, question: str, n: int = 5) -> list[str]:
         return ["a.md", "b.md"]
 
-    def ask(self, question: str) -> tuple[str, list[str]]:
+    def ask(self, question: str) -> tuple[str, list[list[str]], str]:
         if question == "boom":
             raise TimeoutError("model too slow")
         if question == "off topic":
-            return REFUSAL, []
-        return "Alpha is the answer [1].", ["a.md", "b.md"]
+            return REFUSAL, [["a.md", "b.md"]], "fake"
+        return "Alpha is the answer [0].", [["a.md", "b.md"]], "fake"
 
 
 def test_extract_citations() -> None:
-    sources = ["a.md", "b.md"]
-    assert runner.extract_citations("x [1] y [2] [9] [a__b.md] [ ] z", sources) == [
+    sources = [["a.md", "b.md"], ["c.md"]]  # documents under source ids 0 and 1
+    assert runner.extract_citations("x [0] y [1] [9] [a__b.md] [ ] z", sources) == [
         "a.md",
         "b.md",
+        "c.md",
         "9",
         "a/b.md",
     ]
     assert runner.extract_citations("no cites", sources) == []
+    assert runner.extract_citations("[0]", []) == ["0"]  # nothing attached: the id is invented
+
+
+def test_parse_stream() -> None:
+    sources = {"sources": [{"metadata": [{"name": "a__b.md"}, {"name": "c.md"}]}]}
+    lines = [
+        "data: " + json.dumps(sources),
+        "",
+        'data: {"model": "m", "choices": [{"delta": {"content": "Al"}}]}',
+        'data: {"model": "m", "choices": [{"delta": {"content": "pha [0]"}}]}',
+        'data: {"model": "m", "choices": [{"delta": {}, "finish_reason": "stop"}]}',
+        "data: [DONE]",
+    ]
+    assert runner.parse_stream(lines) == ("Alpha [0]", [["a/b.md", "c.md"]], "m")
+    with pytest.raises(RuntimeError, match="stream error"):
+        runner.parse_stream(['data: {"error": {"message": "upstream timed out"}}'])
 
 
 def test_failed_call_does_not_stop_run_and_outputs_are_written(tmp_path: Path) -> None:
@@ -67,6 +86,7 @@ def test_failed_call_does_not_stop_run_and_outputs_are_written(tmp_path: Path) -
     failed = [r for r in rows if r["id"] == "Q1"]
     assert all(r["answer"] == "" and "TimeoutError" in r["error"] for r in failed)
     assert all("error" not in r for r in rows if r["id"] != "Q1")
+    assert all(r["answered_by"] == "fake" for r in rows if r["id"] != "Q1")
 
     assert len(per_pass) == 2
     for metrics_ in per_pass:

@@ -1,0 +1,67 @@
+{
+  "config": {
+    "model": "primary-model",
+    "pinned_model": "qwen3:4b-instruct-2507-q4_K_M",
+    "split": "dev",
+    "passes": 1,
+    "questions": 30,
+    "temperature": 0.0,
+    "seed": 42
+  },
+  "per_pass": [
+    {
+      "hit_at_5": 0.95,
+      "key_fact_correctness": 0.75,
+      "false_refusal_rate": 0.05,
+      "refusal_rate": 1.0,
+      "citation_validity": 1.0,
+      "errors": 0.0
+    }
+  ],
+  "summary": {
+    "citation_validity": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "errors": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "false_refusal_rate": {
+      "mean": 0.05,
+      "min": 0.05,
+      "max": 0.05
+    },
+    "hit_at_5": {
+      "mean": 0.95,
+      "min": 0.95,
+      "max": 0.95
+    },
+    "key_fact_correctness": {
+      "mean": 0.75,
+      "min": 0.75,
+      "max": 0.75
+    },
+    "refusal_rate": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    }
+  },
+  "thresholds": {
+    "hit_at_5": 0.85,
+    "key_fact_correctness": 0.75,
+    "refusal_rate": 0.9,
+    "false_refusal_rate": 0.1,
+    "citation_validity": 1.0
+  },
+  "threshold_pass": {
+    "hit_at_5": true,
+    "key_fact_correctness": true,
+    "refusal_rate": true,
+    "false_refusal_rate": true,
+    "citation_validity": true
+  }
+}

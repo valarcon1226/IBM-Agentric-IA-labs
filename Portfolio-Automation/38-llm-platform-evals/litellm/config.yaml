@@ -3,7 +3,8 @@ model_list:
     litellm_params:
       model: ollama/qwen3:4b-instruct-2507-q4_K_M
       api_base: http://127.0.0.1:11434
-      timeout: 30
+      # A RAG answer (about 1,500 prompt tokens) takes 45-70 s on the 4 GB GPU when it is shared
+      timeout: 180
     model_info:
       id: primary-model
       input_cost_per_token: 0.0000015
@@ -13,7 +14,7 @@ model_list:
     litellm_params:
       model: ollama/qwen3:4b
       api_base: http://127.0.0.1:11434
-      timeout: 30
+      timeout: 180
     model_info:
       id: fallback-model
       input_cost_per_token: 0.0000015
