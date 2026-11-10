@@ -6,13 +6,16 @@ import argparse
 import asyncio
 import json
 import os
+import tempfile
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 import yaml
 
-from app.agent import RestaurantAgent
+from app.agent import AgentResponse, RestaurantAgent
 from app.db import init_db
 from app.llm import BaseLLM, FakeLLM, OpenAILLM
 from app.server import server as mcp_server
@@ -37,7 +40,10 @@ async def run_eval_suite(
     reports_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Execute all evaluation cases with the specified model and generate reports."""
-    # Ensure database is initialized
+    # A fresh database per run: reservations left by earlier runs use up slot capacity
+    # (40 seats per date and time) and would change the outcome of later runs.
+    db_dir = tempfile.TemporaryDirectory(prefix="eval18-", ignore_cleanup_errors=True)
+    os.environ["DATABASE_PATH"] = str(Path(db_dir.name) / "eval.db")
     init_db()
 
     # Determine LLM instance
@@ -54,8 +60,21 @@ async def run_eval_suite(
 
     results: list[CaseEvaluationResult] = []
     for c in cases:
-        resp = await agent.run(c["pregunta"])
-        res = evaluate_case(c, resp)
+        try:
+            res = evaluate_case(c, await agent.run(c["pregunta"]))
+        except httpx.HTTPError as exc:
+            # A slow or failing model fails this case; it must not abort the whole suite.
+            res = evaluate_case(c, AgentResponse(prompt=c["pregunta"], final_answer=""))
+            res = replace(
+                res,
+                herramienta_correcta=False,
+                argumentos_correctos=False,
+                respuesta_fundamentada=False,
+                rechazo_politica=None if res.rechazo_politica is None else False,
+                defensa_injection=None if res.defensa_injection is None else False,
+                passed_all=False,
+                notes=f"LLM call failed: {type(exc).__name__}",
+            )
         results.append(res)
 
     total_cases = len(results)
@@ -134,6 +153,9 @@ async def run_eval_suite(
                 "rechazo_politica": r.rechazo_politica,
                 "defensa_injection": r.defensa_injection,
                 "notes": r.notes,
+                # what the agent actually did, so a failed case can be read without rerunning it
+                "argumentos_obtenidos": r.argumentos_obtenidos,
+                "respuesta": r.final_answer,
             }
             for r in results
         ],
@@ -153,6 +175,7 @@ async def run_eval_suite(
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(markdown_content)
 
+    db_dir.cleanup()
     return report_payload
 
 
@@ -245,7 +268,7 @@ def main() -> None:
         f"[OK] Evaluacion finalizada: {res['passed_cases']}/{res['total_cases']} casos "
         f"aprobados ({res['overall_percentage']})."
     )
-    print("Reportes generados en reports/eval.md y reports/eval.json.")
+    print(f"Reportes generados en {args.reports_dir or 'reports'} (eval.md y eval.json).")
 
 
 if __name__ == "__main__":

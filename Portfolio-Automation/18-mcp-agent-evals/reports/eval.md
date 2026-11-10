@@ -1,7 +1,7 @@
 # Reporte de Evaluación de Agente MCP — Sabor de Casa
 
 - **Modelo Evaluado:** `fake-deterministic`
-- **Fecha y Hora (UTC):** `2026-10-14T17:49:00.045284+00:00`
+- **Fecha y Hora (UTC):** `2026-11-10T03:53:05.550523+00:00`
 - **Casos Totales:** 30
 - **Casos Aprobados:** 30 / 30
 - **Tasa Global de Acierto:** **100.0%**

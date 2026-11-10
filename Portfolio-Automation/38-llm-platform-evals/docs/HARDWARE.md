@@ -9,5 +9,5 @@ Specifications of the homelab machine hosting the System Under Test (SUT) and ev
 | **RAM** | 7.6 GiB Total (~8 GB DDR4) | Available: ~5.5 GiB, Swap: 7.9 GiB total (670 MiB used) |
 | **GPU** | NVIDIA GeForce GTX 1050 Mobile | 4096 MiB VRAM (Driver: 550.163.01, CUDA 12.4) |
 | **Storage** | NVMe SSD | Host filesystem ext4 |
-| **Network** | Gigabit Ethernet (1000BASE-T) | Static homelab IP `192.168.1.15` |
+| **Network** | Gigabit Ethernet (1000BASE-T) | Static address on the home LAN |
 | **Local LLM Engine** | Ollama (systemd service) | Binding `127.0.0.1:11434`, serving `qwen3:4b-instruct-2507-q4_K_M` |

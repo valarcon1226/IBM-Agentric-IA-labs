@@ -1,0 +1,83 @@
+{
+  "config": {
+    "model": "primary-model",
+    "pinned_model": "qwen3:4b-instruct-2507-q4_K_M",
+    "split": "test",
+    "passes": 3,
+    "questions": 120,
+    "temperature": 0.0,
+    "seed": 42
+  },
+  "per_pass": [
+    {
+      "hit_at_5": 0.9375,
+      "key_fact_correctness": 0.7083333333333334,
+      "false_refusal_rate": 0.125,
+      "refusal_rate": 1.0,
+      "citation_validity": 1.0,
+      "errors": 0.0
+    },
+    {
+      "hit_at_5": 0.9375,
+      "key_fact_correctness": 0.7083333333333334,
+      "false_refusal_rate": 0.125,
+      "refusal_rate": 1.0,
+      "citation_validity": 1.0,
+      "errors": 0.0
+    },
+    {
+      "hit_at_5": 0.9375,
+      "key_fact_correctness": 0.7083333333333334,
+      "false_refusal_rate": 0.125,
+      "refusal_rate": 1.0,
+      "citation_validity": 1.0,
+      "errors": 0.0
+    }
+  ],
+  "summary": {
+    "citation_validity": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "errors": {
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "false_refusal_rate": {
+      "mean": 0.125,
+      "min": 0.125,
+      "max": 0.125
+    },
+    "hit_at_5": {
+      "mean": 0.9375,
+      "min": 0.9375,
+      "max": 0.9375
+    },
+    "key_fact_correctness": {
+      "mean": 0.7083333333333334,
+      "min": 0.7083333333333334,
+      "max": 0.7083333333333334
+    },
+    "refusal_rate": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    }
+  },
+  "thresholds": {
+    "hit_at_5": 0.85,
+    "key_fact_correctness": 0.75,
+    "refusal_rate": 0.9,
+    "false_refusal_rate": 0.1,
+    "citation_validity": 1.0
+  },
+  "threshold_pass": {
+    "hit_at_5": true,
+    "key_fact_correctness": false,
+    "refusal_rate": true,
+    "false_refusal_rate": false,
+    "citation_validity": true
+  }
+}

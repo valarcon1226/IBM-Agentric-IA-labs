@@ -29,6 +29,7 @@ class CaseEvaluationResult:
     passed_all: bool
     final_answer: str
     notes: str = ""
+    argumentos_obtenidos: dict[str, Any] | None = None
 
 
 def evaluar_herramienta(caso: dict[str, Any], resp: AgentResponse) -> bool:
@@ -172,4 +173,5 @@ def evaluate_case(caso: dict[str, Any], resp: AgentResponse) -> CaseEvaluationRe
         passed_all=passed_all,
         final_answer=resp.final_answer,
         notes="; ".join(notes),
+        argumentos_obtenidos=resp.tool_args,
     )

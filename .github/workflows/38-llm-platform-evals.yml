@@ -60,4 +60,4 @@ jobs:
 
       - name: Run golden set validation unit tests
         run: |
-          uv run pytest tests/evals/test_evals_validation.py -v
+          uv run pytest tests/evals -v

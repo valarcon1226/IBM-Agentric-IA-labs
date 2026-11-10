@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.agent import RestaurantAgent
-from app.llm import FakeLLM
+from app.llm import FakeLLM, LLMDecision
 from app.server import server as mcp_server
 
 
@@ -69,3 +69,32 @@ async def test_agent_chitchat_greeting():
     resp = await agent.run("Hola, buenas tardes")
     assert resp.tool_called is None
     assert "Sabor de Casa" in resp.final_answer
+
+
+@pytest.mark.asyncio
+async def test_agent_survives_invalid_tool_arguments():
+    """A model that calls a tool without its required arguments gets the error back; no crash."""
+
+    class BadArgsLLM:
+        async def decide_action(self, **kwargs):
+            return LLMDecision(tool_name="crear_reserva", tool_args={})
+
+        async def formulate_final_response(self, **kwargs):
+            return f"No pude crear la reserva: {kwargs['tool_result']['error'][:40]}"
+
+    agent = RestaurantAgent(server=mcp_server, llm=BadArgsLLM())
+    resp = await agent.run("Quiero reservar")
+    assert resp.tool_called == "crear_reserva"
+    assert "error" in resp.tool_result
+    assert resp.final_answer.startswith("No pude crear la reserva")
+
+
+@pytest.mark.asyncio
+async def test_tools_spec_carries_the_parameter_schema():
+    """The model must see each tool's parameters; an empty schema makes it call tools with {}."""
+    spec = await RestaurantAgent(server=mcp_server, llm=FakeLLM())._get_tools_spec()
+    by_name = {s["function"]["name"]: s["function"]["parameters"] for s in spec}
+    assert {"nombre", "telefono", "fecha", "hora", "personas"} <= set(
+        by_name["crear_reserva"]["properties"]
+    )
+    assert all(params.get("type") == "object" for params in by_name.values())

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 from app.llm import BaseLLM
 
@@ -53,9 +54,7 @@ class RestaurantAgent:
                     "function": {
                         "name": t.name,
                         "description": t.description or "",
-                        "parameters": t.inputSchema
-                        if hasattr(t, "inputSchema")
-                        else {"type": "object", "properties": {}},
+                        "parameters": t.input_schema,
                     },
                 }
             )
@@ -81,26 +80,30 @@ class RestaurantAgent:
 
         # Call MCP server tool
         tool_args = decision.tool_args or {}
-        call_result = await self.server.call_tool(decision.tool_name, tool_args)
-
-        # Extract parsed result
         parsed_result: Any = None
-        if hasattr(call_result, "content") and call_result.content:
-            first_content = call_result.content[0]
-            if hasattr(first_content, "text"):
-                try:
-                    parsed_result = json.loads(first_content.text)
-                except Exception:
-                    parsed_result = first_content.text
-            else:
-                parsed_result = str(first_content)
-        elif (
-            hasattr(call_result, "structured_content")
-            and call_result.structured_content is not None
-        ):
-            parsed_result = call_result.structured_content
+        try:
+            call_result = await self.server.call_tool(decision.tool_name, tool_args)
+        except ToolError as exc:
+            # A real model can ask for a tool with missing or invalid arguments.
+            # Hand the error back to the model instead of crashing the agent.
+            parsed_result = {"error": str(exc)}
         else:
-            parsed_result = str(call_result)
+            if hasattr(call_result, "content") and call_result.content:
+                first_content = call_result.content[0]
+                if hasattr(first_content, "text"):
+                    try:
+                        parsed_result = json.loads(first_content.text)
+                    except Exception:
+                        parsed_result = first_content.text
+                else:
+                    parsed_result = str(first_content)
+            elif (
+                hasattr(call_result, "structured_content")
+                and call_result.structured_content is not None
+            ):
+                parsed_result = call_result.structured_content
+            else:
+                parsed_result = str(call_result)
 
         # Formulate final natural language answer
         final_answer = await self.llm.formulate_final_response(

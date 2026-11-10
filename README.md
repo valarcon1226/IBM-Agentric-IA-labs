@@ -25,7 +25,7 @@ Each suite runs the real product in containers and checks what tends to break in
 | [27 · API contract quality](Portfolio-Automation/27-api-contract-quality/) | Pact, Schemathesis, Newman | Consumer contracts and fuzzing against my own services; it found two defects in project 13, fixed since | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/27-api-contract-quality.yml/badge.svg?branch=main) |
 | [19 · Java suite](Portfolio-Automation/19-qa-java-suite/) | Java 21, Selenium, Cucumber, REST Assured, Allure | 35 cases, page objects shared by JUnit tests and Cucumber steps | Runs in Docker |
 | [15 · Python suite](Portfolio-Automation/15-qa-showcase/) | Python, Playwright, httpx | API and UI tests, including five that pin known bugs of the demo site | ![CI](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/workflows/15-qa-showcase.yml/badge.svg?branch=main) |
-| [18 · Agent evals](Portfolio-Automation/18-mcp-agent-evals/) | MCP, pytest, Ollama | A tool server plus 30 evaluation cases for a tool-using agent | Local |
+| [18 · Agent evals](Portfolio-Automation/18-mcp-agent-evals/) | MCP, pytest, Ollama | A tool server plus 30 evaluation cases for a tool-using agent, run with a stub and with a local 4B model. The README reads every failed case | Local |
 
 ## Automation services
 
