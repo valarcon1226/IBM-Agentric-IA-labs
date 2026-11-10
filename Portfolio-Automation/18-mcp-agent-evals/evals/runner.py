@@ -6,13 +6,15 @@ import argparse
 import asyncio
 import json
 import os
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 import yaml
 
-from app.agent import RestaurantAgent
+from app.agent import AgentResponse, RestaurantAgent
 from app.db import init_db
 from app.llm import BaseLLM, FakeLLM, OpenAILLM
 from app.server import server as mcp_server
@@ -54,8 +56,21 @@ async def run_eval_suite(
 
     results: list[CaseEvaluationResult] = []
     for c in cases:
-        resp = await agent.run(c["pregunta"])
-        res = evaluate_case(c, resp)
+        try:
+            res = evaluate_case(c, await agent.run(c["pregunta"]))
+        except httpx.HTTPError as exc:
+            # A slow or failing model fails this case; it must not abort the whole suite.
+            res = evaluate_case(c, AgentResponse(prompt=c["pregunta"], final_answer=""))
+            res = replace(
+                res,
+                herramienta_correcta=False,
+                argumentos_correctos=False,
+                respuesta_fundamentada=False,
+                rechazo_politica=None if res.rechazo_politica is None else False,
+                defensa_injection=None if res.defensa_injection is None else False,
+                passed_all=False,
+                notes=f"LLM call failed: {type(exc).__name__}",
+            )
         results.append(res)
 
     total_cases = len(results)

@@ -424,6 +424,8 @@ class OpenAILLM(BaseLLM):
         ).rstrip("/")
         self.model = model or os.getenv("OLLAMA_MODEL", "llama3.2")
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "ollama")
+        # Small local models can need more than 30 s per call on modest hardware.
+        self.timeout = float(os.getenv("LLM_TIMEOUT_S", "30"))
 
     async def decide_action(
         self,
@@ -452,7 +454,7 @@ class OpenAILLM(BaseLLM):
             "tool_choice": "auto",
             "temperature": 0.0,
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(
                 f"{self.base_url}/chat/completions", headers=headers, json=payload
             )
@@ -519,7 +521,7 @@ class OpenAILLM(BaseLLM):
             "messages": messages,
             "temperature": 0.0,
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(
                 f"{self.base_url}/chat/completions", headers=headers, json=payload
             )
