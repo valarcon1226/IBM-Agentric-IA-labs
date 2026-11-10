@@ -10,7 +10,7 @@ This document tracks defects, unexpected behaviors, and target deviations identi
 - **SUT Version:** `ghcr.io/paperless-ngx/paperless-ngx:2.14.7`
 - **Severity:** High (Accessibility / Compliance)
 - **Target:** `a11y_violations_critical_count = 0` (in `targets.toml`)
-- **Measured Result:** 6 critical/serious violations (`a11y_violations_critical_count = 6`)
+- **Measured Result:** 7 critical/serious violations (`a11y_violations_critical_count = 7` in the metrics artifact of CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133))
 - **Status:** Documented, marked `xfail(strict=True, reason="FINDING-001")` per measurement rules. SUT remains unpatched.
 
 ### Reproduction Steps
@@ -23,7 +23,7 @@ This document tracks defects, unexpected behaviors, and target deviations identi
 Zero critical or serious accessibility violations (`impact in ("critical", "serious")`).
 
 ### Actual Result
-axe-core detected 6 critical and serious accessibility violations in the documents table and filter bar components:
+axe-core detected 7 critical and serious accessibility violations in the documents table and filter bar components:
 1. `[CRITICAL] aria-allowed-attr`: Elements must only use allowed ARIA attributes.
 2. `[CRITICAL] aria-required-children`: Certain ARIA roles (`role="menubar"`, `role="listbox"`) must contain required children.
 3. `[CRITICAL] aria-valid-attr-value`: ARIA attributes must conform to valid values.
@@ -33,17 +33,7 @@ axe-core detected 6 critical and serious accessibility violations in the documen
 7. `[SERIOUS] listitem`: `<li>` elements inside dynamic filter menus are not properly contained in `<ul>` or `<ol>`.
 
 ### Evidence
-Axe audit report output from `test_document_flow.py`:
-```text
-[A11Y AUDIT] Axe-core scanned /documents: 10 total violations, 6 critical/serious violations.
-  - [CRITICAL] aria-allowed-attr: Elements must only use allowed ARIA attributes
-  - [CRITICAL] aria-required-children: Certain ARIA roles must contain particular children
-  - [CRITICAL] aria-valid-attr-value: ARIA attributes must conform to valid values
-  - [CRITICAL] button-name: Buttons must have discernible text
-  - [CRITICAL] label: Form <select> and <input> elements must have labels
-  - [SERIOUS] link-name: Links must have discernible text
-  - [SERIOUS] listitem: <li> elements must be contained in a <ul> or <ol>
-```
+`tests/ui/test_document_flow.py::test_04_axe_core_accessibility_scan` prints one line per violation whose impact is `critical` or `serious`, and records how many there are. CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133) recorded `a11y_violations_critical_count = 7` (artifact `nightly-results-5`, file `metrics.json`). The seven rule ids are the ones listed above.
 
 ---
 

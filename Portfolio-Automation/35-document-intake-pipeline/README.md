@@ -6,7 +6,7 @@ Comprehensive test harness, deterministic corpus generator, chaos resilience sui
 
 ## 1. Architecture Overview
 
-The system under test is an enterprise document intake pipeline orchestrated with Docker Compose:
+The system under test is a document intake pipeline run with Docker Compose:
 
 ```
 +-------------------------------------------------------------------------------+
@@ -123,32 +123,37 @@ uv run pytest -v
 
 ## 5. Measured Results & Target Baselines
 
-All tests write benchmark and quality metrics into `results/metrics.json` and `results/evals.json`, validated against targets defined in `targets.toml`:
+All tests write benchmark and quality metrics into `results/metrics.json` and `results/evals.json`, validated against targets defined in `targets.toml`.
+
+**Where the numbers come from:** the artifacts of CI run [40749407133](https://github.com/valarcon1226/IBM-Agentric-IA-labs/actions/runs/40749407133) (GitHub `ubuntu-latest`, 2026-10-28, nightly job started by hand with `workflow_dispatch`). The two migration rows come from an earlier run, because that run did not export the migration metrics.
 
 | Metric / Requirement | Target Baseline | Measured Result | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Ingestion Drain Time (500 docs)** | $\le 900.0$ s | **605.89 s** | PASSED | Concurrency semaphore = 50 |
-| **Throughput Rate** | $\ge 40.0$ docs/min | **49.51 docs/min** | PASSED | P50 rate during burst drain |
-| **Peak Webserver Memory** | $\le 1900.0$ MB | **1,270.78 MB** | PASSED | Well within 2 GB Docker limit |
+| **Ingestion Drain Time (500 docs)** | $\le 900.0$ s | **585.97 s** | PASSED | Concurrency semaphore = 50 |
+| **Throughput Rate** | $\ge 40.0$ docs/min | **51.20 docs/min** | PASSED | P50 rate during burst drain |
+| **Peak Webserver Memory** | $\le 1900.0$ MB | **990.70 MB** | PASSED | Well within 2 GB Docker limit |
 | **Accounting Ratio** | $= 1.0$ (100%) | **1.0 (100%)** | PASSED | 500/500 documents accounted |
-| **Listing Latency (p95)** | $\le 2000.0$ ms | **213.54 ms** | PASSED | 50 samples with 600 docs in DB |
-| **Search Latency (p95)** | $\le 5000.0$ ms | **219.52 ms** | PASSED | 50 samples with Whoosh engine |
+| **Listing Latency (p95)** | $\le 2000.0$ ms | **233.19 ms** | PASSED | 50 samples with 600 docs in DB |
+| **Search Latency (p95)** | $\le 5000.0$ ms | **224.23 ms** | PASSED | 50 samples with Whoosh engine |
 | **Pagination Consistency** | 0 duplicates / 0 missing | **0 duplicates / 0 missing** | PASSED | 300 docs with identical created timestamp |
 | **Classifier Macro-F1 (3 seeds)** | $\ge 0.90$ | **1.0000** | PASSED | Evaluated on 1,800 docs across seeds 42, 101, 202 |
 | **Classifier Min Recall** | $\ge 0.80$ | **1.0000** | PASSED | Evaluated on 1,800 docs across seeds 42, 101, 202 |
 | **Migration Runtime (2.14.6 $\to$ 2.14.7)** | $\le 300.0$ s | **2.75 s** | PASSED | `manage.py migrate` on 600-document database |
 | **Migration Data Fidelity** | 0 diffs / 0 file diffs | **0 metadata diffs / 0 file diffs** | PASSED | 600 docs, 3 tags, 5 types, 100 notes, 100 CF instances |
 | **UI End-to-End Flow** | Edge upload, search, edit | **All 3 steps verified** | PASSED | Headless Microsoft Edge browser channel |
-| **A11y Critical Violations** | $= 0$ | **6 violations** | XFAIL (SUT) | Pinned axe-core scan on `/documents`, see `FINDING-001` |
+| **A11y Critical Violations** | $= 0$ | **7 violations** | XFAIL (SUT) | Pinned axe-core scan on `/documents`, see `FINDING-001` |
+
+The classifier scores 1.0000 on every seed because the corpus is generated from templates, so this benchmark cannot tell a good classifier from a slightly worse one. See the caveats in [`docs/EVALS.md`](docs/EVALS.md).
 
 ---
 
-## 6. Documented Findings (SUT Defects)
+## 6. Documented Findings
 
 Full technical analysis and reproductions are documented in [`docs/FINDINGS.md`](docs/FINDINGS.md):
 
-- **[FINDING-001](docs/FINDINGS.md#finding-001-upstream-angular-spa-criticalserious-accessibility-violations)**: Paperless-ngx 2.14.7 Angular SPA exhibits 6 critical/serious accessibility violations on `/documents` (`aria-allowed-attr`, `aria-required-children`, `button-name`, `label`, `link-name`, `listitem`). Handled via `@pytest.mark.xfail(strict=True)`.
-- **[FINDING-002](docs/FINDINGS.md#finding-002-encrypted-pdf-processing-skips-ocr-without-explicit-failure-status)**: Uploading an encrypted PDF results in a `SUCCESS` task status with extracted title and metadata, but OCR text extraction is silently skipped with an empty content field.
+- **[FINDING-001](docs/FINDINGS.md#finding-001-critical-accessibility-violations-in-upstream-angular-web-ui)**: the Paperless-ngx 2.14.7 web UI shows 7 critical or serious accessibility violations on `/documents` (`aria-allowed-attr`, `aria-required-children`, `aria-valid-attr-value`, `button-name`, `label`, `link-name`, `listitem`). Pinned with `@pytest.mark.xfail(strict=True)`.
+- **[FINDING-002](docs/FINDINGS.md#finding-002-encrypted-pdf-behavior-defaults-to-non-destructive-ingest-with-skipped-ocr)**: an encrypted PDF ends with task status `SUCCESS`, title and metadata extracted, and OCR skipped with an empty content field. This is a design decision of Paperless-ngx, documented here because it surprises integrators.
+- **[FINDING-003](docs/FINDINGS.md#finding-003-unacknowledged-tasks-remain-stuck-in-pending-after-abrupt-redis-restart)**: after an abrupt Redis restart, tasks that a worker had prefetched and not acknowledged stay `PENDING` until the broker's visibility timeout. Pinned with `@pytest.mark.xfail(strict=True)`.
 
 ---
 
