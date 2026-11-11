@@ -193,7 +193,7 @@ pytest -v -m auth
 
 Workflow file: [`.github/workflows/40-mobile-appium-android.yml`](../../.github/workflows/40-mobile-appium-android.yml)
 
-**CI status:** `CI status: pending first run`
+**CI status:** 7 of 7 scenarios passed on the Android 14 (API 34) emulator in [run 42949836540](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/42949836540).
 
 The automated pipeline executes on push to `Portfolio-Automation/40-mobile-appium-android/**` and manually via `workflow_dispatch`:
 
