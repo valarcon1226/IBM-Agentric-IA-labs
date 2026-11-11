@@ -34,7 +34,7 @@ The suite exercises four performance profiles:
 
 > **Environment:** Windows 11 laptop, 16 cores, 32 GB RAM, Docker Desktop. Recorded on **2026-11-10**.
 > 
-> *Baseline:* `baseline.json` corresponds to the median load run (Run 2) from the local benchmark. In CI (`ubuntu-latest`), runner resources vary; `workflow_dispatch` with `update_baseline = true` can regenerate the runner baseline.
+> *Baseline:* `baseline.json` is the load summary of [CI run 42955293380](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/42955293380) on a GitHub-hosted `ubuntu-latest` runner (overall p95 366.05 ms, 1,472 requests, no failed requests). The first CI run compared against the laptop baseline and failed the gate at +106%: the runner is about twice as slow as the laptop, so a baseline only means something on the hardware that produced it. The table below is the laptop run.
 
 | Scenario / Target | Target Threshold | Measured Value (Local 2026-11-10) | Result |
 |---|---|---|:---:|
