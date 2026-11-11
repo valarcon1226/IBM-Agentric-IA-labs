@@ -8,7 +8,7 @@ This document records real defects and performance bottlenecks observed in the S
 
 - **Component:** `app.routes.webhooks.receive_woocommerce_webhook` / `app.database.MongoRepository.create_order`
 - **Severity:** Medium
-- **Status:** Open in project 20
+- **Status:** Fixed in project 20 (commit `736cc86`). After the fix `scripts/repro_duplicate_race.py` returns HTTP 200 for all 40 deliveries, 10 orders are stored and 10 emails are sent. The description below is the behaviour before the fix.
 
 #### Description
 When multiple webhook deliveries for the same order arrive simultaneously, a race condition occurs between the duplicate event check and the order insertion in MongoDB.

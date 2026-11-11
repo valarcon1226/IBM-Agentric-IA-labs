@@ -125,7 +125,7 @@ The regression gate script (`scripts/compare.py`) compares the current run summa
 
 Concurrency issues identified during testing are detailed in [`docs/FINDINGS.md`](docs/FINDINGS.md):
 
-- **FINDING-001:** Simultaneous deliveries of the same order cause a race condition between duplicate lookup and MongoDB insert, resulting in an unhandled `DuplicateKeyError` and HTTP 500. Sequential redeliveries respond with HTTP 200 ignored, and the MongoDB unique index prevents duplicate order records.
+- **FINDING-001:** Simultaneous deliveries of the same order cause a race condition between duplicate lookup and MongoDB insert, resulting in an unhandled `DuplicateKeyError` and HTTP 500. Sequential redeliveries respond with HTTP 200 ignored, and the MongoDB unique index prevents duplicate order records. Fixed in project 20 in commit `736cc86`; the reproduction script now returns HTTP 200 for all 40 deliveries.
 
 ---
 
