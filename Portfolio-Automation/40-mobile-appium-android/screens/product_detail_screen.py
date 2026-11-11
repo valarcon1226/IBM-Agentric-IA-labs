@@ -33,6 +33,14 @@ class ProductDetailScreen(BaseScreen):
             *self.PRODUCT_PRICE, timeout=8.0
         )
 
+    def _scroll_to(self, short_id: str) -> None:
+        """Scroll until the element with this resource id is on screen (lower half of the view)."""
+        self.driver.find_element(
+            AppiumBy.ANDROID_UIAUTOMATOR,
+            "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView("
+            f'new UiSelector().resourceId("com.saucelabs.mydemoapp.android:id/{short_id}"))',
+        )
+
     def get_title(self) -> str:
         """Return the product title."""
         return self.get_text(*self.PRODUCT_TITLE)
@@ -45,6 +53,7 @@ class ProductDetailScreen(BaseScreen):
 
     def get_quantity(self) -> int:
         """Return current quantity selected."""
+        self._scroll_to("noTV")
         raw = self.get_text(*self.QUANTITY_LABEL)
         return int(raw) if raw.isdigit() else 1
 
@@ -57,11 +66,7 @@ class ProductDetailScreen(BaseScreen):
 
     def add_to_cart(self) -> None:
         """Scroll the 'Add to cart' button into view and click it."""
-        self.driver.find_element(
-            AppiumBy.ANDROID_UIAUTOMATOR,
-            "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView("
-            'new UiSelector().resourceId("com.saucelabs.mydemoapp.android:id/cartBt"))',
-        )
+        self._scroll_to("cartBt")
         if self.is_displayed(*self.ADD_TO_CART_BUTTON, timeout=2.0):
             self.click(*self.ADD_TO_CART_BUTTON)
         else:
