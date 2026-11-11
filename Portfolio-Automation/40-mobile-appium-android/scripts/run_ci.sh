@@ -5,7 +5,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p artifacts results
 
-appium --port 4723 --log artifacts/appium.log &
+appium --port 4723 --log artifacts/appium.log --log-level error:debug &
 APPIUM_PID=$!
 trap 'kill "$APPIUM_PID" 2>/dev/null || true' EXIT
 

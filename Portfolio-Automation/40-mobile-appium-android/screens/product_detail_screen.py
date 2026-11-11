@@ -28,13 +28,9 @@ class ProductDetailScreen(BaseScreen):
 
     def is_loaded(self) -> bool:
         """Verify product detail elements are visible."""
-        return (
-            self.is_displayed(*self.PRODUCT_TITLE, timeout=8.0)
-            and self.is_displayed(*self.PRODUCT_PRICE, timeout=8.0)
-            and (
-                self.is_displayed(*self.ADD_TO_CART_BUTTON, timeout=2.0)
-                or self.is_displayed(*self.ADD_TO_CART_FALLBACK, timeout=2.0)
-            )
+        # The add-to-cart button sits below the fold, so it is not part of the load check.
+        return self.is_displayed(*self.PRODUCT_TITLE, timeout=8.0) and self.is_displayed(
+            *self.PRODUCT_PRICE, timeout=8.0
         )
 
     def get_title(self) -> str:
@@ -60,7 +56,12 @@ class ProductDetailScreen(BaseScreen):
             self.click(*self.INCREASE_QTY_FALLBACK)
 
     def add_to_cart(self) -> None:
-        """Click 'Add to cart' button."""
+        """Scroll the 'Add to cart' button into view and click it."""
+        self.driver.find_element(
+            AppiumBy.ANDROID_UIAUTOMATOR,
+            "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView("
+            'new UiSelector().resourceId("com.saucelabs.mydemoapp.android:id/cartBt"))',
+        )
         if self.is_displayed(*self.ADD_TO_CART_BUTTON, timeout=2.0):
             self.click(*self.ADD_TO_CART_BUTTON)
         else:
