@@ -1,0 +1,36 @@
+{
+  "id": "REQ-04",
+  "title": "Gestión del carrito de compras",
+  "description": "Permite añadir productos al carrito, recalcular subtotales al cambiar unidades y respetar límites de stock.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Permite agregar productos con cantidades comprendidas entre 1 y el stock disponible del almacén.",
+      "must_have": [
+        "stock\\s+disponible|unidades?|agregar\\s+al\\s+carrito"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "El subtotal y total del carrito se recalculan de forma automática cada vez que se modifica la cantidad de un ítem.",
+      "must_have": [
+        "recalcular|subtotal|total\\s+actualizado"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "Si el usuario intenta añadir una cantidad superior al inventario existente, mostrar advertencia 'Stock insuficiente'.",
+      "must_have": [
+        "stock\\s+insuficiente|m[aá]ximo\\s+disponible|supera\\s+el\\s+stock"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Al eliminar un producto del carrito, este desaparece y se descuenta su valor del total general.",
+      "must_have": [
+        "eliminar|remover|quitar|contador\\s+del\\s+carrito"
+      ]
+    }
+  ]
+}

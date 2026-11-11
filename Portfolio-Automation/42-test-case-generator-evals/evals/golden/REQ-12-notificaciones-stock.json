@@ -1,0 +1,36 @@
+{
+  "id": "REQ-12",
+  "title": "Alertas automáticas de reposición de inventario",
+  "description": "Permite a los usuarios suscribirse a notificaciones por correo ante reposición de productos agotados.",
+  "split": "test",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Permite ingresar el correo en el botón 'Notificar cuando haya stock' en productos agotados.",
+      "must_have": [
+        "notificar\\s+cuando\\s+haya\\s+stock|sin\\s+stock|agotado"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "Se emite un correo automático de alerta en un lapso no superior a 10 minutos tras reponer inventario.",
+      "must_have": [
+        "10\\s*minutos|alerta\\s+de\\s+reposici[oó]n|restock"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El correo incluye un enlace de 'Cancelar suscripción' para no recibir futuras notificaciones de dicho producto.",
+      "must_have": [
+        "cancelar\\s+suscripci[oó]n|unsubscribe|desuscribir"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "El sistema previene suscripciones duplicadas activas para un mismo correo y producto.",
+      "must_have": [
+        "suscripci[oó]n\\s+duplicada|ya\\s+est[aá]\\s+suscrito|alerta\\s+activa"
+      ]
+    }
+  ]
+}

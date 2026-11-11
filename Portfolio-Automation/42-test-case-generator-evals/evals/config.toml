@@ -1,0 +1,16 @@
+# Pre-registered evaluation thresholds for test case generator
+# These thresholds are locked before running real models to prevent goalpost moving.
+
+[thresholds]
+schema_valid_rate = 0.90
+verified_coverage = 0.70
+hallucinated_refs = 0.02
+duplicate_rate = 0.10
+negative_presence = 1.0
+
+[comparisons]
+schema_valid_rate = ">="
+verified_coverage = ">="
+hallucinated_refs = "<="
+duplicate_rate = "<="
+negative_presence = ">="

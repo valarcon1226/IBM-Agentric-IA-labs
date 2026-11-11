@@ -1,0 +1,27 @@
+[project]
+name = "test-case-generator-evals"
+version = "1.0.0"
+description = "Test case generator with measured deterministic evaluation for local LLMs"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008", "E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

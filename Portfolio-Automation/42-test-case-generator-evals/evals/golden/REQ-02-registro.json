@@ -1,0 +1,39 @@
+{
+  "id": "REQ-02",
+  "title": "Registro de nuevos clientes y validación de credenciales",
+  "description": "Permite crear una cuenta en la tienda online verificando unicidad de correo, fortaleza de contraseña y aceptación legal.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "El correo electrónico debe tener formato válido con arroba y dominio existente.",
+      "must_have": [
+        "correo\\s+inv[aá]lido|formato\\s+de\\s+correo|@",
+        "dominio"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "La contraseña debe contener al menos 8 caracteres incluyendo al menos 1 número, 1 mayúscula y 1 símbolo especial.",
+      "must_have": [
+        "8\\s*caracteres?|al\\s+menos\\s+8",
+        "s[ií]mbolo|especial|may[uú]scula"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "Si el correo ya está registrado en el sistema, mostrar mensaje de error exacto 'El correo ya está registrado'.",
+      "must_have": [
+        "correo\\s+ya\\s+est[aá]\\s+registrado|ya\\s+existe"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Es obligatorio marcar la casilla de aceptación de términos y condiciones para habilitar el botón de registro.",
+      "must_have": [
+        "t[eé]rminos\\s+y\\s+condiciones",
+        "casilla|checkbox"
+      ]
+    }
+  ]
+}

@@ -3,13 +3,15 @@
 import hashlib
 import json
 import logging
+from typing import Optional
 
 import stripe
 from fastapi import APIRouter, Header, HTTPException, Request, status
+from pymongo.errors import DuplicateKeyError
 
 from app.config import settings
 from app.database import get_repository
-from app.models import OrderSource, OrderStatus, WebhookEvent
+from app.models import Order, OrderSource, OrderStatus, WebhookEvent
 from app.normalizers import (
     normalize_shopify_order,
     normalize_stripe_payment_intent,
@@ -27,6 +29,86 @@ from app.security import (
 
 logger = logging.getLogger("cafe_de_origen.webhooks")
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
+
+
+async def process_webhook_order(
+    event_record: WebhookEvent,
+    order: Optional[Order] = None,
+) -> dict:
+    """Procesa de forma idempotente y atómica un evento de webhook y su pedido asociado."""
+    repo = get_repository()
+    event_id = event_record.event_id
+    payload_hash = event_record.payload_hash
+
+    # 1. Idempotencia: verificación de evento ya procesado
+    existing_event = await repo.get_event(event_id, payload_hash)
+    if existing_event and existing_event.processed:
+        logger.info("Evento duplicado detectado (id: %s). Ignorando.", event_id)
+        return {
+            "status": "ignored",
+            "reason": "duplicate_event",
+            "order_id": existing_event.order_id,
+            "event_id": event_id,
+        }
+
+    # 2. Si hay pedido, verificar si ya fue persistido previamente
+    if order:
+        existing_order = await repo.get_order(order.id)
+        if existing_order:
+            logger.info("Pedido ya existente detectado (id: %s). Ignorando.", order.id)
+            return {
+                "status": "ignored",
+                "reason": "duplicate_event",
+                "order_id": existing_order.id,
+                "event_id": event_id,
+            }
+
+    # 3. Registro del evento (protegido contra concurrencia de mismo event_id)
+    try:
+        await repo.create_event(event_record)
+    except DuplicateKeyError:
+        logger.info("Evento duplicado detectado de forma concurrente (id: %s). Ignorando.", event_id)
+        return {
+            "status": "ignored",
+            "reason": "duplicate_event",
+            "order_id": order.id if order else "n/a",
+            "event_id": event_id,
+        }
+
+    # 4. Si el evento no requiere pedido (ej. eventos informativos de Stripe)
+    if not order:
+        await repo.mark_event_processed(
+            event_id, "n/a", {"note": f"Evento {event_record.event_type} recibido pero no requiere pedido"}
+        )
+        return {"status": "received", "event_id": event_id, "type": event_record.event_type}
+
+    # 5. Persistencia del pedido (protegido contra concurrencia de entregas simultáneas)
+    try:
+        await repo.create_order(order)
+    except DuplicateKeyError:
+        logger.info("Pedido duplicado detectado de forma concurrente (%s). Ignorando.", order.id)
+        await repo.mark_event_processed(event_id, order.id, {"note": "duplicate_order"})
+        return {
+            "status": "ignored",
+            "reason": "duplicate_event",
+            "order_id": order.id,
+            "event_id": event_id,
+        }
+
+    # 6. Notificaciones únicamente si el pedido es nuevo y está listo para despachar
+    if order.status == OrderStatus.LISTO_PARA_DESPACHAR:
+        notify_order_ready_for_dispatch(order)
+        notify_whatsapp_order_status(order, "listo_para_despachar")
+
+    # 7. Marcar evento como procesado
+    await repo.mark_event_processed(event_id, order.id)
+    return {
+        "status": "processed",
+        "order_id": order.id,
+        "external_id": order.external_id,
+        "order_status": order.status.value,
+        "total": order.total_amount,
+    }
 
 
 # ==========================================================
@@ -57,48 +139,21 @@ async def receive_woocommerce_webhook(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JSON inválido: {e}") from e
 
-    # 2. Idempotencia
+    # 2. Metadatos del evento y normalización
     payload_hash = hashlib.sha256(raw_body).hexdigest()
     wc_order_id = str(payload.get("id", "unknown"))
     event_id = x_wc_webhook_id or f"wc_{wc_order_id}_{payload.get('date_modified', '')}"
 
-    repo = get_repository()
-    existing_event = await repo.get_event(event_id, payload_hash)
-    if existing_event and existing_event.processed:
-        logger.info("Evento WooCommerce duplicado detectado (id: %s). Ignorando.", event_id)
-        return {
-            "status": "ignored",
-            "reason": "duplicate_event",
-            "order_id": existing_event.order_id,
-            "event_id": event_id,
-        }
-
-    # Registrar evento
     event_record = WebhookEvent(
         event_id=event_id,
         source=OrderSource.WOOCOMMERCE,
         event_type=x_wc_webhook_topic or "order.created",
         payload_hash=payload_hash,
     )
-    await repo.create_event(event_record)
-
-    # 3. Normalización del pedido
     order = normalize_woocommerce_order(payload)
-    await repo.create_order(order)
 
-    # 4. Notificaciones si el pedido está listo para despacho
-    if order.status == OrderStatus.LISTO_PARA_DESPACHAR:
-        notify_order_ready_for_dispatch(order)
-        notify_whatsapp_order_status(order, "listo_para_despachar")
-
-    await repo.mark_event_processed(event_id, order.id)
-    return {
-        "status": "processed",
-        "order_id": order.id,
-        "external_id": order.external_id,
-        "order_status": order.status.value,
-        "total": order.total_amount,
-    }
+    # 3. Procesamiento idempotente
+    return await process_webhook_order(event_record, order)
 
 
 # ==========================================================
@@ -129,21 +184,10 @@ async def receive_shopify_webhook(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JSON inválido: {e}") from e
 
-    # 2. Idempotencia
+    # 2. Metadatos del evento y normalización
     payload_hash = hashlib.sha256(raw_body).hexdigest()
     shopify_id = str(payload.get("id", "unknown"))
     event_id = x_shopify_webhook_id or f"shopify_{shopify_id}"
-
-    repo = get_repository()
-    existing_event = await repo.get_event(event_id, payload_hash)
-    if existing_event and existing_event.processed:
-        logger.info("Evento Shopify duplicado detectado (id: %s). Ignorando.", event_id)
-        return {
-            "status": "ignored",
-            "reason": "duplicate_event",
-            "order_id": existing_event.order_id,
-            "event_id": event_id,
-        }
 
     event_record = WebhookEvent(
         event_id=event_id,
@@ -151,25 +195,10 @@ async def receive_shopify_webhook(
         event_type=x_shopify_topic or "orders/create",
         payload_hash=payload_hash,
     )
-    await repo.create_event(event_record)
-
-    # 3. Normalización
     order = normalize_shopify_order(payload)
-    await repo.create_order(order)
 
-    # 4. Notificaciones
-    if order.status == OrderStatus.LISTO_PARA_DESPACHAR:
-        notify_order_ready_for_dispatch(order)
-        notify_whatsapp_order_status(order, "listo_para_despachar")
-
-    await repo.mark_event_processed(event_id, order.id)
-    return {
-        "status": "processed",
-        "order_id": order.id,
-        "external_id": order.external_id,
-        "order_status": order.status.value,
-        "total": order.total_amount,
-    }
+    # 3. Procesamiento idempotente
+    return await process_webhook_order(event_record, order)
 
 
 # ==========================================================
@@ -203,21 +232,10 @@ async def receive_stripe_webhook(
             detail=f"Error procesando payload de Stripe: {e}",
         ) from e
 
-    # 2. Idempotencia
+    # 2. Metadatos del evento y pedido opcional
     payload_hash = hashlib.sha256(raw_body).hexdigest()
     event_id = stripe_event.get("id") or f"stripe_{payload_hash[:16]}"
     event_type = stripe_event.get("type", "unknown")
-
-    repo = get_repository()
-    existing_event = await repo.get_event(event_id, payload_hash)
-    if existing_event and existing_event.processed:
-        logger.info("Evento Stripe duplicado detectado (id: %s). Ignorando.", event_id)
-        return {
-            "status": "ignored",
-            "reason": "duplicate_event",
-            "order_id": existing_event.order_id,
-            "event_id": event_id,
-        }
 
     event_record = WebhookEvent(
         event_id=event_id,
@@ -225,28 +243,10 @@ async def receive_stripe_webhook(
         event_type=event_type,
         payload_hash=payload_hash,
     )
-    await repo.create_event(event_record)
 
-    # 3. Normalización y despacho si el pago fue exitoso
+    order = None
     if event_type in ("payment_intent.succeeded", "checkout.session.completed"):
         order = normalize_stripe_payment_intent(stripe_event)
-        await repo.create_order(order)
 
-        if order.status == OrderStatus.LISTO_PARA_DESPACHAR:
-            notify_order_ready_for_dispatch(order)
-            notify_whatsapp_order_status(order, "listo_para_despachar")
-
-        await repo.mark_event_processed(event_id, order.id)
-        return {
-            "status": "processed",
-            "order_id": order.id,
-            "external_id": order.external_id,
-            "order_status": order.status.value,
-            "total": order.total_amount,
-        }
-
-    # Si es otro tipo de evento reconocido por Stripe
-    await repo.mark_event_processed(
-        event_id, "n/a", {"note": f"Evento {event_type} recibido pero no requiere pedido"}
-    )
-    return {"status": "received", "event_id": event_id, "type": event_type}
+    # 3. Procesamiento idempotente
+    return await process_webhook_order(event_record, order)

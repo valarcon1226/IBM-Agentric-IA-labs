@@ -1,0 +1,1116 @@
+{
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "split": "dev",
+  "timestamp_utc": "2026-11-11T06:56:57.817879+00:00",
+  "total_requirements": 8,
+  "total_test_cases": 66,
+  "metrics": {
+    "schema_valid_rate": {
+      "score": 0.875,
+      "threshold": 0.9,
+      "operator": ">=",
+      "passed": false
+    },
+    "declared_coverage": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "verified_coverage": {
+      "score": 0.9062,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "hallucinated_refs": {
+      "score": 0.0152,
+      "threshold": 0.02,
+      "operator": "<=",
+      "passed": true
+    },
+    "duplicate_rate": {
+      "score": 0.1212,
+      "threshold": 0.1,
+      "operator": "<=",
+      "passed": false
+    },
+    "negative_presence": {
+      "score": 1.0,
+      "threshold": 1.0,
+      "operator": ">=",
+      "passed": true
+    }
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "REQ-01",
+      "requirement_title": "Autenticación de usuarios y control de sesiones",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Inicio de sesión exitoso con credenciales válidas y redirección al dashboard principal con token de sesión\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El usuario está registrado con correo y contraseña válidos. El sistema está en estado de ejecución normal.\",\n      \"steps\": [\n        \"El usuario ingresa su correo electrónico registrado.\",\n        \"El usuario ingresa su contraseña correcta.\",\n        \"El usuario hace clic en el botón 'Iniciar sesión'.\"\n      ],\n      \"expected\": \"El sistema valida las credenciales, genera un token de sesión válido y redirige al usuario al dashboard principal.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Bloqueo temporal de cuenta tras 5 intentos fallidos consecutivos de contraseña\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario tiene una cuenta registrada. El sistema permite hasta 5 intentos fallidos consecutivos antes de bloquear la cuenta.\",\n      \"steps\": [\n        \"El usuario ingresa un correo válido pero una contraseña incorrecta.\",\n        \"Se repite el proceso de inicio de sesión con contraseñas incorrectas cinco veces consecutivas.\",\n        \"El usuario intenta iniciar sesión nuevamente después de los cinco intentos.\"\n      ],\n      \"expected\": \"La cuenta del usuario se bloquea temporalmente y se muestra un mensaje de error indicando que la cuenta está bloqueada por intentos fallidos.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"El enlace para restablecimiento de contraseña caduca automáticamente después de 15 minutos\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario ha olvidado su contraseña y ha solicitado un enlace de restablecimiento.\",\n      \"steps\": [\n        \"El usuario hace clic en 'Olvidar contraseña' y recibe un enlace de restablecimiento por correo.\",\n        \"El usuario abre el enlace de restablecimiento después de 14 minutos.\",\n        \"El usuario abre el enlace de restablecimiento después de 16 minutos.\"\n      ],\n      \"expected\": \"El enlace de restablecimiento funciona correctamente dentro de los 15 minutos, pero caduca después de ese tiempo y muestra un mensaje de error indicando que ha expirado.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Sesión mantenida tras cerrar y reabrir el navegador con opción 'Recordar credenciales'\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha iniciado sesión con la opción 'Recordar credenciales' activada.\",\n      \"steps\": [\n        \"El usuario inicia sesión con la opción 'Recordar credenciales' seleccionada.\",\n        \"El usuario cierra el navegador completamente.\",\n        \"El usuario abre nuevamente el navegador y accede a la página de inicio de sesión.\"\n      ],\n      \"expected\": \"El sistema reconoce la sesión activa y permite al usuario iniciar sesión sin ingresar credenciales nuevamente, manteniendo la sesión activa.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-_5\",\n      \"title\": \"Inicio de sesión fallido con correo no registrado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema permite verificar si el correo electrónico está registrado.\",\n      \"steps\": [\n        \"El usuario ingresa un correo electrónico no registrado.\",\n        \"El usuario ingresa una contraseña válida.\",\n        \"El usuario hace clic en el botón 'Iniciar sesión'.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error indicando que el correo no está registrado y no permite el inicio de sesión.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Inicio de sesión con contraseña vacía\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario tiene una cuenta registrada con correo válido.\",\n      \"steps\": [\n        \"El usuario ingresa un correo válido.\",\n        \"El usuario deja la contraseña en blanco.\",\n        \"El usuario hace clic en el botón 'Iniciar sesión'.\"\n      ],\n      \"expected\": \"El sistema rechaza el inicio de sesión y muestra un mensaje de error indicando que la contraseña es requerida.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Sesión expirada tras tiempo prolongado de inactividad\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha iniciado sesión y ha dejado el navegador inactivo durante más de 30 minutos.\",\n      \"steps\": [\n        \"El usuario inicia sesión y se queda inactivo en la página durante más de 30 minutos.\",\n        \"El usuario cierra el navegador y lo vuelve a abrir.\",\n        \"El usuario intenta acceder al dashboard principal.\"\n      ],\n      \"expected\": \"El sistema detecta la inactividad y finaliza la sesión, redirigiendo al usuario al formulario de inicio de sesión.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Restablecimiento de contraseña con enlace expirado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario ha solicitado un enlace de restablecimiento de contraseña.\",\n      \"steps\": [\n        \"El usuario recibe el enlace de restablecimiento por correo.\",\n        \"El usuario abre el enlace después de 16 minutos.\",\n        \"El usuario intenta usar el enlace para cambiar la contraseña.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error indicando que el enlace ha caducado y no permite el cambio de contraseña.\",\n      \"covers\": [\"AC-03\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Inicio de sesión exitoso con credenciales válidas y redirección al dashboard principal con token de sesión",
+          "level": "smoke",
+          "preconditions": "El usuario está registrado con correo y contraseña válidos. El sistema está en estado de ejecución normal.",
+          "steps": [
+            "El usuario ingresa su correo electrónico registrado.",
+            "El usuario ingresa su contraseña correcta.",
+            "El usuario hace clic en el botón 'Iniciar sesión'."
+          ],
+          "expected": "El sistema valida las credenciales, genera un token de sesión válido y redirige al usuario al dashboard principal.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Bloqueo temporal de cuenta tras 5 intentos fallidos consecutivos de contraseña",
+          "level": "negative",
+          "preconditions": "El usuario tiene una cuenta registrada. El sistema permite hasta 5 intentos fallidos consecutivos antes de bloquear la cuenta.",
+          "steps": [
+            "El usuario ingresa un correo válido pero una contraseña incorrecta.",
+            "Se repite el proceso de inicio de sesión con contraseñas incorrectas cinco veces consecutivas.",
+            "El usuario intenta iniciar sesión nuevamente después de los cinco intentos."
+          ],
+          "expected": "La cuenta del usuario se bloquea temporalmente y se muestra un mensaje de error indicando que la cuenta está bloqueada por intentos fallidos.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "El enlace para restablecimiento de contraseña caduca automáticamente después de 15 minutos",
+          "level": "functional",
+          "preconditions": "El usuario ha olvidado su contraseña y ha solicitado un enlace de restablecimiento.",
+          "steps": [
+            "El usuario hace clic en 'Olvidar contraseña' y recibe un enlace de restablecimiento por correo.",
+            "El usuario abre el enlace de restablecimiento después de 14 minutos.",
+            "El usuario abre el enlace de restablecimiento después de 16 minutos."
+          ],
+          "expected": "El enlace de restablecimiento funciona correctamente dentro de los 15 minutos, pero caduca después de ese tiempo y muestra un mensaje de error indicando que ha expirado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Sesión mantenida tras cerrar y reabrir el navegador con opción 'Recordar credenciales'",
+          "level": "edge",
+          "preconditions": "El usuario ha iniciado sesión con la opción 'Recordar credenciales' activada.",
+          "steps": [
+            "El usuario inicia sesión con la opción 'Recordar credenciales' seleccionada.",
+            "El usuario cierra el navegador completamente.",
+            "El usuario abre nuevamente el navegador y accede a la página de inicio de sesión."
+          ],
+          "expected": "El sistema reconoce la sesión activa y permite al usuario iniciar sesión sin ingresar credenciales nuevamente, manteniendo la sesión activa.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-_5",
+          "title": "Inicio de sesión fallido con correo no registrado",
+          "level": "negative",
+          "preconditions": "El sistema permite verificar si el correo electrónico está registrado.",
+          "steps": [
+            "El usuario ingresa un correo electrónico no registrado.",
+            "El usuario ingresa una contraseña válida.",
+            "El usuario hace clic en el botón 'Iniciar sesión'."
+          ],
+          "expected": "El sistema muestra un mensaje de error indicando que el correo no está registrado y no permite el inicio de sesión.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Inicio de sesión con contraseña vacía",
+          "level": "negative",
+          "preconditions": "El usuario tiene una cuenta registrada con correo válido.",
+          "steps": [
+            "El usuario ingresa un correo válido.",
+            "El usuario deja la contraseña en blanco.",
+            "El usuario hace clic en el botón 'Iniciar sesión'."
+          ],
+          "expected": "El sistema rechaza el inicio de sesión y muestra un mensaje de error indicando que la contraseña es requerida.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Sesión expirada tras tiempo prolongado de inactividad",
+          "level": "edge",
+          "preconditions": "El usuario ha iniciado sesión y ha dejado el navegador inactivo durante más de 30 minutos.",
+          "steps": [
+            "El usuario inicia sesión y se queda inactivo en la página durante más de 30 minutos.",
+            "El usuario cierra el navegador y lo vuelve a abrir.",
+            "El usuario intenta acceder al dashboard principal."
+          ],
+          "expected": "El sistema detecta la inactividad y finaliza la sesión, redirigiendo al usuario al formulario de inicio de sesión.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Restablecimiento de contraseña con enlace expirado",
+          "level": "negative",
+          "preconditions": "El usuario ha solicitado un enlace de restablecimiento de contraseña.",
+          "steps": [
+            "El usuario recibe el enlace de restablecimiento por correo.",
+            "El usuario abre el enlace después de 16 minutos.",
+            "El usuario intenta usar el enlace para cambiar la contraseña."
+          ],
+          "expected": "El sistema muestra un mensaje de error indicando que el enlace ha caducado y no permite el cambio de contraseña.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-02",
+      "requirement_title": "Registro de nuevos clientes y validación de credenciales",
+      "valid_on_first_try": false,
+      "retries_used": 1,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Registro de cliente con correo válido y contraseña fortalecida con aceptación de términos\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico válido con formato correcto (ej. usuario@dominio.com)\",\n        \"Ingresar una contraseña que cumpla con los requisitos: al menos 8 caracteres, un número, una mayúscula y un símbolo especial (ej. Pass123@)\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Se debe crear una cuenta exitosamente y el usuario debe ser redirigido a la pantalla de inicio de sesión.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\",\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Intento de registro con correo inválido (falta arroba o dominio)\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico con formato inválido (ej. usuario.com o usuario@)\",\n        \"Ingresar una contraseña válida\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que el formato del correo es inválido.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Intento de registro con contraseña que no cumple los requisitos de fortaleza\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico válido (ej. usuario@dominio.com)\",\n        \"Ingresar una contraseña de 7 caracteres sin número, mayúscula ni símbolo (ej. pass123)\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que la contraseña no cumple los requisitos de fortaleza.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-_04\",\n      \"title\": \"Intento de registro con correo ya registrado en el sistema\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Existe un cliente registrado con el correo electrónico proporcionado.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico que ya está registrado en el sistema (ej. usuario@dominio.com)\",\n        \"Ingresar una contraseña válida\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse el mensaje de error exacto: 'El correo ya está registrado'.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Intento de registro sin aceptar los términos y condiciones\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico válido (ej. usuario@dominio.com)\",\n        \"Ingresar una contraseña válida\",\n        \"No marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"El botón de registro debe quedar deshabilitado o no permitir el envío del formulario.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Registro con correo válido pero dominio no existente (edge case)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico con dominio no existente (ej. usuario@noexiste.com)\",\n        \"Ingresar una contraseña válida\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que el dominio no es válido o que el correo no es aceptado.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Registro con correo vacío o sin contenido\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Dejar el campo de correo electrónico vacío\",\n        \"Ingresar una contraseña válida\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que el campo de correo es obligatorio.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Registro con contraseña muy corta (edge case)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema está en estado de inicio y lista para recibir nuevos registros.\",\n      \"steps\": [\n        \"Ingresar un correo electrónico válido (ej. usuario@dominio.com)\",\n        \"Ingresar una contraseña de 6 caracteres (ej. pass12)\",\n        \"Marcar la casilla de aceptación de términos y condiciones\",\n        \"Hacer clic en el botón de registro\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que la contraseña no cumple el requisito de longitud mínima.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Registro de cliente con correo válido y contraseña fortalecida con aceptación de términos",
+          "level": "smoke",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico válido con formato correcto (ej. usuario@dominio.com)",
+            "Ingresar una contraseña que cumpla con los requisitos: al menos 8 caracteres, un número, una mayúscula y un símbolo especial (ej. Pass123@)",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Se debe crear una cuenta exitosamente y el usuario debe ser redirigido a la pantalla de inicio de sesión.",
+          "covers": [
+            "AC-01",
+            "AC-02",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Intento de registro con correo inválido (falta arroba o dominio)",
+          "level": "negative",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico con formato inválido (ej. usuario.com o usuario@)",
+            "Ingresar una contraseña válida",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que el formato del correo es inválido.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Intento de registro con contraseña que no cumple los requisitos de fortaleza",
+          "level": "negative",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico válido (ej. usuario@dominio.com)",
+            "Ingresar una contraseña de 7 caracteres sin número, mayúscula ni símbolo (ej. pass123)",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que la contraseña no cumple los requisitos de fortaleza.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-_04",
+          "title": "Intento de registro con correo ya registrado en el sistema",
+          "level": "negative",
+          "preconditions": "Existe un cliente registrado con el correo electrónico proporcionado.",
+          "steps": [
+            "Ingresar un correo electrónico que ya está registrado en el sistema (ej. usuario@dominio.com)",
+            "Ingresar una contraseña válida",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse el mensaje de error exacto: 'El correo ya está registrado'.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Intento de registro sin aceptar los términos y condiciones",
+          "level": "negative",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico válido (ej. usuario@dominio.com)",
+            "Ingresar una contraseña válida",
+            "No marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "El botón de registro debe quedar deshabilitado o no permitir el envío del formulario.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Registro con correo válido pero dominio no existente (edge case)",
+          "level": "edge",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico con dominio no existente (ej. usuario@noexiste.com)",
+            "Ingresar una contraseña válida",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que el dominio no es válido o que el correo no es aceptado.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Registro con correo vacío o sin contenido",
+          "level": "negative",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Dejar el campo de correo electrónico vacío",
+            "Ingresar una contraseña válida",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que el campo de correo es obligatorio.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Registro con contraseña muy corta (edge case)",
+          "level": "edge",
+          "preconditions": "El sistema está en estado de inicio y lista para recibir nuevos registros.",
+          "steps": [
+            "Ingresar un correo electrónico válido (ej. usuario@dominio.com)",
+            "Ingresar una contraseña de 6 caracteres (ej. pass12)",
+            "Marcar la casilla de aceptación de términos y condiciones",
+            "Hacer clic en el botón de registro"
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que la contraseña no cumple el requisito de longitud mínima.",
+          "covers": [
+            "AC-02"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-03",
+      "requirement_title": "Búsqueda y filtrado de productos en catálogo",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Buscar producto por nombre y verificar coincidencias en nombre y descripción\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El catálogo de productos debe estar cargado y disponible en la interfaz.\",\n      \"steps\": [\n        \"Ingresar una palabra clave en el campo de búsqueda, por ejemplo 'laptop'.\",\n        \"Hacer clic en el botón de búsqueda.\"\n      ],\n      \"expected\": \"Se deben mostrar productos cuyo nombre o descripción contenga la palabra 'laptop'.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Filtrar productos por categoría y verificar que solo se muestren de esa categoría\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Debe haber al menos dos categorías disponibles en el catálogo y productos asignados a cada una.\",\n      \"steps\": [\n        \"Realizar una búsqueda general para obtener productos.\",\n        \"Seleccionar una categoría, por ejemplo 'Electrónicos', en el filtro de categorías.\",\n        \"Aplicar el filtro y observar los productos mostrados.\"\n      ],\n      \"expected\": \"Solo los productos pertenecientes a la categoría 'Electrónicos' deben aparecer en el resultado.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Aplicar filtro de precio mínimo y máximo para mostrar productos en rango\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Debe existir un rango de precios válido en el catálogo de productos.\",\n      \"steps\": [\n        \"Realizar una búsqueda general de productos.\",\n        \"Establecer un precio mínimo, por ejemplo 100, y un precio máximo, por ejemplo 500, en los campos de filtro.\",\n        \"Aplicar el filtro de precios.\"\n      ],\n      \"expected\": \"Solo los productos cuyo precio esté entre 100 y 500 deben mostrarse en el resultado.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Buscar producto con término no existente y verificar mensaje de no encontrados\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El catálogo debe tener productos, pero el término de búsqueda debe ser irrelevante.\",\n      \"steps\": [\n        \"Ingresar una palabra clave que no exista en nombres ni descripciones de productos, por ejemplo 'zorro'.\",\n        \"Hacer clic en el botón de búsqueda.\"\n      ],\n      \"expected\": \"Debe aparecer el mensaje 'No encontramos productos'.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Filtrar productos con precio mínimo superior al máximo\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Debe existir un catálogo con productos de diferentes precios.\",\n      \"steps\": [\n        \"Realizar una búsqueda general de productos.\",\n        \"Establecer un precio mínimo de 1000 y un precio máximo de 500 (mínimo > máximo).\",\n        \"Aplicar el filtro de precios.\"\n      ],\n      \"expected\": \"No deben mostrarse productos, y debe aparecer el mensaje 'No encontramos productos'.\",\n      \"covers\": [\n        \"AC-03\",\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Filtrar productos por categoría que no exista en el catálogo\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El catálogo debe tener categorías válidas, pero debe existir una categoría no registrada.\",\n      \"steps\": [\n        \"Realizar una búsqueda general de productos.\",\n        \"Seleccionar una categoría inexistente, por ejemplo 'Máquinas de cocina'.\",\n        \"Aplicar el filtro de categoría.\"\n      ],\n      \"expected\": \"No deben mostrarse productos, y debe aparecer el mensaje 'No encontramos productos'.\",\n      \"covers\": [\n        \"AC-02\",\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Buscar producto con término vacío en el campo de búsqueda\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El catálogo debe estar disponible y con productos registrados.\",\n      \"steps\": [\n        \"Dejar el campo de búsqueda vacío.\",\n        \"Hacer clic en el botón de búsqueda.\"\n      ],\n      \"expected\": \"Debe mostrarse el mensaje 'No encontramos productos'.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Aplicar filtro de precio mínimo en valor cero y máximo en valor alto\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Debe existir un catálogo con productos de precios variados.\",\n      \"steps\": [\n        \"Realizar una búsqueda general de productos.\",\n        \"Establecer un precio mínimo de 0 y un precio máximo de 10000.\",\n        \"Aplicar el filtro de precios.\"\n      ],\n      \"expected\": \"Debe mostrarse todos los productos en el catálogo, ya que el rango es amplio y cubre todos los precios.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Buscar producto por nombre y verificar coincidencias en nombre y descripción",
+          "level": "smoke",
+          "preconditions": "El catálogo de productos debe estar cargado y disponible en la interfaz.",
+          "steps": [
+            "Ingresar una palabra clave en el campo de búsqueda, por ejemplo 'laptop'.",
+            "Hacer clic en el botón de búsqueda."
+          ],
+          "expected": "Se deben mostrar productos cuyo nombre o descripción contenga la palabra 'laptop'.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Filtrar productos por categoría y verificar que solo se muestren de esa categoría",
+          "level": "functional",
+          "preconditions": "Debe haber al menos dos categorías disponibles en el catálogo y productos asignados a cada una.",
+          "steps": [
+            "Realizar una búsqueda general para obtener productos.",
+            "Seleccionar una categoría, por ejemplo 'Electrónicos', en el filtro de categorías.",
+            "Aplicar el filtro y observar los productos mostrados."
+          ],
+          "expected": "Solo los productos pertenecientes a la categoría 'Electrónicos' deben aparecer en el resultado.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Aplicar filtro de precio mínimo y máximo para mostrar productos en rango",
+          "level": "functional",
+          "preconditions": "Debe existir un rango de precios válido en el catálogo de productos.",
+          "steps": [
+            "Realizar una búsqueda general de productos.",
+            "Establecer un precio mínimo, por ejemplo 100, y un precio máximo, por ejemplo 500, en los campos de filtro.",
+            "Aplicar el filtro de precios."
+          ],
+          "expected": "Solo los productos cuyo precio esté entre 100 y 500 deben mostrarse en el resultado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Buscar producto con término no existente y verificar mensaje de no encontrados",
+          "level": "negative",
+          "preconditions": "El catálogo debe tener productos, pero el término de búsqueda debe ser irrelevante.",
+          "steps": [
+            "Ingresar una palabra clave que no exista en nombres ni descripciones de productos, por ejemplo 'zorro'.",
+            "Hacer clic en el botón de búsqueda."
+          ],
+          "expected": "Debe aparecer el mensaje 'No encontramos productos'.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Filtrar productos con precio mínimo superior al máximo",
+          "level": "edge",
+          "preconditions": "Debe existir un catálogo con productos de diferentes precios.",
+          "steps": [
+            "Realizar una búsqueda general de productos.",
+            "Establecer un precio mínimo de 1000 y un precio máximo de 500 (mínimo > máximo).",
+            "Aplicar el filtro de precios."
+          ],
+          "expected": "No deben mostrarse productos, y debe aparecer el mensaje 'No encontramos productos'.",
+          "covers": [
+            "AC-03",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Filtrar productos por categoría que no exista en el catálogo",
+          "level": "negative",
+          "preconditions": "El catálogo debe tener categorías válidas, pero debe existir una categoría no registrada.",
+          "steps": [
+            "Realizar una búsqueda general de productos.",
+            "Seleccionar una categoría inexistente, por ejemplo 'Máquinas de cocina'.",
+            "Aplicar el filtro de categoría."
+          ],
+          "expected": "No deben mostrarse productos, y debe aparecer el mensaje 'No encontramos productos'.",
+          "covers": [
+            "AC-02",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Buscar producto con término vacío en el campo de búsqueda",
+          "level": "edge",
+          "preconditions": "El catálogo debe estar disponible y con productos registrados.",
+          "steps": [
+            "Dejar el campo de búsqueda vacío.",
+            "Hacer clic en el botón de búsqueda."
+          ],
+          "expected": "Debe mostrarse el mensaje 'No encontramos productos'.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Aplicar filtro de precio mínimo en valor cero y máximo en valor alto",
+          "level": "edge",
+          "preconditions": "Debe existir un catálogo con productos de precios variados.",
+          "steps": [
+            "Realizar una búsqueda general de productos.",
+            "Establecer un precio mínimo de 0 y un precio máximo de 10000.",
+            "Aplicar el filtro de precios."
+          ],
+          "expected": "Debe mostrarse todos los productos en el catálogo, ya que el rango es amplio y cubre todos los precios.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-04",
+      "requirement_title": "Gestión del carrito de compras",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Agregar producto con cantidad válida dentro del rango de stock disponible\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío.\",\n      \"steps\": [\n        \"Ingresar al carrito de compras.\",\n        \"Seleccionar un producto con stock disponible mayor a 1.\",\n        \"Añadir el producto con una cantidad entre 1 y el stock disponible.\"\n      ],\n      \"expected\": \"El producto se añade al carrito y el subtotal se actualiza correctamente.\",\n      \"covers\": [\"AC-01\", \"AC-02\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Intentar agregar una cantidad superior al stock disponible\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de 3 unidades.\",\n      \"steps\": [\n        \"Ingresar al carrito de compras.\",\n        \"Seleccionar un producto con stock disponible de 3 unidades.\",\n        \"Intentar añadir el producto con una cantidad de 5 unidades.\"\n      ],\n      \"expected\": \"Se muestra una advertencia 'Stock insuficiente' y no se añade el producto al carrito.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Modificar cantidad de un producto en el carrito y recalcular subtotal automáticamente\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras contiene al menos un producto con cantidad inicial de 1.\",\n      \"steps\": [\n        \"Añadir un producto al carrito con cantidad inicial de 1.\",\n        \"Modificar la cantidad del producto a 2.\",\n        \"Verificar el subtotal del carrito.\"\n      ],\n      \"expected\": \"El subtotal se recalcula automáticamente y muestra el valor correcto basado en la nueva cantidad.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-_04\",\n      \"title\": \"Eliminar un producto del carrito y verificar descuento del total\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras contiene al menos un producto con cantidad inicial de 1.\",\n      \"steps\": [\n        \"Añadir un producto al carrito con cantidad de 1.\",\n        \"Eliminar el producto del carrito.\",\n        \"Verificar que el carrito esté vacío y el total general sea cero.\"\n      ],\n      \"expected\": \"El producto desaparece del carrito y el total general se descuenta correctamente.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Agregar producto con cantidad mínima permitida (1 unidad)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de al menos 1 unidad.\",\n      \"steps\": [\n        \"Ingresar al carrito de compras.\",\n        \"Seleccionar un producto con stock disponible de 1 unidad.\",\n        \"Añadir el producto con cantidad de 1 unidad.\"\n      ],\n      \"expected\": \"El producto se añade al carrito y el subtotal se actualiza correctamente.\",\n      \"covers\": [\"AC-01\", \"AC-02\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Intentar añadir producto con cantidad cero\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de al menos 1 unidad.\",\n      \"steps\": [\n        \"Ingresar al carrito de compras.\",\n        \"Seleccionar un producto con stock disponible de 1 unidad.\",\n        \"Intentar añadir el producto con cantidad de 0 unidades.\"\n      ],\n      \"expected\": \"Se muestra un mensaje de error o advertencia y no se añade el producto al carrito.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Agregar producto con cantidad máxima permitida (igual al stock disponible)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de 5 unidades.\",\n      \"steps\": [\n        \"Ingresar al carrito de compras.\",\n        \"Seleccionar un producto con stock disponible de 5 unidades.\",\n        \"Añadir el producto con cantidad de 5 unidades.\"\n      ],\n      \"expected\": \"El producto se añade al carrito y el subtotal se actualiza correctamente.\",\n      \"covers\": [\"AC-01\", \"AC-02\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Eliminar producto del carrito cuando el carrito está vacío\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El sistema está iniciado y el carrito de compras está vacío.\",\n      \"steps\": [\n        \"Intentar eliminar un producto del carrito que no existe.\"\n      ],\n      \"expected\": \"Se muestra un mensaje de error indicando que no hay productos para eliminar.\",\n      \"covers\": [\"AC-04\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Agregar producto con cantidad válida dentro del rango de stock disponible",
+          "level": "functional",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío.",
+          "steps": [
+            "Ingresar al carrito de compras.",
+            "Seleccionar un producto con stock disponible mayor a 1.",
+            "Añadir el producto con una cantidad entre 1 y el stock disponible."
+          ],
+          "expected": "El producto se añade al carrito y el subtotal se actualiza correctamente.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Intentar agregar una cantidad superior al stock disponible",
+          "level": "negative",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de 3 unidades.",
+          "steps": [
+            "Ingresar al carrito de compras.",
+            "Seleccionar un producto con stock disponible de 3 unidades.",
+            "Intentar añadir el producto con una cantidad de 5 unidades."
+          ],
+          "expected": "Se muestra una advertencia 'Stock insuficiente' y no se añade el producto al carrito.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Modificar cantidad de un producto en el carrito y recalcular subtotal automáticamente",
+          "level": "functional",
+          "preconditions": "El sistema está iniciado y el carrito de compras contiene al menos un producto con cantidad inicial de 1.",
+          "steps": [
+            "Añadir un producto al carrito con cantidad inicial de 1.",
+            "Modificar la cantidad del producto a 2.",
+            "Verificar el subtotal del carrito."
+          ],
+          "expected": "El subtotal se recalcula automáticamente y muestra el valor correcto basado en la nueva cantidad.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-_04",
+          "title": "Eliminar un producto del carrito y verificar descuento del total",
+          "level": "functional",
+          "preconditions": "El sistema está iniciado y el carrito de compras contiene al menos un producto con cantidad inicial de 1.",
+          "steps": [
+            "Añadir un producto al carrito con cantidad de 1.",
+            "Eliminar el producto del carrito.",
+            "Verificar que el carrito esté vacío y el total general sea cero."
+          ],
+          "expected": "El producto desaparece del carrito y el total general se descuenta correctamente.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Agregar producto con cantidad mínima permitida (1 unidad)",
+          "level": "edge",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de al menos 1 unidad.",
+          "steps": [
+            "Ingresar al carrito de compras.",
+            "Seleccionar un producto con stock disponible de 1 unidad.",
+            "Añadir el producto con cantidad de 1 unidad."
+          ],
+          "expected": "El producto se añade al carrito y el subtotal se actualiza correctamente.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Intentar añadir producto con cantidad cero",
+          "level": "negative",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de al menos 1 unidad.",
+          "steps": [
+            "Ingresar al carrito de compras.",
+            "Seleccionar un producto con stock disponible de 1 unidad.",
+            "Intentar añadir el producto con cantidad de 0 unidades."
+          ],
+          "expected": "Se muestra un mensaje de error o advertencia y no se añade el producto al carrito.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Agregar producto con cantidad máxima permitida (igual al stock disponible)",
+          "level": "edge",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío. Existe un producto con stock disponible de 5 unidades.",
+          "steps": [
+            "Ingresar al carrito de compras.",
+            "Seleccionar un producto con stock disponible de 5 unidades.",
+            "Añadir el producto con cantidad de 5 unidades."
+          ],
+          "expected": "El producto se añade al carrito y el subtotal se actualiza correctamente.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Eliminar producto del carrito cuando el carrito está vacío",
+          "level": "negative",
+          "preconditions": "El sistema está iniciado y el carrito de compras está vacío.",
+          "steps": [
+            "Intentar eliminar un producto del carrito que no existe."
+          ],
+          "expected": "Se muestra un mensaje de error indicando que no hay productos para eliminar.",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-05",
+      "requirement_title": "Aplicación de cupones de descuento y promociones",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Valid coupon applies discount to eligible items in cart\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is logged in and has items in cart with total value above $50.\",\n      \"steps\": [\n        \"Add eligible products to the cart with total value exceeding $50.\",\n        \"Enter a valid coupon code in the cart redemption field.\",\n        \"Submit the coupon and observe the cart update.\"\n      ],\n      \"expected\": \"The cart displays the agreed discount percentage applied to eligible items, and the total price reflects the discounted amount.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Expired coupon shows error message\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has items in cart with total value above $50.\",\n      \"steps\": [\n        \"Add eligible products to the cart with total value exceeding $50.\",\n        \"Enter a coupon code that has expired or is no longer valid.\",\n        \"Submit the coupon and observe the response.\"\n      ],\n      \"expected\": \"A message is displayed exactly stating 'Cupón expirado o no vigente'.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Coupon requires minimum purchase of $50 to apply discount\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is logged in and has items in cart.\",\n      \"steps\": [\n        \"Add products to the cart with total value less than $50.\",\n        \"Enter a valid coupon code that requires a minimum purchase of $50.\",\n        \"Submit the coupon and observe the result.\"\n      ],\n      \"expected\": \"The coupon does not apply, and the user is informed that the minimum purchase requirement is not met.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Coupon with single use cannot be redeemed again by same user\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and has items in cart with total value above $50. A single-use coupon is available.\",\n      \"steps\": [\n        \"Add eligible products to the cart with total value exceeding $50.\",\n        \"Redeem a single-use coupon in the cart.\",\n        \"Complete the purchase.\",\n        \"Log back in and attempt to redeem the same coupon code in a new cart.\"\n      ],\n      \"expected\": \"The coupon is not available for redemption in the new cart, and a message is shown indicating it has already been used.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Coupon redemption fails when cart total is below minimum threshold\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has items in cart with total value below $50.\",\n      \"steps\": [\n        \"Add products to the cart with total value less than $50.\",\n        \"Enter a coupon code that requires a minimum purchase of $50.\",\n        \"Submit the coupon and observe the result.\"\n      ],\n      \"expected\": \"The coupon is rejected and a message is shown indicating the minimum purchase requirement is not met.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Invalid coupon code results in error message\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has items in cart with total value above $50.\",\n      \"steps\": [\n        \"Add eligible products to the cart with total value exceeding $50.\",\n        \"Enter a non-existent or invalid coupon code.\",\n        \"Submit the coupon and observe the response.\"\n      ],\n      \"expected\": \"A message is displayed stating 'Cupón expirado o no vigente'.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Coupon with single use is not available after first use by same user\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and has items in cart with total value above $50.\",\n      \"steps\": [\n        \"Add eligible products to the cart with total value exceeding $50.\",\n        \"Redeem a single-use coupon and complete the purchase.\",\n        \"Log out and log back in.\",\n        \"Add new items to the cart and attempt to redeem the same coupon code.\"\n      ],\n      \"expected\": \"The coupon is not available for redemption, and a message is shown indicating it has already been used.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Valid coupon applies discount to eligible items in cart",
+          "level": "smoke",
+          "preconditions": "User is logged in and has items in cart with total value above $50.",
+          "steps": [
+            "Add eligible products to the cart with total value exceeding $50.",
+            "Enter a valid coupon code in the cart redemption field.",
+            "Submit the coupon and observe the cart update."
+          ],
+          "expected": "The cart displays the agreed discount percentage applied to eligible items, and the total price reflects the discounted amount.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Expired coupon shows error message",
+          "level": "negative",
+          "preconditions": "User is logged in and has items in cart with total value above $50.",
+          "steps": [
+            "Add eligible products to the cart with total value exceeding $50.",
+            "Enter a coupon code that has expired or is no longer valid.",
+            "Submit the coupon and observe the response."
+          ],
+          "expected": "A message is displayed exactly stating 'Cupón expirado o no vigente'.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Coupon requires minimum purchase of $50 to apply discount",
+          "level": "functional",
+          "preconditions": "User is logged in and has items in cart.",
+          "steps": [
+            "Add products to the cart with total value less than $50.",
+            "Enter a valid coupon code that requires a minimum purchase of $50.",
+            "Submit the coupon and observe the result."
+          ],
+          "expected": "The coupon does not apply, and the user is informed that the minimum purchase requirement is not met.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Coupon with single use cannot be redeemed again by same user",
+          "level": "edge",
+          "preconditions": "User is logged in and has items in cart with total value above $50. A single-use coupon is available.",
+          "steps": [
+            "Add eligible products to the cart with total value exceeding $50.",
+            "Redeem a single-use coupon in the cart.",
+            "Complete the purchase.",
+            "Log back in and attempt to redeem the same coupon code in a new cart."
+          ],
+          "expected": "The coupon is not available for redemption in the new cart, and a message is shown indicating it has already been used.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Coupon redemption fails when cart total is below minimum threshold",
+          "level": "negative",
+          "preconditions": "User is logged in and has items in cart with total value below $50.",
+          "steps": [
+            "Add products to the cart with total value less than $50.",
+            "Enter a coupon code that requires a minimum purchase of $50.",
+            "Submit the coupon and observe the result."
+          ],
+          "expected": "The coupon is rejected and a message is shown indicating the minimum purchase requirement is not met.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Invalid coupon code results in error message",
+          "level": "negative",
+          "preconditions": "User is logged in and has items in cart with total value above $50.",
+          "steps": [
+            "Add eligible products to the cart with total value exceeding $50.",
+            "Enter a non-existent or invalid coupon code.",
+            "Submit the coupon and observe the response."
+          ],
+          "expected": "A message is displayed stating 'Cupón expirado o no vigente'.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Coupon with single use is not available after first use by same user",
+          "level": "edge",
+          "preconditions": "User is logged in and has items in cart with total value above $50.",
+          "steps": [
+            "Add eligible products to the cart with total value exceeding $50.",
+            "Redeem a single-use coupon and complete the purchase.",
+            "Log out and log back in.",
+            "Add new items to the cart and attempt to redeem the same coupon code."
+          ],
+          "expected": "The coupon is not available for redemption, and a message is shown indicating it has already been used.",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-06",
+      "requirement_title": "Pasarela de pago y confirmación de pedidos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Validar número de tarjeta con 16 dígitos y fecha de vencimiento posterior al mes actual\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta de 16 dígitos válido.\",\n        \"Ingresar una fecha de vencimiento futura (por ejemplo, mes 05, año 2026).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Validar número de tarjeta con menos de 16 dígitos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta de 15 dígitos.\",\n        \"Enviar la solicitud de pago a la pasare-ela de pago.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el número de tarjeta es inválido.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Validar número de tarjeta con más de 16 dígitos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta de 17 dígitos.\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el número de tarjeta es inválido.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Validar número de tarjeta con fecha de vencimiento anterior al mes actual\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos.\",\n        \"Ingresar una fecha de vencimiento anterior al mes actual (por ejemplo, mes 03, año 2024).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que la fecha de vencimiento es inválida.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Validar código de seguridad CVV con 3 dígitos numéricos\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV de 3 dígitos numéricos (por ejemplo, 123).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Validar código de seguridad CVV con 4 dígitos numéricos\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV de 4 dígitos numéricos (por ejemplo, 1234).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Validar código de seguridad CVV con menos de 3 dígitos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV de 2 dígitos (por ejemplo, 12).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el CVV es inválido.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Validar código de seguridad CVV con más de 4 dígitos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV de 5 dígitos (por ejemplo, 12345).\",\n        \"Enviar la solicitud de pago a la pasarela de pago.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el CVV es inválido.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-09\",\n      \"title\": \"Procesar transacción con timeout de pasarela bancaria y reintentos automáticos\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La pasarela bancaria debe simular un timeout en la primera solicitud.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV válido (3 o 4 dígitos).\",\n        \"Enviar la solicitud de pago a la pasarela de pago y simular un timeout en la primera conexión.\",\n        \"Verificar si el sistema realiza un segundo intento de conexión.\"\n      ],\n      \"expected\": \"El sistema debe realizar un segundo reintentó y, si el segundo intento también falla, debe finalizar la transacción con mensaje de error y no realizar más intentos.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-10\",\n      \"title\": \"Confirmar transacción aprobada con número de orden y correo de confirmación\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La transacción debe ser aprobada por la pasarela.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV válido (3 o 4 dígitos).\",\n        \"Enviar la solicitud de pago a la pasarela de pago y esperar a que se procese.\",\n        \"Verificar que se genere un número de orden con prefijo ORD-.\",\n        \"Verificar que se envíe un correo de confirmación al cliente.\"\n      ],\n      \"expected\": \"Debe generarse un número de orden con prefijo ORD- y debe enviarse un correo de confirmación al cliente.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-11\",\n      \"title\": \"Procesar transacción con error de conexión en la pasarela bancaria y no realizar reintentos después de 2 intentos\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La pasarela bancaria debe simular un error de conexión en los primeros dos intentos.\",\n      \"steps\": [\n        \"Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.\",\n        \"Ingresar un código CVV válido (3 o 4 dígitos).\",\n        \"Enviar la solicitud de pago a la pasarela de pago y simular un error de conexión en los primeros dos intentos.\",\n        \"Verificar que el sistema no realice más intentos y muestre un mensaje de error.\"\n      ],\n      \"expected\": \"El sistema debe detener los reintentos después de dos intentos y mostrar un mensaje de error indicando que la transacción no pudo completarse.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Validar número de tarjeta con 16 dígitos y fecha de vencimiento posterior al mes actual",
+          "level": "smoke",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta de 16 dígitos válido.",
+            "Ingresar una fecha de vencimiento futura (por ejemplo, mes 05, año 2026).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Validar número de tarjeta con menos de 16 dígitos",
+          "level": "negative",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta de 15 dígitos.",
+            "Enviar la solicitud de pago a la pasare-ela de pago."
+          ],
+          "expected": "El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el número de tarjeta es inválido.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Validar número de tarjeta con más de 16 dígitos",
+          "level": "negative",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta de 17 dígitos.",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el número de tarjeta es inválido.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Validar número de tarjeta con fecha de vencimiento anterior al mes actual",
+          "level": "negative",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos.",
+            "Ingresar una fecha de vencimiento anterior al mes actual (por ejemplo, mes 03, año 2024).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que la fecha de vencimiento es inválida.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Validar código de seguridad CVV con 3 dígitos numéricos",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV de 3 dígitos numéricos (por ejemplo, 123).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Validar código de seguridad CVV con 4 dígitos numéricos",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV de 4 dígitos numéricos (por ejemplo, 1234).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "La transacción debe ser aprobada y generar un número de orden con prefijo ORD-.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Validar código de seguridad CVV con menos de 3 dígitos",
+          "level": "negative",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV de 2 dígitos (por ejemplo, 12).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el CVV es inválido.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Validar código de seguridad CVV con más de 4 dígitos",
+          "level": "negative",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV de 5 dígitos (por ejemplo, 12345).",
+            "Enviar la solicitud de pago a la pasarela de pago."
+          ],
+          "expected": "El sistema debe rechazar la transacción y mostrar un mensaje de error indicando que el CVV es inválido.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-09",
+          "title": "Procesar transacción con timeout de pasarela bancaria y reintentos automáticos",
+          "level": "edge",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La pasarela bancaria debe simular un timeout en la primera solicitud.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV válido (3 o 4 dígitos).",
+            "Enviar la solicitud de pago a la pasarela de pago y simular un timeout en la primera conexión.",
+            "Verificar si el sistema realiza un segundo intento de conexión."
+          ],
+          "expected": "El sistema debe realizar un segundo reintentó y, si el segundo intento también falla, debe finalizar la transacción con mensaje de error y no realizar más intentos.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-10",
+          "title": "Confirmar transacción aprobada con número de orden y correo de confirmación",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La transacción debe ser aprobada por la pasarela.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV válido (3 o 4 dígitos).",
+            "Enviar la solicitud de pago a la pasarela de pago y esperar a que se procese.",
+            "Verificar que se genere un número de orden con prefijo ORD-.",
+            "Verificar que se envíe un correo de confirmación al cliente."
+          ],
+          "expected": "Debe generarse un número de orden con prefijo ORD- y debe enviarse un correo de confirmación al cliente.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-11",
+          "title": "Procesar transacción con error de conexión en la pasarela bancaria y no realizar reintentos después de 2 intentos",
+          "level": "edge",
+          "preconditions": "El cliente ha iniciado sesión y ha seleccionado el método de pago con tarjeta de crédito. La pasarela bancaria debe simular un error de conexión en los primeros dos intentos.",
+          "steps": [
+            "Ingresar un número de tarjeta válido de 16 dígitos con fecha de vencimiento futura.",
+            "Ingresar un código CVV válido (3 o 4 dígitos).",
+            "Enviar la solicitud de pago a la pasarela de pago y simular un error de conexión en los primeros dos intentos.",
+            "Verificar que el sistema no realice más intentos y muestre un mensaje de error."
+          ],
+          "expected": "El sistema debe detener los reintentos después de dos intentos y mostrar un mensaje de error indicando que la transacción no pudo completarse.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-07",
+      "requirement_title": "Libreta de direcciones de entrega",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Validar que el código postal sea exactamente de 5 dígitos numéricos\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa un código postal de 5 dígitos numéricos válido, por ejemplo '12345'.\",\n        \"El sistema valida el formato del código postal y muestra el formulario de dirección completado.\"\n      ],\n      \"expected\": \"El código postal se acepta y se muestra correctamente en el formulario de dirección.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Validar que el código postal rechaze cadenas no numéricas\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa un código postal con caracteres no numéricos, por ejemplo '1234a'.\",\n        \"El sistema valida el formato del código postal y muestra el formulario de dirección.\"\n      ],\n      \"expected\": \"El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que solo se permiten dígitos numéricos.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Validar que el código postal rechaze cadenas de menos de 5 dígitos\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa un código postal de 4 dígitos, por ejemplo '1234'.\",\n        \"El sistema valida el formato del código postal y muestra el formulario de dirección.\"\n      ],\n      \"expected\": \"El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que debe tener exactamente 5 dígitos numéricos.\",\n      \"covers\": [\"AC--01\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Validar que el código postal rechaze cadenas de más de 5 dígitos\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa un código postal de 6 dígitos, por ejemplo '123456'.\",\n        \"El sistema valida el formato del código postal y muestra el formulario de dirección.\"\n      ],\n      \"expected\": \"El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que debe tener exactamente 5 dígitos numéricos.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Validar que el usuario pueda designar una dirección como predeterminada\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario ha registrado al menos una dirección de entrega válida.\",\n      \"steps\": [\n        \"El usuario selecciona una dirección de entrega existente en la lista.\",\n        \"El usuario activa la opción 'Dirección predeterminada' en el formulario de dirección.\"\n      ],\n      \"expected\": \"La dirección seleccionada se marca como predeterminada y se mostrará como opción por defecto en el proceso de checkout.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Validar que el sistema no permita más de 5 direcciones registradas por usuario\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha registrado 5 direcciones de entrega válidas.\",\n      \"steps\": [\n        \"El usuario intenta registrar una sexta dirección de entrega.\",\n        \"El sistema valida el número total de direcciones registradas.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la nueva dirección y mostrar un mensaje de error indicando que el límite máximo de 5 direcciones ha sido alcanzado.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Validar que el campo de dirección residencial rechaze etiquetas sospechosas de inyección de script\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa una dirección que contiene etiquetas de script, por ejemplo '<script>alert(1)</script>'.\",\n        \"El sistema valida el contenido del campo de dirección residencial.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la entrada y mostrar un mensaje de error indicando que no se permiten caracteres especiales o etiquetas de script.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Validar que el campo de dirección residencial rechaze caracteres especiales no permitidos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.\",\n      \"steps\": [\n        \"El usuario ingresa una dirección que contiene caracteres como '@', '#', '$', o '%'.\",\n        \"El sistema valida el contenido del campo de dirección residencial.\"\n      ],\n      \"expected\": \"El sistema debe rechazar la entrada y mostrar un mensaje de error indicando que solo se permiten caracteres alfanuméricos y espacios.\",\n      \"covers\": [\"AC-04\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Validar que el código postal sea exactamente de 5 dígitos numéricos",
+          "level": "smoke",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa un código postal de 5 dígitos numéricos válido, por ejemplo '12345'.",
+            "El sistema valida el formato del código postal y muestra el formulario de dirección completado."
+          ],
+          "expected": "El código postal se acepta y se muestra correctamente en el formulario de dirección.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Validar que el código postal rechaze cadenas no numéricas",
+          "level": "negative",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa un código postal con caracteres no numéricos, por ejemplo '1234a'.",
+            "El sistema valida el formato del código postal y muestra el formulario de dirección."
+          ],
+          "expected": "El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que solo se permiten dígitos numéricos.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Validar que el código postal rechaze cadenas de menos de 5 dígitos",
+          "level": "edge",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa un código postal de 4 dígitos, por ejemplo '1234'.",
+            "El sistema valida el formato del código postal y muestra el formulario de dirección."
+          ],
+          "expected": "El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que debe tener exactamente 5 dígitos numéricos.",
+          "covers": [
+            "AC--01"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Validar que el código postal rechaze cadenas de más de 5 dígitos",
+          "level": "edge",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa un código postal de 6 dígitos, por ejemplo '123456'.",
+            "El sistema valida el formato del código postal y muestra el formulario de dirección."
+          ],
+          "expected": "El sistema debe rechazar el código postal y mostrar un mensaje de error indicando que debe tener exactamente 5 dígitos numéricos.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Validar que el usuario pueda designar una dirección como predeterminada",
+          "level": "functional",
+          "preconditions": "El usuario ha registrado al menos una dirección de entrega válida.",
+          "steps": [
+            "El usuario selecciona una dirección de entrega existente en la lista.",
+            "El usuario activa la opción 'Dirección predeterminada' en el formulario de dirección."
+          ],
+          "expected": "La dirección seleccionada se marca como predeterminada y se mostrará como opción por defecto en el proceso de checkout.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Validar que el sistema no permita más de 5 direcciones registradas por usuario",
+          "level": "edge",
+          "preconditions": "El usuario ha registrado 5 direcciones de entrega válidas.",
+          "steps": [
+            "El usuario intenta registrar una sexta dirección de entrega.",
+            "El sistema valida el número total de direcciones registradas."
+          ],
+          "expected": "El sistema debe rechazar la nueva dirección y mostrar un mensaje de error indicando que el límite máximo de 5 direcciones ha sido alcanzado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Validar que el campo de dirección residencial rechaze etiquetas sospechosas de inyección de script",
+          "level": "negative",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa una dirección que contiene etiquetas de script, por ejemplo '<script>alert(1)</script>'.",
+            "El sistema valida el contenido del campo de dirección residencial."
+          ],
+          "expected": "El sistema debe rechazar la entrada y mostrar un mensaje de error indicando que no se permiten caracteres especiales o etiquetas de script.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Validar que el campo de dirección residencial rechaze caracteres especiales no permitidos",
+          "level": "negative",
+          "preconditions": "El usuario ha iniciado sesión y accede a la sección de direcciones de entrega.",
+          "steps": [
+            "El usuario ingresa una dirección que contiene caracteres como '@', '#', '$', o '%'.",
+            "El sistema valida el contenido del campo de dirección residencial."
+          ],
+          "expected": "El sistema debe rechazar la entrada y mostrar un mensaje de error indicando que solo se permiten caracteres alfanuméricos y espacios.",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-08",
+      "requirement_title": "Solicitud de devoluciones y reembolsos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Solicitud de devolución dentro del plazo de 30 días posteriores a la entrega\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El cliente ha recibido el producto y la fecha de entrega es conocida.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución dentro de los 30 días posteriores a la fecha de entrega.\",\n        \"El sistema valida la fecha de solicitud en relación con la fecha de entrega.\"\n      ],\n      \"expected\": \"La solicitud de devolución se autoriza y se procesa correctamente.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Solicitud de devolución fuera del plazo de 30 días posteriores a la entrega\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha recibido el producto y la fecha de entrega es conocida.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución más de 30 días después de la fecha de entrega.\",\n        \"El sistema valida la fecha de solicitud en relación con la fecha de entrega.\"\n      ],\n      \"expected\": \"La solicitud de devolución se rechaza y se muestra un mensaje indicando que se excede el plazo reglamentario.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Solicitud de devolución por producto defectuoso con evidencia fotográfica\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto entregado presenta un defecto físico o averiado y el cliente ha recibido el producto.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por defecto del producto.\",\n        \"El cliente adjunta al menos una foto clara que muestre el defecto del producto.\"\n      ],\n      \"expected\": \"La solicitud se autoriza y se procesa con evidencia fotográfica adjunta.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Solicitud de devolución por producto defectuoso sin evidencia fotográfica\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto entregado presenta un defecto físico o averiado y el cliente ha recibido el producto.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por defecto del producto.\",\n        \"El cliente no adjunta ninguna foto de evidencia.\"\n      ],\n      \"expected\": \"La solicitud se rechaza y se muestra un mensaje indicando que se requiere al menos una foto clara de evidencia.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Opción de reembolso al método de pago original\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha recibido el producto y desea devolverlo.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución y selecciona la opción de reembolso al método de pago original.\",\n        \"El sistema valida la opción seleccionada y registra el método de pago original.\"\n      ],\n      \"expected\": \"El cliente recibe un reembolso al método de pago original dentro del plazo establecido.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Opción de crédito en tienda para futuras compras\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha recibido el producto y desea devolverlo.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución y selecciona la opción de crédito en la tienda.\",\n        \"El sistema valida la opción seleccionada y registra el crédito en la tienda.\"\n      ],\n      \"expected\": \"El cliente recibe un crédito en la tienda para futuras compras.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Solicitud de devolución para artículo de uso íntimo o higiene personal\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El producto es un artículo de uso íntimo o higiene personal y el cliente desea devolverlo.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución para un artículo de uso íntimo o higiene personal.\",\n        \"El sistema valida el tipo de producto en la solicitud.\"\n      ],\n      \"expected\": \"La solicitud se rechaza inmediatamente y se muestra un mensaje indicando que no se admiten devoluciones para artículos de uso íntimo o higiene personal.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Solicitud de devolución para producto no defectuoso fuera del plazo\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto está en buen estado y la fecha de entrega ha pasado más de 30 días.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por producto en buen estado.\",\n        \"El sistema valida la fecha de solicitud y el estado del producto.\"\n      ],\n      \"expected\": \"La solicitud se rechaza por exceder el plazo reglamentario y por no presentar defecto.\",\n      \"covers\": [\"AC-01\", \"AC-02\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Solicitud de devolución dentro del plazo de 30 días posteriores a la entrega",
+          "level": "smoke",
+          "preconditions": "El cliente ha recibido el producto y la fecha de entrega es conocida.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución dentro de los 30 días posteriores a la fecha de entrega.",
+            "El sistema valida la fecha de solicitud en relación con la fecha de entrega."
+          ],
+          "expected": "La solicitud de devolución se autoriza y se procesa correctamente.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Solicitud de devolución fuera del plazo de 30 días posteriores a la entrega",
+          "level": "negative",
+          "preconditions": "El cliente ha recibido el producto y la fecha de entrega es conocida.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución más de 30 días después de la fecha de entrega.",
+            "El sistema valida la fecha de solicitud en relación con la fecha de entrega."
+          ],
+          "expected": "La solicitud de devolución se rechaza y se muestra un mensaje indicando que se excede el plazo reglamentario.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Solicitud de devolución por producto defectuoso con evidencia fotográfica",
+          "level": "functional",
+          "preconditions": "El producto entregado presenta un defecto físico o averiado y el cliente ha recibido el producto.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por defecto del producto.",
+            "El cliente adjunta al menos una foto clara que muestre el defecto del producto."
+          ],
+          "expected": "La solicitud se autoriza y se procesa con evidencia fotográfica adjunta.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Solicitud de devolución por producto defectuoso sin evidencia fotográfica",
+          "level": "negative",
+          "preconditions": "El producto entregado presenta un defecto físico o averiado y el cliente ha recibido el producto.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por defecto del producto.",
+            "El cliente no adjunta ninguna foto de evidencia."
+          ],
+          "expected": "La solicitud se rechaza y se muestra un mensaje indicando que se requiere al menos una foto clara de evidencia.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Opción de reembolso al método de pago original",
+          "level": "functional",
+          "preconditions": "El cliente ha recibido el producto y desea devolverlo.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución y selecciona la opción de reembolso al método de pago original.",
+            "El sistema valida la opción seleccionada y registra el método de pago original."
+          ],
+          "expected": "El cliente recibe un reembolso al método de pago original dentro del plazo establecido.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Opción de crédito en tienda para futuras compras",
+          "level": "functional",
+          "preconditions": "El cliente ha recibido el producto y desea devolverlo.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución y selecciona la opción de crédito en la tienda.",
+            "El sistema valida la opción seleccionada y registra el crédito en la tienda."
+          ],
+          "expected": "El cliente recibe un crédito en la tienda para futuras compras.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Solicitud de devolución para artículo de uso íntimo o higiene personal",
+          "level": "edge",
+          "preconditions": "El producto es un artículo de uso íntimo o higiene personal y el cliente desea devolverlo.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución para un artículo de uso íntimo o higiene personal.",
+            "El sistema valida el tipo de producto en la solicitud."
+          ],
+          "expected": "La solicitud se rechaza inmediatamente y se muestra un mensaje indicando que no se admiten devoluciones para artículos de uso íntimo o higiene personal.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Solicitud de devolución para producto no defectuoso fuera del plazo",
+          "level": "negative",
+          "preconditions": "El producto está en buen estado y la fecha de entrega ha pasado más de 30 días.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por producto en buen estado.",
+            "El sistema valida la fecha de solicitud y el estado del producto."
+          ],
+          "expected": "La solicitud se rechaza por exceder el plazo reglamentario y por no presentar defecto.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        }
+      ]
+    }
+  ]
+}

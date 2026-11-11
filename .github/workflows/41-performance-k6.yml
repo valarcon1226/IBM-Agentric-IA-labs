@@ -1,0 +1,135 @@
+name: 41-performance-k6
+
+on:
+  push:
+    paths:
+      - 'Portfolio-Automation/41-performance-k6/**'
+      - 'Portfolio-Automation/20-ecommerce-order-automation/**'
+      - '.github/workflows/41-performance-k6.yml'
+  pull_request:
+    paths:
+      - 'Portfolio-Automation/41-performance-k6/**'
+      - 'Portfolio-Automation/20-ecommerce-order-automation/**'
+      - '.github/workflows/41-performance-k6.yml'
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: 'Upload new baseline summary without enforcing regression gate'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  performance-gate:
+    name: k6 Performance Regression Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Portfolio-Automation/41-performance-k6
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@887a942a15af3a7626099df99e897a18d9e5ab3a # v5.1.0
+        with:
+          version: 'latest'
+
+      - name: Install script validation tools
+        run: |
+          uv venv .venv
+          uv pip install pytest ruff
+
+      - name: Run unit tests and lint checks on scripts
+        run: |
+          .venv/bin/python -m pytest tests -q
+          .venv/bin/python -m ruff check scripts tests
+
+      - name: Start SUT Docker stack
+        run: |
+          docker compose -f docker-compose.perf.yml up -d --build --wait
+
+      - name: Wait for /health endpoint
+        run: |
+          timeout 60 bash -c 'until curl -sf http://127.0.0.1:8000/health; do sleep 2; done'
+
+      - name: Create results directory
+        run: |
+          mkdir -p results
+
+      - name: Run k6 Smoke Scenario
+        run: |
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/k6:/k6" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/results:/results" \
+            -e BASE_URL=http://127.0.0.1:8000 \
+            grafana/k6:2.3.0 run /k6/smoke.js --summary-export=/results/smoke-summary.json
+
+      - name: Run k6 Load Scenario
+        run: |
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/k6:/k6" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/results:/results" \
+            -e BASE_URL=http://127.0.0.1:8000 \
+            grafana/k6:2.3.0 run /k6/load.js --summary-export=/results/load-summary.json
+
+      - name: Run k6 Negative Scenario (Invalid Signatures)
+        run: |
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/k6:/k6" \
+            -v "${{ github.workspace }}/Portfolio-Automation/41-performance-k6/results:/results" \
+            -e BASE_URL=http://127.0.0.1:8000 \
+            grafana/k6:2.3.0 run /k6/negative.js --summary-export=/results/negative-summary.json
+
+      - name: Evaluate Performance Regression Gate (compare.py)
+        if: ${{ inputs.update_baseline != true }}
+        run: |
+          .venv/bin/python scripts/compare.py results/load-summary.json baseline.json --tolerance 100 --output results/regression-gate.md
+          cat results/regression-gate.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload new baseline artifact notice
+        if: ${{ inputs.update_baseline == true }}
+        run: |
+          echo "### Baseline Update Mode" >> $GITHUB_STEP_SUMMARY
+          echo "A new baseline was generated from load-summary.json and uploaded as an artifact." >> $GITHUB_STEP_SUMMARY
+
+      - name: Compile Historical Performance Trend (trend.py)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p past_summaries
+          # Download summaries from past runs if available
+          RUN_IDS=$(gh run list --workflow=41-performance-k6.yml --status=completed --limit=10 --json databaseId --jq '.[].databaseId' || true)
+          for r_id in $RUN_IDS; do
+            gh run download "$r_id" --name "k6-summaries" --dir "past_summaries/run-$r_id" || true
+          done
+          # Include current results
+          cp -r results past_summaries/current
+          .venv/bin/python scripts/trend.py past_summaries --output results/trend.md
+          cat results/trend.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Tear down SUT stack
+        if: always()
+        run: |
+          docker compose -f docker-compose.perf.yml down -v
+
+      - name: Upload k6 summaries artifact
+        if: always()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: k6-summaries
+          path: |
+            Portfolio-Automation/41-performance-k6/results/*.json
+            Portfolio-Automation/41-performance-k6/results/*.md
+          retention-days: 30

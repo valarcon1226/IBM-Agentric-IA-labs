@@ -1,0 +1,36 @@
+{
+  "id": "REQ-05",
+  "title": "Aplicación de cupones de descuento y promociones",
+  "description": "Permite redimir códigos promocionales en el carrito validando vigencia, compra mínima y un solo uso.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Un cupón vigente aplica el porcentaje de descuento acordado sobre los productos elegibles del carrito.",
+      "must_have": [
+        "descuento|porcentaje|cupon\\s+v[aá]lido"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "Si el cupón ha superado su fecha de vigencia, mostrar mensaje de error exacto 'Cupón expirado o no vigente'.",
+      "must_have": [
+        "cup[oó]n\\s+expirado|no\\s+vigente|vencido"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El cupón requiere una compra mínima de 50 USD en el carrito para habilitar la rebaja de precio.",
+      "must_have": [
+        "50\\s*(?:\\$|usd|d[oó]lares)|compra\\s+m[ií]nima"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Los cupones de un solo uso no pueden volver a ser canjeados por el mismo cliente en compras posteriores.",
+      "must_have": [
+        "ya\\s+utilizado|un\\s+solo\\s+uso|solo\\s+un\\s+uso"
+      ]
+    }
+  ]
+}

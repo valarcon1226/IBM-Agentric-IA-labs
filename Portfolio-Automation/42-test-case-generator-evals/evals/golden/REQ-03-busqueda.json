@@ -1,0 +1,37 @@
+{
+  "id": "REQ-03",
+  "title": "Búsqueda y filtrado de productos en catálogo",
+  "description": "Permite encontrar artículos mediante palabras clave, filtrando por categoría y delimitando rangos de precio.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "La búsqueda arroja coincidencias de productos cuando el término coincide con el nombre o descripción.",
+      "must_have": [
+        "t[eé]rmino|palabra\\s+clave|coincidencia|query"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "El filtro por categoría restringe los artículos desplegados exclusivamente a la categoría seleccionada.",
+      "must_have": [
+        "categor[ií]a",
+        "filtro|filtrar"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El filtro de precios admite definir valores de precio mínimo y precio máximo mostrando productos en dicho rango.",
+      "must_have": [
+        "precio\\s*(?:m[ií]nimo|m[aá]ximo)|rango\\s+de\\s+precio"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Cuando no existan productos que coincidan con la búsqueda, mostrar el mensaje 'No encontramos productos'.",
+      "must_have": [
+        "no\\s+encontramos\\s+productos|sin\\s+resultados"
+      ]
+    }
+  ]
+}

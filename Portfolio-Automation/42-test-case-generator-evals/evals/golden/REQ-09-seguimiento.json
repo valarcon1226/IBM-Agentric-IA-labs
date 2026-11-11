@@ -1,0 +1,37 @@
+{
+  "id": "REQ-09",
+  "title": "Seguimiento y trazabilidad de pedidos",
+  "description": "Permite monitorear el progreso del despacho en tiempo real, consultar la guía de mensajería y cancelar oportunamente.",
+  "split": "test",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "El estado del pedido refleja etapas en tiempo real: en preparación, enviado y entregado.",
+      "must_have": [
+        "en\\s+preparaci[oó]n|enviado|entregado"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "Cuando la orden se encuentra enviada, la vista muestra el número de guía con enlace de rastreo al courier.",
+      "must_have": [
+        "enlace\\s+de\\s+rastreo|n[uú]mero\\s+de\\s+gu[ií]a|courier|transportadora"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El comprador únicamente puede cancelar la orden mientras el estado permanezca en preparación.",
+      "must_have": [
+        "cancelar|cancelaci[oó]n",
+        "en\\s+preparaci[oó]n"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Al consultar un identificador de paquete inexistente se despliega el aviso 'Número de seguimiento no encontrado'.",
+      "must_have": [
+        "no\\s+encontrado|gu[ií]a\\s+inv[aá]lida|no\\s+existe"
+      ]
+    }
+  ]
+}

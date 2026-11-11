@@ -1,0 +1,40 @@
+{
+  "id": "REQ-01",
+  "title": "Autenticación de usuarios y control de sesiones",
+  "description": "Permite a los usuarios registrados iniciar sesión mediante correo y contraseña, controlando intentos fallidos y expiración de tokens.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Inicio de sesión exitoso con credenciales válidas y redirección al dashboard principal con token de sesión.",
+      "must_have": [
+        "dashboard",
+        "token"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "Bloqueo temporal de la cuenta tras registrar 5 intentos fallidos consecutivos de contraseña.",
+      "must_have": [
+        "5\\s*(?:intentos|veces|failed)",
+        "bloque(?:o|ad[ao])"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El enlace para restablecimiento de contraseña caduca automáticamente después de 15 minutos.",
+      "must_have": [
+        "15\\s*(?:minutos|min|minutes)",
+        "expir(?:ado|ación|a)"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "La sesión se mantiene activa tras cerrar y reabrir el navegador si se activó la opción Recordar credenciales.",
+      "must_have": [
+        "recordar|remember",
+        "cookie|persist"
+      ]
+    }
+  ]
+}
