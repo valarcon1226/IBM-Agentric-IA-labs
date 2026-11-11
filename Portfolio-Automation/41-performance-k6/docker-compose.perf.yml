@@ -1,0 +1,68 @@
+services:
+  mongo:
+    image: mongo:7.0.8
+    container_name: cafe_perf_mongo
+    environment:
+      MONGO_INITDB_DATABASE: cafe_perf
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_perf_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand(\"ping\").ok' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: cafe_perf_mailpit
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8025/api/v1/info || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../20-ecommerce-order-automation
+      dockerfile: Dockerfile
+    container_name: cafe_perf_api
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017/cafe_perf
+      MONGO_DB_NAME: cafe_perf
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: pedidos@cafedeorigen.co
+      WOOCOMMERCE_WEBHOOK_SECRET: perf_test_woocommerce_secret_key
+      SHOPIFY_WEBHOOK_SECRET: perf_test_shopify_secret_key
+      STRIPE_WEBHOOK_SECRET: whsec_perf_test_stripe_secret_key
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: perf_test_admin_password_123
+      SECRET_KEY: perf_test_secret_key_random_session
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mongo_perf_data:
+    name: cafe_perf_mongo_data
+
+networks:
+  default:
+    name: cafe_perf_net

@@ -1,0 +1,211 @@
+{
+    "metrics": {
+        "http_req_duration{endpoint:admin_orders}": {
+            "p(95)": 437.74406689999984,
+            "avg": 188.94402894957983,
+            "min": 55.807288,
+            "med": 161.943891,
+            "max": 765.468138,
+            "p(90)": 306.5573740000001,
+            "thresholds": {
+                "p(95)<600": false
+            }
+        },
+        "data_sent": {
+            "count": 1520980,
+            "rate": 12599.30761820515
+        },
+        "iteration_duration": {
+            "p(95)": 1256.8879437,
+            "avg": 1056.577118898823,
+            "min": 1007.79953,
+            "med": 1015.910025,
+            "max": 1869.260686,
+            "p(90)": 1186.7757346
+        },
+        "http_req_connecting": {
+            "avg": 0.02358196430931923,
+            "min": 0,
+            "med": 0,
+            "max": 2.661284,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration": {
+            "min": 1.243593,
+            "med": 15.31391,
+            "max": 765.468138,
+            "p(90)": 115.9123054,
+            "p(95)": 177.36076319999978,
+            "avg": 46.81945745472569,
+            "thresholds": {
+                "p(95)<600": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0
+        },
+        "http_req_waiting": {
+            "avg": 43.97492577329806,
+            "min": 1.192948,
+            "med": 15.211173,
+            "max": 724.577084,
+            "p(90)": 107.10435579999996,
+            "p(95)": 157.71547979999988
+        },
+        "http_req_duration{endpoint:webhook_woocommerce}": {
+            "min": 7.806632,
+            "med": 13.720960999999999,
+            "max": 361.203129,
+            "p(90)": 90.80915319999998,
+            "p(95)": 125.54811209999974,
+            "avg": 32.90402532225914,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_received": {
+            "count": 68384872,
+            "rate": 566478.2171754948
+        },
+        "iterations": {
+            "count": 1275,
+            "rate": 10.561688656794676
+        },
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 1513,
+            "thresholds": {
+                "rate<0.02": false
+            },
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 765.468138,
+            "p(90)": 115.9123054,
+            "p(95)": 177.36076319999978,
+            "avg": 46.81945745472569,
+            "min": 1.243593,
+            "med": 15.31391
+        },
+        "checks": {
+            "passes": 2669,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.98": false
+            },
+            "value": 1
+        },
+        "http_req_blocked": {
+            "p(90)": 0.006998,
+            "p(95)": 0.008326799999999988,
+            "avg": 0.03088693126239258,
+            "min": 0.001379,
+            "med": 0.005241,
+            "max": 3.575847
+        },
+        "http_reqs": {
+            "count": 1513,
+            "rate": 12.53320387272968
+        },
+        "http_req_receiving": {
+            "avg": 2.823396457369466,
+            "min": 0.011603,
+            "med": 0.074544,
+            "max": 48.020137,
+            "p(90)": 0.1437038,
+            "p(95)": 35.74590719999997
+        },
+        "vus": {
+            "min": 1,
+            "max": 20,
+            "value": 1
+        },
+        "http_req_duration{endpoint:webhook_shopify}": {
+            "p(95)": 116.89930310000004,
+            "avg": 32.14848330866423,
+            "min": 7.504994,
+            "med": 13.9762935,
+            "max": 309.436622,
+            "p(90)": 89.02063249999998,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_sending": {
+            "p(90)": 0.029501399999999997,
+            "p(95)": 0.035262599999999956,
+            "avg": 0.02113522405816256,
+            "min": 0.004689,
+            "med": 0.020749,
+            "max": 0.090332
+        }
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "wc status is 200": {
+                    "passes": 602,
+                    "fails": 0,
+                    "name": "wc status is 200",
+                    "path": "::wc status is 200",
+                    "id": "0dd919c80f5f6d1e31da3a1c8b3c05d6"
+                },
+                "wc order processed": {
+                    "fails": 0,
+                    "name": "wc order processed",
+                    "path": "::wc order processed",
+                    "id": "08e669b24db571a17818ad2d7af0246e",
+                    "passes": 602
+                },
+                "shopify status is 200": {
+                    "name": "shopify status is 200",
+                    "path": "::shopify status is 200",
+                    "id": "9b9c78f915f5a10d86f44b13ce04137c",
+                    "passes": 554,
+                    "fails": 0
+                },
+                "shopify order processed": {
+                    "name": "shopify order processed",
+                    "path": "::shopify order processed",
+                    "id": "9658c0f32089586ce84cbc2052447dd8",
+                    "passes": 554,
+                    "fails": 0
+                },
+                "admin login redirects 303": {
+                    "name": "admin login redirects 303",
+                    "path": "::admin login redirects 303",
+                    "id": "97ae4207e77a49d023952fb520d45cbd",
+                    "passes": 119,
+                    "fails": 0
+                },
+                "admin orders status is 200": {
+                    "path": "::admin orders status is 200",
+                    "id": "7887b0a03abfc6ca5627a017bcd2ccf4",
+                    "passes": 119,
+                    "fails": 0,
+                    "name": "admin orders status is 200"
+                },
+                "admin orders page rendered": {
+                    "path": "::admin orders page rendered",
+                    "id": "7ddd2914cccce0fa740e3f69a747909a",
+                    "passes": 119,
+                    "fails": 0,
+                    "name": "admin orders page rendered"
+                }
+            },
+        "name": "",
+        "path": ""
+    }
+}
