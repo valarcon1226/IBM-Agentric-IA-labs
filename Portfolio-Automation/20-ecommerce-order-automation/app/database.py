@@ -1,10 +1,12 @@
 """Capa de persistencia con soporte para MongoDB (Motor) y repositorio en memoria para tests."""
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 
 from app.config import settings
 from app.models import Order, OrderStatus, Product, StatusHistoryEntry, WebhookEvent
@@ -72,9 +74,11 @@ class InMemoryRepository(BaseRepository):
             self.products = list(SEED_PRODUCTS)
 
     async def get_order(self, order_id: str) -> Optional[Order]:
+        await asyncio.sleep(0)
         return self.orders.get(order_id)
 
     async def find_order_by_external_id(self, source: str, external_id: str) -> Optional[Order]:
+        await asyncio.sleep(0)
         for o in self.orders.values():
             if o.source.value == source and o.external_id == external_id:
                 return o
@@ -86,6 +90,7 @@ class InMemoryRepository(BaseRepository):
         source: Optional[str] = None,
         search: Optional[str] = None,
     ) -> List[Order]:
+        await asyncio.sleep(0)
         results = list(self.orders.values())
         if status:
             results = [o for o in results if o.status.value == status]
@@ -106,12 +111,18 @@ class InMemoryRepository(BaseRepository):
         return results
 
     async def create_order(self, order: Order) -> Order:
+        await asyncio.sleep(0)
+        if order.id in self.orders:
+            raise DuplicateKeyError(
+                f"E11000 duplicate key error collection: orders index: id_1 dup key: {{ id: '{order.id}' }}"
+            )
         self.orders[order.id] = order
         return order
 
     async def update_order_status(
         self, order_id: str, new_status: OrderStatus, note: str = ""
     ) -> Optional[Order]:
+        await asyncio.sleep(0)
         order = self.orders.get(order_id)
         if not order:
             return None
@@ -128,6 +139,7 @@ class InMemoryRepository(BaseRepository):
         return order
 
     async def get_event(self, event_id: str, payload_hash: str) -> Optional[WebhookEvent]:
+        await asyncio.sleep(0)
         # Buscar por event_id o por hash idéntico
         if event_id in self.events:
             return self.events[event_id]
@@ -137,12 +149,18 @@ class InMemoryRepository(BaseRepository):
         return None
 
     async def create_event(self, event: WebhookEvent) -> WebhookEvent:
+        await asyncio.sleep(0)
+        if event.event_id in self.events:
+            raise DuplicateKeyError(
+                f"E11000 duplicate key error collection: events index: event_id_1 dup key: {{ event_id: '{event.event_id}' }}"
+            )
         self.events[event.event_id] = event
         return event
 
     async def mark_event_processed(
         self, event_id: str, order_id: str, details: Optional[dict] = None
     ) -> None:
+        await asyncio.sleep(0)
         if event_id in self.events:
             self.events[event_id].processed = True
             self.events[event_id].order_id = order_id
@@ -150,6 +168,7 @@ class InMemoryRepository(BaseRepository):
                 self.events[event_id].details.update(details)
 
     async def list_products(self) -> List[Product]:
+        await asyncio.sleep(0)
         return list(self.products)
 
 
