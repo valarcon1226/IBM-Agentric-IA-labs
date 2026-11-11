@@ -1,0 +1,4 @@
+pytest==9.2.0
+selenium==4.52.0
+playwright==1.65.0
+pytest-playwright==0.10.0

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+env/
+venv/
+results/
+bench_runs/
+.playwright/
+test-results/
