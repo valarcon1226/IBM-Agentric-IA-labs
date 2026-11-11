@@ -1,0 +1,36 @@
+{
+  "id": "REQ-07",
+  "title": "Libreta de direcciones de entrega",
+  "description": "Permite registrar y seleccionar direcciones de envío, controlando formato postal, dirección por defecto y cupo.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "El código postal debe cumplir con un formato numérico exacto de 5 dígitos.",
+      "must_have": [
+        "c[oó]digo\\s+postal|5\\s*d[ií]gitos|zip"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "El usuario puede designar una dirección como predeterminada para que se seleccione por defecto en checkout.",
+      "must_have": [
+        "direcci[oó]n\\s+predeterminada|por\\s+defecto|default"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "Se establece un límite máximo de 5 direcciones registradas por cuenta de usuario.",
+      "must_have": [
+        "m[aá]ximo\\s+5|l[ií]mite\\s+de\\s+5|5\\s*direcciones"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "El campo de dirección residencial rechaza caracteres inválidos y etiquetas sospechosas de inyección de script.",
+      "must_have": [
+        "<script>|caracteres?\\s+inv[aá]lidos?|inyecci[oó]n"
+      ]
+    }
+  ]
+}

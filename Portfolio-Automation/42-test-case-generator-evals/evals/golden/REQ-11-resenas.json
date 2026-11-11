@@ -1,0 +1,36 @@
+{
+  "id": "REQ-11",
+  "title": "Sistema de reseñas y valoraciones de producto",
+  "description": "Permite calificar artículos comprados mediante estrellas y opiniones escritas con filtro de vocabulario.",
+  "split": "test",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Permite asignar una valoración numérica en el rango de 1 a 5 estrellas.",
+      "must_have": [
+        "1\\s*a\\s*5\\s*estrellas?|calificaci[oó]n|estrellas?"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "La reseña escrita debe contener una longitud comprendida entre 10 y 1000 caracteres.",
+      "must_have": [
+        "10\\s*y\\s*1000\\s*caracteres?|longitud|m[ií]nimo\\s+10"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "Muestra la insignia de comprador verificado si el cliente adquirió el producto en la plataforma.",
+      "must_have": [
+        "comprador\\s+verificado|compra\\s+verificada|badge"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Un filtro automático de lenguaje inapropiado bloquea la publicación de palabras ofensivas.",
+      "must_have": [
+        "lenguaje\\s+inapropiado|filtro|palabras\\s+ofensivas"
+      ]
+    }
+  ]
+}

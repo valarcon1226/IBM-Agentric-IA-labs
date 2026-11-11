@@ -1,0 +1,38 @@
+{
+  "id": "REQ-08",
+  "title": "Solicitud de devoluciones y reembolsos",
+  "description": "Permite gestionar peticiones de devolución dentro del plazo reglamentario, con evidencia gráfica y exclusiones.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "La solicitud de devolución sólo se autoriza si se efectúa dentro de los 30 días posteriores a la fecha de entrega.",
+      "must_have": [
+        "30\\s*d[ií]as",
+        "plazo\\s+de\\s+devoluci[oó]n|fecha\\s+de\\s+entrega"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "Las devoluciones por producto defectuoso o averiado exigen adjuntar al menos una foto clara de evidencia.",
+      "must_have": [
+        "foto|evidencia|adjuntar\\s+imagen"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "El cliente puede optar por reembolso al método de pago original o crédito en la tienda para futuras compras.",
+      "must_have": [
+        "m[eé]todo\\s+original|cr[eé]dito\\s+en\\s+tienda|reembolso"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Artículos de uso íntimo o higiene personal no admiten devoluciones bajo ninguna circunstancia.",
+      "must_have": [
+        "higiene|ropa\\s+interior",
+        "no\\s+retornable|no\\s+admite\\s+devoluci[oó]n"
+      ]
+    }
+  ]
+}

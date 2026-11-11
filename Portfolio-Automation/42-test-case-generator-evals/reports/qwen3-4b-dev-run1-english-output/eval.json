@@ -1,0 +1,1179 @@
+{
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "split": "dev",
+  "timestamp_utc": "2026-11-11T06:40:13.287040+00:00",
+  "total_requirements": 8,
+  "total_test_cases": 70,
+  "metrics": {
+    "schema_valid_rate": {
+      "score": 0.75,
+      "threshold": 0.9,
+      "operator": ">=",
+      "passed": false
+    },
+    "declared_coverage": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "verified_coverage": {
+      "score": 0.5625,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": false
+    },
+    "hallucinated_refs": {
+      "score": 0.0286,
+      "threshold": 0.02,
+      "operator": "<=",
+      "passed": false
+    },
+    "duplicate_rate": {
+      "score": 0.0286,
+      "threshold": 0.1,
+      "operator": "<=",
+      "passed": true
+    },
+    "negative_presence": {
+      "score": 1.0,
+      "threshold": 1.0,
+      "operator": ">=",
+      "passed": true
+    }
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "REQ-01",
+      "requirement_title": "Autenticación de usuarios y control de sesiones",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Successful login with valid credentials and redirection to dashboard\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is registered with valid email and password. The system is running and accessible.\",\n      \"steps\": [\n        \"User navigates to the login page.\",\n        \"User enters a valid email address and correct password.\",\n        \"User clicks the 'Login' button.\"\n      ],\n      \"expected\": \"The user is redirected to the dashboard page with a valid session token in the response headers.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Login fails after 5 consecutive incorrect password attempts\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is registered with a valid email but has no password set. The system allows up to 5 failed login attempts.\",\n      \"steps\": [\n        \"User navigates to the login page.\",\n        \"User enters a valid email and an incorrect password.\",\n        \"User repeats this step five times consecutively.\",\n        \"User attempts to log in a sixth time with the same email and password.\"\n      ],\n      \"expected\": \"The account is temporarily blocked, and a message is displayed indicating that the account is locked due to too many failed attempts.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Password reset link expires after 15 minutes\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is registered with a valid email. The password reset feature is enabled.\",\n      \"steps\": [\n        \"User navigates to the login page and clicks 'Forgot Password'.\",\n        \"User enters a valid email and submits the request.\",\n        \"The system generates a password reset link and sends it via email.\",\n        \"User checks the email after 15 minutes to verify the link status.\"\n      ],\n      \"expected\": \"The password reset link is no longer valid or accessible after 15 minutes, and the user receives a message indicating the link has expired.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Session remains active after browser close and reopen with 'Remember me' enabled\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is registered and has enabled the 'Remember me' option during login. The session token is stored securely.\",\n      \"steps\": [\n        \"User logs in with valid credentials and selects 'Remember me'.\",\n        \"User closes the browser completely.\",\n        \"User opens the browser again and navigates to the login page.\",\n        \"User attempts to access the dashboard without re-entering credentials.\"\n      ],\n      \"expected\": \"The user is automatically logged in and redirected to the dashboard without needing to re-enter credentials.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Login fails with invalid email format\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is registered with a valid email. The system validates email format on login.\",\n      \"steps\": [\n        \"User navigates to the login page.\",\n        \"User enters an invalid email (e.g., 'invalid-email') and a valid password.\",\n        \"User clicks the 'Login' button.\"\n      ],\n      \"expected\": \"The system displays an error message indicating an invalid email format, and no session is created.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Login fails with empty password field\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is registered with a valid email. The system requires a password field to be filled.\",\n      \"steps\": [\n        \"User navigates to the login page.\",\n        \"User enters a valid email and leaves the password field empty.\",\n        \"User clicks the 'Login' button.\"\n      ],\n      \"expected\": \"The system displays an error message indicating that the password field is required, and no session is created.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Session token expires after 30 minutes of inactivity\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in successfully. The session timeout is set to 30 minutes.\",\n      \"steps\": [\n        \"User logs in successfully and is redirected to the dashboard.\",\n        \"User performs no actions for 30 minutes.\",\n        \"User attempts to access the dashboard after 30 minutes of inactivity.\"\n      ],\n      \"expected\": \"The user is redirected to the login page, and a message indicates that the session has expired.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"User attempts to log in with expired password reset link\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is registered. A password reset link has been sent and expired after 15 minutes.\",\n      \"steps\": [\n        \"User navigates to the password reset page.\",\n        \"User enters the email used to generate the expired link.\",\n        \"User clicks on the expired link in the email.\"\n      ],\n      \"expected\": \"The system displays a message indicating that the password reset link has expired and a new one must be requested.\",\n      \"covers\": [\"AC-03\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Successful login with valid credentials and redirection to dashboard",
+          "level": "smoke",
+          "preconditions": "User is registered with valid email and password. The system is running and accessible.",
+          "steps": [
+            "User navigates to the login page.",
+            "User enters a valid email address and correct password.",
+            "User clicks the 'Login' button."
+          ],
+          "expected": "The user is redirected to the dashboard page with a valid session token in the response headers.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Login fails after 5 consecutive incorrect password attempts",
+          "level": "negative",
+          "preconditions": "User is registered with a valid email but has no password set. The system allows up to 5 failed login attempts.",
+          "steps": [
+            "User navigates to the login page.",
+            "User enters a valid email and an incorrect password.",
+            "User repeats this step five times consecutively.",
+            "User attempts to log in a sixth time with the same email and password."
+          ],
+          "expected": "The account is temporarily blocked, and a message is displayed indicating that the account is locked due to too many failed attempts.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Password reset link expires after 15 minutes",
+          "level": "functional",
+          "preconditions": "User is registered with a valid email. The password reset feature is enabled.",
+          "steps": [
+            "User navigates to the login page and clicks 'Forgot Password'.",
+            "User enters a valid email and submits the request.",
+            "The system generates a password reset link and sends it via email.",
+            "User checks the email after 15 minutes to verify the link status."
+          ],
+          "expected": "The password reset link is no longer valid or accessible after 15 minutes, and the user receives a message indicating the link has expired.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Session remains active after browser close and reopen with 'Remember me' enabled",
+          "level": "edge",
+          "preconditions": "User is registered and has enabled the 'Remember me' option during login. The session token is stored securely.",
+          "steps": [
+            "User logs in with valid credentials and selects 'Remember me'.",
+            "User closes the browser completely.",
+            "User opens the browser again and navigates to the login page.",
+            "User attempts to access the dashboard without re-entering credentials."
+          ],
+          "expected": "The user is automatically logged in and redirected to the dashboard without needing to re-enter credentials.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Login fails with invalid email format",
+          "level": "negative",
+          "preconditions": "User is registered with a valid email. The system validates email format on login.",
+          "steps": [
+            "User navigates to the login page.",
+            "User enters an invalid email (e.g., 'invalid-email') and a valid password.",
+            "User clicks the 'Login' button."
+          ],
+          "expected": "The system displays an error message indicating an invalid email format, and no session is created.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Login fails with empty password field",
+          "level": "negative",
+          "preconditions": "User is registered with a valid email. The system requires a password field to be filled.",
+          "steps": [
+            "User navigates to the login page.",
+            "User enters a valid email and leaves the password field empty.",
+            "User clicks the 'Login' button."
+          ],
+          "expected": "The system displays an error message indicating that the password field is required, and no session is created.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Session token expires after 30 minutes of inactivity",
+          "level": "edge",
+          "preconditions": "User is logged in successfully. The session timeout is set to 30 minutes.",
+          "steps": [
+            "User logs in successfully and is redirected to the dashboard.",
+            "User performs no actions for 30 minutes.",
+            "User attempts to access the dashboard after 30 minutes of inactivity."
+          ],
+          "expected": "The user is redirected to the login page, and a message indicates that the session has expired.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "User attempts to log in with expired password reset link",
+          "level": "negative",
+          "preconditions": "User is registered. A password reset link has been sent and expired after 15 minutes.",
+          "steps": [
+            "User navigates to the password reset page.",
+            "User enters the email used to generate the expired link.",
+            "User clicks on the expired link in the email."
+          ],
+          "expected": "The system displays a message indicating that the password reset link has expired and a new one must be requested.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-02",
+      "requirement_title": "Registro de nuevos clientes y validación de credenciales",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Register with valid email, strong password, and terms acceptance\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"The user is successfully registered and redirected to the dashboard.\",\n      \"covers\": [\"AC-01\", \"AC-02\", \"AC-04\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Register with invalid email format\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter an invalid email format (e.g., user@.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the email format is invalid.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Register with weak password (less than 8 characters)\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Enter a weak password (e.g., pass123) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the password does not meet strength requirements.\",\n      \"covers\": [\"AC-_02\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Register with password lacking a number, uppercase, or special character\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Enter a password without required elements (e.g., password123) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the password does not meet strength requirements.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Register with already existing email\",\n      \"level\": \"negative\",\n      \"preconditions\": \"A user account with the email user@example.com already exists in the system.\",\n      \"steps\": [\n        \"Enter an existing email (e.g., user@example.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A message 'El correo ya está registrado' is displayed.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Register without accepting terms and conditions\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Do not check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"The 'Register' button is disabled or a validation error message appears indicating terms acceptance is required.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Register with empty email field\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Leave the email field empty.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the email field is required.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Register with empty password field\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Leave the password field empty.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the password field is required.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-09\",\n      \"title\": \"Register with valid email and password but missing terms acceptance\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter a valid email address (e.g., user@example.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Do not check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"The registration form prevents submission and displays a validation error.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-10\",\n      \"title\": \"Register with email containing only domain (e.g., @example.com)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the registration page of the online store.\",\n      \"steps\": [\n        \"Enter an email with only domain (e.g., @example.com) in the email field.\",\n        \"Enter a strong password (e.g., P@ssw0rd2024) in the password field.\",\n        \"Check the terms and conditions checkbox.\",\n        \"Click the 'Register' button.\"\n      ],\n      \"expected\": \"A validation error message is displayed indicating the email format is invalid.\",\n      \"covers\": [\"AC-01\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Register with valid email, strong password, and terms acceptance",
+          "level": "smoke",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "The user is successfully registered and redirected to the dashboard.",
+          "covers": [
+            "AC-01",
+            "AC-02",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Register with invalid email format",
+          "level": "negative",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter an invalid email format (e.g., user@.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the email format is invalid.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Register with weak password (less than 8 characters)",
+          "level": "negative",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Enter a weak password (e.g., pass123) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the password does not meet strength requirements.",
+          "covers": [
+            "AC-_02"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Register with password lacking a number, uppercase, or special character",
+          "level": "negative",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Enter a password without required elements (e.g., password123) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the password does not meet strength requirements.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Register with already existing email",
+          "level": "negative",
+          "preconditions": "A user account with the email user@example.com already exists in the system.",
+          "steps": [
+            "Enter an existing email (e.g., user@example.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A message 'El correo ya está registrado' is displayed.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Register without accepting terms and conditions",
+          "level": "negative",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Do not check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "The 'Register' button is disabled or a validation error message appears indicating terms acceptance is required.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Register with empty email field",
+          "level": "edge",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Leave the email field empty.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the email field is required.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Register with empty password field",
+          "level": "edge",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Leave the password field empty.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the password field is required.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-09",
+          "title": "Register with valid email and password but missing terms acceptance",
+          "level": "edge",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter a valid email address (e.g., user@example.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Do not check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "The registration form prevents submission and displays a validation error.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-10",
+          "title": "Register with email containing only domain (e.g., @example.com)",
+          "level": "edge",
+          "preconditions": "User is on the registration page of the online store.",
+          "steps": [
+            "Enter an email with only domain (e.g., @example.com) in the email field.",
+            "Enter a strong password (e.g., P@ssw0rd2024) in the password field.",
+            "Check the terms and conditions checkbox.",
+            "Click the 'Register' button."
+          ],
+          "expected": "A validation error message is displayed indicating the email format is invalid.",
+          "covers": [
+            "AC-01"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-03",
+      "requirement_title": "Búsqueda y filtrado de productos en catálogo",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Search for product by keyword matching name or description\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is on the product catalog page with a functional search bar and category filters.\",\n      \"steps\": [\n        \"Enter 'laptop' in the search bar and press enter.\",\n        \"Verify the list of products displayed includes items with 'laptop' in name or description.\"\n      ],\n      \"expected\": \"Products matching 'laptop' in name or description are shown in the catalog.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Filter products by category to show only items in that category\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is on the product catalog page with a functional category filter.\",\n      \"steps\": [\n        \"Select 'Electronics' from the category dropdown.\",\n        \"Observe the list of products displayed.\"\n      ],\n      \"expected\": \"Only products categorized as 'Electronics' are shown in the list.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Filter products by price range with valid minimum and maximum values\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is on the product catalog page with price range filters available.\",\n      \"steps\": [\n        \"Set minimum price to 100 and maximum price to 500.\",\n        \"Apply the price filter and observe the results.\"\n      ],\n      \"expected\": \"Only products with price between 100 and 500 are displayed.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Search with no matching products returns 'No encontramos productos'\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the product catalog page with a search bar.\",\n      \"steps\": [\n        \"Enter 'xyz123' in the search bar and press enter.\",\n        \"Wait for the results to load.\"\n      ],\n      \"expected\": \"A message 'No encontramos productos' is displayed, indicating no matches were found.\",\n      \"covers\": [\"AC-01\", \"AC-04\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Filter with invalid price range (min > max) shows no results\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the product catalog page with price range filters.\",\n      \"steps\": [\n        \"Set minimum price to 500 and maximum price to 100.\",\n        \"Apply the price filter and observe the results.\"\n      ],\n      \"expected\": \"No products are displayed, and the interface should not show an error message or incorrect data.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Search with empty input field returns all products or shows a placeholder\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the product catalog page with a search bar.\",\n      \"steps\": [\n        \"Leave the search bar empty and press enter.\",\n        \"Observe the displayed products or search placeholder.\"\n      ],\n      \"expected\": \"The catalog shows all products or a placeholder indicating no search term was entered.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Filter by category with non-existent category returns no results\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the product catalog page with category filters.\",\n      \"steps\": [\n        \"Select a category that does not exist in the catalog (e.g., 'Zoo Animals').\",\n        \"Observe the list of products displayed.\"\n      ],\n      \"expected\": \"No products are shown, and the interface should not display an error or incorrect category list.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Price range filter with zero or negative values behaves correctly\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the product catalog page with price range filters.\",\n      \"steps\": [\n        \"Set minimum price to 0 and maximum price to 1000.\",\n        \"Apply the filter and observe results.\"\n      ],\n      \"expected\": \"Products with price from 0 to 1000 are shown, including those with price 0.\",\n      \"covers\": [\"AC-03\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Search for product by keyword matching name or description",
+          "level": "smoke",
+          "preconditions": "User is on the product catalog page with a functional search bar and category filters.",
+          "steps": [
+            "Enter 'laptop' in the search bar and press enter.",
+            "Verify the list of products displayed includes items with 'laptop' in name or description."
+          ],
+          "expected": "Products matching 'laptop' in name or description are shown in the catalog.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Filter products by category to show only items in that category",
+          "level": "functional",
+          "preconditions": "User is on the product catalog page with a functional category filter.",
+          "steps": [
+            "Select 'Electronics' from the category dropdown.",
+            "Observe the list of products displayed."
+          ],
+          "expected": "Only products categorized as 'Electronics' are shown in the list.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Filter products by price range with valid minimum and maximum values",
+          "level": "functional",
+          "preconditions": "User is on the product catalog page with price range filters available.",
+          "steps": [
+            "Set minimum price to 100 and maximum price to 500.",
+            "Apply the price filter and observe the results."
+          ],
+          "expected": "Only products with price between 100 and 500 are displayed.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Search with no matching products returns 'No encontramos productos'",
+          "level": "negative",
+          "preconditions": "User is on the product catalog page with a search bar.",
+          "steps": [
+            "Enter 'xyz123' in the search bar and press enter.",
+            "Wait for the results to load."
+          ],
+          "expected": "A message 'No encontramos productos' is displayed, indicating no matches were found.",
+          "covers": [
+            "AC-01",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Filter with invalid price range (min > max) shows no results",
+          "level": "edge",
+          "preconditions": "User is on the product catalog page with price range filters.",
+          "steps": [
+            "Set minimum price to 500 and maximum price to 100.",
+            "Apply the price filter and observe the results."
+          ],
+          "expected": "No products are displayed, and the interface should not show an error message or incorrect data.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Search with empty input field returns all products or shows a placeholder",
+          "level": "edge",
+          "preconditions": "User is on the product catalog page with a search bar.",
+          "steps": [
+            "Leave the search bar empty and press enter.",
+            "Observe the displayed products or search placeholder."
+          ],
+          "expected": "The catalog shows all products or a placeholder indicating no search term was entered.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Filter by category with non-existent category returns no results",
+          "level": "negative",
+          "preconditions": "User is on the product catalog page with category filters.",
+          "steps": [
+            "Select a category that does not exist in the catalog (e.g., 'Zoo Animals').",
+            "Observe the list of products displayed."
+          ],
+          "expected": "No products are shown, and the interface should not display an error or incorrect category list.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Price range filter with zero or negative values behaves correctly",
+          "level": "edge",
+          "preconditions": "User is on the product catalog page with price range filters.",
+          "steps": [
+            "Set minimum price to 0 and maximum price to 1000.",
+            "Apply the filter and observe results."
+          ],
+          "expected": "Products with price from 0 to 1000 are shown, including those with price 0.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-04",
+      "requirement_title": "Gestión del carrito de compras",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Add product with valid quantity within stock limit\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is logged in and the product 'Laptop' has 5 units in stock.\",\n      \"steps\": [\n        \"Navigate to the product page for 'Laptop'.\",\n        \"Select quantity 3 for the 'Laptop' product.\",\n        \"Click 'Add to Cart' button.\"\n      ],\n      \"expected\": \"The product is successfully added to the cart with a quantity of 3. The subtotal and total are recalculated correctly.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Attempt to add product with quantity exceeding stock\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and the product 'Mouse' has 2 units in stock.\",\n      \"steps\": [\n        \"Navigate to the product page for 'Mouse'.\",\n        \"Select quantity 5 for the 'Mouse' product.\",\n        \"Click 'Add to Cart' button.\"\n      ],\n      \"expected\": \"A warning message 'Stock insuficiente' is displayed. The product is not added to the cart.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Modify product quantity in cart and recalculate subtotals\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User has added 'Keyboard' with quantity 2 to the cart. The product has 10 units in stock.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Change the quantity of 'Keyboard' from 2 to 4.\",\n        \"Observe the cart summary.\"\n      ],\n      \"expected\": \"The subtotal and total are automatically recalculated based on the new quantity. The new subtotal reflects the updated value.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Remove product from cart and verify total update\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User has added 'Monitor' with quantity 1 to the cart.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Click the 'Remove' button for 'Monitor'.\"\n      ],\n      \"expected\": \"The product is removed from the cart and the total amount is reduced by the value of the removed item.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Add product with minimum valid quantity (1 unit)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and the product 'Headphones' has 10 units in stock.\",\n      \"steps\": [\n        \"Navigate to the product page for 'Headphones'.\",\n        \"Select quantity 1.\",\n        \"Click 'Add to Cart' button.\"\n      ],\n      \"expected\": \"The product is added to the cart with quantity 1. The subtotal and total are updated correctly.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Attempt to add product with zero quantity\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and the product 'Mousepad' has 5 units in stock.\",\n      \"steps\": [\n        \"Navigate to the product page for 'Mousepad'.\",\n        \"Select quantity 0.\",\n        \"Click 'Add to Cart' button.\"\n      ],\n      \"expected\": \"The form should prevent submission and display an error or warning indicating invalid quantity.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-_7\",\n      \"title\": \"Add product with quantity equal to stock limit\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and the product 'USB Drive' has 3 units in stock.\",\n      \"steps\": [\n        \"Navigate to the product page for 'USB Drive'.\",\n        \"Select quantity 3.\",\n        \"Click 'Add to Cart' button.\"\n      ],\n      \"expected\": \"The product is successfully added to the cart with quantity 3. No stock warning is shown.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Add product with valid quantity within stock limit",
+          "level": "functional",
+          "preconditions": "User is logged in and the product 'Laptop' has 5 units in stock.",
+          "steps": [
+            "Navigate to the product page for 'Laptop'.",
+            "Select quantity 3 for the 'Laptop' product.",
+            "Click 'Add to Cart' button."
+          ],
+          "expected": "The product is successfully added to the cart with a quantity of 3. The subtotal and total are recalculated correctly.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Attempt to add product with quantity exceeding stock",
+          "level": "negative",
+          "preconditions": "User is logged in and the product 'Mouse' has 2 units in stock.",
+          "steps": [
+            "Navigate to the product page for 'Mouse'.",
+            "Select quantity 5 for the 'Mouse' product.",
+            "Click 'Add to Cart' button."
+          ],
+          "expected": "A warning message 'Stock insuficiente' is displayed. The product is not added to the cart.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Modify product quantity in cart and recalculate subtotals",
+          "level": "functional",
+          "preconditions": "User has added 'Keyboard' with quantity 2 to the cart. The product has 10 units in stock.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Change the quantity of 'Keyboard' from 2 to 4.",
+            "Observe the cart summary."
+          ],
+          "expected": "The subtotal and total are automatically recalculated based on the new quantity. The new subtotal reflects the updated value.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Remove product from cart and verify total update",
+          "level": "functional",
+          "preconditions": "User has added 'Monitor' with quantity 1 to the cart.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Click the 'Remove' button for 'Monitor'."
+          ],
+          "expected": "The product is removed from the cart and the total amount is reduced by the value of the removed item.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Add product with minimum valid quantity (1 unit)",
+          "level": "edge",
+          "preconditions": "User is logged in and the product 'Headphones' has 10 units in stock.",
+          "steps": [
+            "Navigate to the product page for 'Headphones'.",
+            "Select quantity 1.",
+            "Click 'Add to Cart' button."
+          ],
+          "expected": "The product is added to the cart with quantity 1. The subtotal and total are updated correctly.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Attempt to add product with zero quantity",
+          "level": "negative",
+          "preconditions": "User is logged in and the product 'Mousepad' has 5 units in stock.",
+          "steps": [
+            "Navigate to the product page for 'Mousepad'.",
+            "Select quantity 0.",
+            "Click 'Add to Cart' button."
+          ],
+          "expected": "The form should prevent submission and display an error or warning indicating invalid quantity.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-_7",
+          "title": "Add product with quantity equal to stock limit",
+          "level": "edge",
+          "preconditions": "User is logged in and the product 'USB Drive' has 3 units in stock.",
+          "steps": [
+            "Navigate to the product page for 'USB Drive'.",
+            "Select quantity 3.",
+            "Click 'Add to Cart' button."
+          ],
+          "expected": "The product is successfully added to the cart with quantity 3. No stock warning is shown.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-05",
+      "requirement_title": "Aplicación de cupones de descuento y promociones",
+      "valid_on_first_try": false,
+      "retries_used": 1,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Valid coupon applies discount to eligible items in cart\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a valid coupon code that meets all criteria: active, requires minimum purchase of $50, and is single-use.\",\n        \"Apply the coupon and submit the form.\"\n      ],\n      \"expected\": \"The discount percentage is applied correctly to eligible items in the cart, and the final total reflects the discounted amount.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Expired coupon shows error message\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a coupon code that has expired (past its validity date).\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"A message is displayed exactly: 'Cupón expirado o no vigente'.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Coupon requires minimum purchase of $50\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value below $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a valid coupon code that requires a minimum purchase of $50.\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"The coupon is not applied, and a message is shown indicating that the minimum purchase requirement is not met.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Single-use coupon cannot be reapplied by same user\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50. A single-use coupon is available and valid.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Apply the single-use coupon and complete the purchase.\",\n        \"Log back in and navigate to the cart page with new items.\",\n        \"Attempt to reapply the same coupon code.\"\n      ],\n      \"expected\": \"The coupon is not available for reapplication, and a message is shown indicating that the coupon has already been used.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Coupon with invalid format or syntax fails to apply\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a coupon code with invalid format (e.g., missing characters, incorrect length).\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"A message is displayed indicating the coupon is invalid or not recognized.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Coupon applied after purchase threshold is met but before minimum purchase is reached\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value just above $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a coupon that requires a minimum purchase of $50.\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"The coupon is applied successfully as the purchase amount meets the minimum requirement.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Coupon with zero discount fails to apply\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter a coupon code that offers 0% discount.\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"The coupon is not applied, and a message is shown indicating no discount is available.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Multiple coupons in cart - only one valid coupon applies\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is logged in and has added products to cart with total value above $50. Two coupon codes are available: one valid, one expired.\",\n      \"steps\": [\n        \"Navigate to the cart page.\",\n        \"Enter both coupon codes in the input field (one valid, one expired).\",\n        \"Submit the form.\"\n      ],\n      \"expected\": \"Only the valid coupon is applied, and the expired one is ignored with no error message.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Valid coupon applies discount to eligible items in cart",
+          "level": "smoke",
+          "preconditions": "User is logged in and has added products to cart with total value above $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a valid coupon code that meets all criteria: active, requires minimum purchase of $50, and is single-use.",
+            "Apply the coupon and submit the form."
+          ],
+          "expected": "The discount percentage is applied correctly to eligible items in the cart, and the final total reflects the discounted amount.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Expired coupon shows error message",
+          "level": "negative",
+          "preconditions": "User is logged in and has added products to cart with total value above $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a coupon code that has expired (past its validity date).",
+            "Submit the form."
+          ],
+          "expected": "A message is displayed exactly: 'Cupón expirado o no vigente'.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Coupon requires minimum purchase of $50",
+          "level": "functional",
+          "preconditions": "User is logged in and has added products to cart with total value below $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a valid coupon code that requires a minimum purchase of $50.",
+            "Submit the form."
+          ],
+          "expected": "The coupon is not applied, and a message is shown indicating that the minimum purchase requirement is not met.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Single-use coupon cannot be reapplied by same user",
+          "level": "edge",
+          "preconditions": "User is logged in and has added products to cart with total value above $50. A single-use coupon is available and valid.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Apply the single-use coupon and complete the purchase.",
+            "Log back in and navigate to the cart page with new items.",
+            "Attempt to reapply the same coupon code."
+          ],
+          "expected": "The coupon is not available for reapplication, and a message is shown indicating that the coupon has already been used.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Coupon with invalid format or syntax fails to apply",
+          "level": "negative",
+          "preconditions": "User is logged in and has added products to cart with total value above $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a coupon code with invalid format (e.g., missing characters, incorrect length).",
+            "Submit the form."
+          ],
+          "expected": "A message is displayed indicating the coupon is invalid or not recognized.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Coupon applied after purchase threshold is met but before minimum purchase is reached",
+          "level": "edge",
+          "preconditions": "User is logged in and has added products to cart with total value just above $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a coupon that requires a minimum purchase of $50.",
+            "Submit the form."
+          ],
+          "expected": "The coupon is applied successfully as the purchase amount meets the minimum requirement.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Coupon with zero discount fails to apply",
+          "level": "negative",
+          "preconditions": "User is logged in and has added products to cart with total value above $50.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter a coupon code that offers 0% discount.",
+            "Submit the form."
+          ],
+          "expected": "The coupon is not applied, and a message is shown indicating no discount is available.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Multiple coupons in cart - only one valid coupon applies",
+          "level": "functional",
+          "preconditions": "User is logged in and has added products to cart with total value above $50. Two coupon codes are available: one valid, one expired.",
+          "steps": [
+            "Navigate to the cart page.",
+            "Enter both coupon codes in the input field (one valid, one expired).",
+            "Submit the form."
+          ],
+          "expected": "Only the valid coupon is applied, and the expired one is ignored with no error message.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-06",
+      "requirement_title": "Pasarela de pago y confirmación de pedidos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Valid card number and expiry date with correct CVV\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is logged in and on the payment page with a valid card input form.\",\n      \"steps\": [\n        \"Enter a 16-digit valid card number (e.g., 4532123456789012).\",\n        \"Set expiry date to a month and year in the future (e.g., 05/2026).\",\n        \"Enter a 3-digit CVV (e.g., 123) for a Visa card.\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The payment is processed successfully, and a confirmation email is sent to the user with order number starting with 'ORD-'.\",\n      \"covers\": [\n        \"AC-01\",\n        \"AC-02\",\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Invalid card number with incorrect length\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Enter a card number with 15 digits (e.g., 453212345678901).\",\n        \"Set expiry date to a future month and year.\",\n        \"Enter a valid CVV (e.g., 123).\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system rejects the card number with an error message indicating invalid length.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Card number with expiry date in the past\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Enter a valid 16-digit card number (e.g., 4532123456789012).\",\n        \"Set expiry date to a month and year in the past (e.g., 01/2023).\",\n        \"Enter a valid CVV (e.g., 123).\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system rejects the expiry date with an error message indicating invalid date.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Invalid CVV length for a specific card type\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Enter a valid 16-digit card number (e.g., 4532123456789012).\",\n        \"Set expiry date to a future month and year.\",\n        \"Enter a 5-digit CVV (e.g., 12345) for a Visa card.\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system rejects the CVV with an error message indicating invalid length.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"CVV with invalid characters\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Enter a valid 16-digit card number (e.g., 4532123456789012).\",\n        \"Set expiry date to a future month and year.\",\n        \"Enter a CVV with non-numeric characters (e.g., 12a).\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system rejects the CVV with an error message indicating invalid format.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Timeout scenario with automatic retry\",\n      \"level\": \"functional\",\n      \"preconditions\": \"The payment gateway is configured to simulate a timeout on the third attempt.\",\n      \"steps\": [\n        \"Initiate a payment request with valid card details.\",\n        \"Simulate a timeout response from the payment gateway on the first attempt.\",\n        \"Wait for the system to attempt a retry.\",\n        \"Verify that the system attempts a second retry before failing.\"\n      ],\n      \"expected\": \"The system performs two automatic retries before failing and showing a timeout error.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Payment success with order confirmation email\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User has a valid card and is on the payment page.\",\n      \"steps\": [\n        \"Enter valid card number, expiry, and CVV.\",\n        \"Submit the payment form successfully.\",\n        \"Check the user's email inbox after submission.\"\n      ],\n      \"expected\": \"A confirmation email is sent with a number starting with 'ORD-' and includes transaction details.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Empty card number field\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Leave the card number field empty.\",\n        \"Set expiry date and CVV to valid values.\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system rejects the input with an error message indicating required field missing.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-09\",\n      \"title\": \"Card number with leading or trailing spaces\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the payment page with a card input form.\",\n      \"steps\": [\n        \"Enter a 16-digit card number with leading or trailing spaces (e.g., ' 4532123456789012 ').\",\n        \"Set expiry date and CVV to valid values.\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system strips spaces and validates the number as 16 digits; if invalid, it rejects the input.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-10\",\n      \"title\": \"CVV with 4 digits for a Mastercard\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is on the payment page with a card input form and using a Mastercard.\",\n      \"steps\": [\n        \"Enter a valid 16-digit Mastercard number (e.g., 5555555555554444).\",\n        \"Set expiry date to a future month and year.\",\n        \"Enter a 4-digit CVV (e.g., 1234).\",\n        \"Submit the payment form.\"\n      ],\n      \"expected\": \"The system accepts the 4-digit CVV as valid for Mastercard according to the franchise rules.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Valid card number and expiry date with correct CVV",
+          "level": "smoke",
+          "preconditions": "User is logged in and on the payment page with a valid card input form.",
+          "steps": [
+            "Enter a 16-digit valid card number (e.g., 4532123456789012).",
+            "Set expiry date to a month and year in the future (e.g., 05/2026).",
+            "Enter a 3-digit CVV (e.g., 123) for a Visa card.",
+            "Submit the payment form."
+          ],
+          "expected": "The payment is processed successfully, and a confirmation email is sent to the user with order number starting with 'ORD-'.",
+          "covers": [
+            "AC-01",
+            "AC-02",
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Invalid card number with incorrect length",
+          "level": "negative",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Enter a card number with 15 digits (e.g., 453212345678901).",
+            "Set expiry date to a future month and year.",
+            "Enter a valid CVV (e.g., 123).",
+            "Submit the payment form."
+          ],
+          "expected": "The system rejects the card number with an error message indicating invalid length.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Card number with expiry date in the past",
+          "level": "negative",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Enter a valid 16-digit card number (e.g., 4532123456789012).",
+            "Set expiry date to a month and year in the past (e.g., 01/2023).",
+            "Enter a valid CVV (e.g., 123).",
+            "Submit the payment form."
+          ],
+          "expected": "The system rejects the expiry date with an error message indicating invalid date.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Invalid CVV length for a specific card type",
+          "level": "negative",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Enter a valid 16-digit card number (e.g., 4532123456789012).",
+            "Set expiry date to a future month and year.",
+            "Enter a 5-digit CVV (e.g., 12345) for a Visa card.",
+            "Submit the payment form."
+          ],
+          "expected": "The system rejects the CVV with an error message indicating invalid length.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "CVV with invalid characters",
+          "level": "negative",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Enter a valid 16-digit card number (e.g., 4532123456789012).",
+            "Set expiry date to a future month and year.",
+            "Enter a CVV with non-numeric characters (e.g., 12a).",
+            "Submit the payment form."
+          ],
+          "expected": "The system rejects the CVV with an error message indicating invalid format.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Timeout scenario with automatic retry",
+          "level": "functional",
+          "preconditions": "The payment gateway is configured to simulate a timeout on the third attempt.",
+          "steps": [
+            "Initiate a payment request with valid card details.",
+            "Simulate a timeout response from the payment gateway on the first attempt.",
+            "Wait for the system to attempt a retry.",
+            "Verify that the system attempts a second retry before failing."
+          ],
+          "expected": "The system performs two automatic retries before failing and showing a timeout error.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Payment success with order confirmation email",
+          "level": "functional",
+          "preconditions": "User has a valid card and is on the payment page.",
+          "steps": [
+            "Enter valid card number, expiry, and CVV.",
+            "Submit the payment form successfully.",
+            "Check the user's email inbox after submission."
+          ],
+          "expected": "A confirmation email is sent with a number starting with 'ORD-' and includes transaction details.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Empty card number field",
+          "level": "edge",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Leave the card number field empty.",
+            "Set expiry date and CVV to valid values.",
+            "Submit the payment form."
+          ],
+          "expected": "The system rejects the input with an error message indicating required field missing.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-09",
+          "title": "Card number with leading or trailing spaces",
+          "level": "edge",
+          "preconditions": "User is on the payment page with a card input form.",
+          "steps": [
+            "Enter a 16-digit card number with leading or trailing spaces (e.g., ' 4532123456789012 ').",
+            "Set expiry date and CVV to valid values.",
+            "Submit the payment form."
+          ],
+          "expected": "The system strips spaces and validates the number as 16 digits; if invalid, it rejects the input.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-10",
+          "title": "CVV with 4 digits for a Mastercard",
+          "level": "edge",
+          "preconditions": "User is on the payment page with a card input form and using a Mastercard.",
+          "steps": [
+            "Enter a valid 16-digit Mastercard number (e.g., 5555555555554444).",
+            "Set expiry date to a future month and year.",
+            "Enter a 4-digit CVV (e.g., 1234).",
+            "Submit the payment form."
+          ],
+          "expected": "The system accepts the 4-digit CVV as valid for Mastercard according to the franchise rules.",
+          "covers": [
+            "AC-02"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-07",
+      "requirement_title": "Libreta de direcciones de entrega",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Validate postal code format with exact 5-digit numeric input\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a valid 5-digit numeric postal code (e.g., 12345) in the postal code field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The address is successfully registered with the postal code validated as correct.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Validate rejection of invalid postal code formats\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a postal code with non-numeric characters (e.g., 12a34) in the postal code field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the input and displays an error message indicating invalid postal code format.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Validate rejection of postal code with fewer than 5 digits\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a postal code with 4 digits (e.g., 1234) in the postal code field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the input and displays an error message indicating postal code must be exactly 5 digits.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Validate rejection of postal code with more than 5 digits\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a postal code with 6 digits (e.g., 123456) in the postal code field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the input and displays an error message indicating postal code must be exactly 5 digits.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"User can designate a default address for checkout selection\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User has at least one address registered and is on the address management page.\",\n      \"steps\": [\n        \"Select an existing address from the list and click the 'Set as Default' button.\",\n        \"Confirm the action is completed and navigate to checkout.\"\n      ],\n      \"expected\": \"The selected address appears as the default in the checkout form and is pre-filled.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"User cannot set more than 5 addresses as registered\",\n      \"level\": \"edge\",\n      \"preconditions\": \"User has already registered 5 addresses and is on the address registration page.\",\n      \"steps\": [\n        \"Attempt to register a sixth address by entering valid details including a postal code.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the registration and displays a message indicating maximum of 5 addresses allowed.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Validate rejection of script injection in residential address field\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a residential address containing script-like content (e.g., <script>alert('xss')</script>) in the residential address field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the input and displays an error message indicating invalid characters or content.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Validate rejection of special characters in residential address field\",\n      \"level\": \"negative\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a residential address with special characters (e.g., @#$%&*) in the residential address field.\",\n        \"Submit the form to register the address.\"\n      ],\n      \"expected\": \"The system rejects the input and displays an error message indicating only valid characters are allowed.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-09\",\n      \"title\": \"Validate that address fields are properly sanitized on submission\",\n      \"level\": \"functional\",\n      \"preconditions\": \"User is logged in and on the address registration page.\",\n      \"steps\": [\n        \"Enter a residential address with valid content (e.g., '123 Main St') and submit the form.\",\n        \"Verify the address is stored in the system without script or special characters.\"\n      ],\n      \"expected\": \"The address is stored correctly and no malicious content is present in the database.\",\n      \"covers\": [\"AC-04\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Validate postal code format with exact 5-digit numeric input",
+          "level": "smoke",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a valid 5-digit numeric postal code (e.g., 12345) in the postal code field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The address is successfully registered with the postal code validated as correct.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Validate rejection of invalid postal code formats",
+          "level": "negative",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a postal code with non-numeric characters (e.g., 12a34) in the postal code field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the input and displays an error message indicating invalid postal code format.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Validate rejection of postal code with fewer than 5 digits",
+          "level": "edge",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a postal code with 4 digits (e.g., 1234) in the postal code field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the input and displays an error message indicating postal code must be exactly 5 digits.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Validate rejection of postal code with more than 5 digits",
+          "level": "edge",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a postal code with 6 digits (e.g., 123456) in the postal code field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the input and displays an error message indicating postal code must be exactly 5 digits.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "User can designate a default address for checkout selection",
+          "level": "functional",
+          "preconditions": "User has at least one address registered and is on the address management page.",
+          "steps": [
+            "Select an existing address from the list and click the 'Set as Default' button.",
+            "Confirm the action is completed and navigate to checkout."
+          ],
+          "expected": "The selected address appears as the default in the checkout form and is pre-filled.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "User cannot set more than 5 addresses as registered",
+          "level": "edge",
+          "preconditions": "User has already registered 5 addresses and is on the address registration page.",
+          "steps": [
+            "Attempt to register a sixth address by entering valid details including a postal code.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the registration and displays a message indicating maximum of 5 addresses allowed.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Validate rejection of script injection in residential address field",
+          "level": "negative",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a residential address containing script-like content (e.g., <script>alert('xss')</script>) in the residential address field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the input and displays an error message indicating invalid characters or content.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Validate rejection of special characters in residential address field",
+          "level": "negative",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a residential address with special characters (e.g., @#$%&*) in the residential address field.",
+            "Submit the form to register the address."
+          ],
+          "expected": "The system rejects the input and displays an error message indicating only valid characters are allowed.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-09",
+          "title": "Validate that address fields are properly sanitized on submission",
+          "level": "functional",
+          "preconditions": "User is logged in and on the address registration page.",
+          "steps": [
+            "Enter a residential address with valid content (e.g., '123 Main St') and submit the form.",
+            "Verify the address is stored in the system without script or special characters."
+          ],
+          "expected": "The address is stored correctly and no malicious content is present in the database.",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-08",
+      "requirement_title": "Solicitud de devoluciones y reembolsos",
+      "valid_on_first_try": false,
+      "retries_used": 1,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Devuelve solicitud dentro del plazo de 30 días después de la entrega\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El cliente ha recibido el producto y la fecha de entrega es registrada en el sistema.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución dentro de los 30 días posteriores a la fecha de entrega.\",\n        \"El sistema valida la fecha de entrega y el tiempo transcurrido desde ella.\"\n      ],\n      \"expected\": \"La solicitud de devolución se autoriza y se procesa correctamente en el sistema.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Solicitud de devolución fuera del plazo de 30 días no es autorizada\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El cliente ha recibido el producto y ha pasado los 30 días desde la fecha de entrega.\",\n      \"steps\": [\n        \"El cliente intenta iniciar una solicitud de devolución después de los 30 días desde la fecha de entrega.\",\n        \"El sistema verifica la fecha de entrega y el tiempo transcurrido.\"\n      ],\n      \"expected\": \"La solicitud de devolución se rechaza con mensaje indicando que se ha pasado el plazo reglamentario.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Solicitud de devolución por producto defectuoso requiere evidencia visual\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto entregado presenta un defecto físico visible.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por defecto del producto.\",\n        \"El sistema solicita adjuntar una foto clara del defecto.\"\n      ],\n      \"expected\": \"El sistema requiere que el cliente suba al menos una foto clara del producto defectuoso como evidencia.\",\n      \"covers\": [\"AC-_02\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Solicitud de devolución sin evidencia visual es rechazada\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto tiene un defecto, pero el cliente no adjunta ninguna foto.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por defecto del producto sin adjuntar fotos.\",\n        \"El sistema valida la ausencia de evidencia visual.\"\n      ],\n      \"expected\": \"La solicitud se rechaza y se muestra un mensaje indicando que se requiere evidencia visual.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Cliente puede elegir reembolso al método original o crédito en tienda\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado una solicitud de devolución válida dentro del plazo.\",\n      \"steps\": [\n        \"El cliente accede a la pantalla de opciones de devolución.\",\n        \"El cliente selecciona 'reembolso al método de pago original' o 'crédito en tienda'.\"\n      ],\n      \"expected\": \"El sistema registra la opción elegida y la guarda en el historial de devolución.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Artículos de uso íntimo o higiene personal no permiten devolución\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El producto es de uso íntimo o higiene personal (por ejemplo, jabón, toalla, protector de senos).\",\n      \"steps\": [\n        \"El cliente intenta iniciar una solicitud de devolución para un producto de uso íntimo o higiene personal.\",\n        \"El sistema verifica el tipo de producto en la base de datos.\"\n      ],\n      \"expected\": \"La solicitud se rechaza automáticamente y se muestra un mensaje indicando que estos productos no admiten devoluciones.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Solicitud de devolución para producto defectuoso con foto clara se autoriza\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto tiene un defecto físico visible y el cliente adjunta una foto clara.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución por defecto del producto.\",\n        \"El cliente adjunta una foto clara del defecto del producto.\"\n      ],\n      \"expected\": \"La solicitud se autoriza y se procesa correctamente en el sistema.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Solicitud de devolución para producto no defectuoso sin evidencia es rechazada\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto está en buen estado, pero el cliente solicita devolución por razones no especificadas.\",\n      \"steps\": [\n        \"El cliente inicia una solicitud de devolución sin motivo ni evidencia.\",\n        \"El sistema valida la ausencia de evidencia y el motivo de devolución.\"\n      ],\n      \"expected\": \"La solicitud se rechaza y se muestra un mensaje indicando que se requiere evidencia o motivo válido.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-09\",\n      \"title\": \"Reembolso al método original se procesa correctamente\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado una solicitud de devolución válida dentro del plazo.\",\n      \"steps\": [\n        \"El cliente selecciona 'reembolso al método de pago original'.\",\n        \"El sistema verifica el método de pago original y procesa el reembolso.\"\n      ],\n      \"expected\": \"El reembolso se realiza al método de pago original del cliente.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-10\",\n      \"title\": \"Crédito en tienda se asigna correctamente para futuras compras\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El cliente ha iniciado una solicitud de devolución válida dentro del plazo.\",\n      \"steps\": [\n        \"El cliente selecciona 'crédito en tienda' como opción de devolución.\",\n        \"El sistema registra el crédito y lo asigna al cliente para futuras compras.\"\n      ],\n      \"expected\": \"El cliente recibe un crédito en la tienda que puede usar en futuras compras.\",\n      \"covers\": [\"AC-03\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Devuelve solicitud dentro del plazo de 30 días después de la entrega",
+          "level": "smoke",
+          "preconditions": "El cliente ha recibido el producto y la fecha de entrega es registrada en el sistema.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución dentro de los 30 días posteriores a la fecha de entrega.",
+            "El sistema valida la fecha de entrega y el tiempo transcurrido desde ella."
+          ],
+          "expected": "La solicitud de devolución se autoriza y se procesa correctamente en el sistema.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Solicitud de devolución fuera del plazo de 30 días no es autorizada",
+          "level": "negative",
+          "preconditions": "El cliente ha recibido el producto y ha pasado los 30 días desde la fecha de entrega.",
+          "steps": [
+            "El cliente intenta iniciar una solicitud de devolución después de los 30 días desde la fecha de entrega.",
+            "El sistema verifica la fecha de entrega y el tiempo transcurrido."
+          ],
+          "expected": "La solicitud de devolución se rechaza con mensaje indicando que se ha pasado el plazo reglamentario.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Solicitud de devolución por producto defectuoso requiere evidencia visual",
+          "level": "functional",
+          "preconditions": "El producto entregado presenta un defecto físico visible.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por defecto del producto.",
+            "El sistema solicita adjuntar una foto clara del defecto."
+          ],
+          "expected": "El sistema requiere que el cliente suba al menos una foto clara del producto defectuoso como evidencia.",
+          "covers": [
+            "AC-_02"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Solicitud de devolución sin evidencia visual es rechazada",
+          "level": "negative",
+          "preconditions": "El producto tiene un defecto, pero el cliente no adjunta ninguna foto.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por defecto del producto sin adjuntar fotos.",
+            "El sistema valida la ausencia de evidencia visual."
+          ],
+          "expected": "La solicitud se rechaza y se muestra un mensaje indicando que se requiere evidencia visual.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Cliente puede elegir reembolso al método original o crédito en tienda",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado una solicitud de devolución válida dentro del plazo.",
+          "steps": [
+            "El cliente accede a la pantalla de opciones de devolución.",
+            "El cliente selecciona 'reembolso al método de pago original' o 'crédito en tienda'."
+          ],
+          "expected": "El sistema registra la opción elegida y la guarda en el historial de devolución.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Artículos de uso íntimo o higiene personal no permiten devolución",
+          "level": "edge",
+          "preconditions": "El producto es de uso íntimo o higiene personal (por ejemplo, jabón, toalla, protector de senos).",
+          "steps": [
+            "El cliente intenta iniciar una solicitud de devolución para un producto de uso íntimo o higiene personal.",
+            "El sistema verifica el tipo de producto en la base de datos."
+          ],
+          "expected": "La solicitud se rechaza automáticamente y se muestra un mensaje indicando que estos productos no admiten devoluciones.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Solicitud de devolución para producto defectuoso con foto clara se autoriza",
+          "level": "functional",
+          "preconditions": "El producto tiene un defecto físico visible y el cliente adjunta una foto clara.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución por defecto del producto.",
+            "El cliente adjunta una foto clara del defecto del producto."
+          ],
+          "expected": "La solicitud se autoriza y se procesa correctamente en el sistema.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Solicitud de devolución para producto no defectuoso sin evidencia es rechazada",
+          "level": "negative",
+          "preconditions": "El producto está en buen estado, pero el cliente solicita devolución por razones no especificadas.",
+          "steps": [
+            "El cliente inicia una solicitud de devolución sin motivo ni evidencia.",
+            "El sistema valida la ausencia de evidencia y el motivo de devolución."
+          ],
+          "expected": "La solicitud se rechaza y se muestra un mensaje indicando que se requiere evidencia o motivo válido.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-09",
+          "title": "Reembolso al método original se procesa correctamente",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado una solicitud de devolución válida dentro del plazo.",
+          "steps": [
+            "El cliente selecciona 'reembolso al método de pago original'.",
+            "El sistema verifica el método de pago original y procesa el reembolso."
+          ],
+          "expected": "El reembolso se realiza al método de pago original del cliente.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-10",
+          "title": "Crédito en tienda se asigna correctamente para futuras compras",
+          "level": "functional",
+          "preconditions": "El cliente ha iniciado una solicitud de devolución válida dentro del plazo.",
+          "steps": [
+            "El cliente selecciona 'crédito en tienda' como opción de devolución.",
+            "El sistema registra el crédito y lo asigna al cliente para futuras compras."
+          ],
+          "expected": "El cliente recibe un crédito en la tienda que puede usar en futuras compras.",
+          "covers": [
+            "AC-03"
+          ]
+        }
+      ]
+    }
+  ]
+}

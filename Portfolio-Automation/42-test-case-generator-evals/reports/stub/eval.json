@@ -1,0 +1,576 @@
+{
+  "model": "stub",
+  "split": "dev",
+  "timestamp_utc": "2026-11-11T03:59:15.776067+00:00",
+  "total_requirements": 8,
+  "total_test_cases": 32,
+  "metrics": {
+    "schema_valid_rate": {
+      "score": 1.0,
+      "threshold": 0.9,
+      "operator": ">=",
+      "passed": true
+    },
+    "declared_coverage": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "verified_coverage": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "hallucinated_refs": {
+      "score": 0.0,
+      "threshold": 0.02,
+      "operator": "<=",
+      "passed": true
+    },
+    "duplicate_rate": {
+      "score": 0.0,
+      "threshold": 0.1,
+      "operator": "<=",
+      "passed": true
+    },
+    "negative_presence": {
+      "score": 1.0,
+      "threshold": 1.0,
+      "operator": ">=",
+      "passed": true
+    }
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "REQ-01",
+      "requirement_title": "Autenticación de usuarios y control de sesiones",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01-01\",\n      \"title\": \"Inicio de sesión exitoso con credenciales válidas\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Usuario registrado con email usuario@ejemplo.com y clave válida\",\n      \"steps\": [\n        \"Navegar a la pantalla de login\",\n        \"Ingresar email usuario@ejemplo.com y contraseña correcta\",\n        \"Hacer clic en Iniciar Sesión\"\n      ],\n      \"expected\": \"Redirección exitosa al dashboard principal con token de sesión activo\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-01-02\",\n      \"title\": \"Bloqueo temporal de cuenta tras superar intentos fallidos\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Cuenta activa en la plataforma\",\n      \"steps\": [\n        \"Ingresar contraseña incorrecta consecutivamente durante 5 intentos\",\n        \"Presionar Enviar en cada intento\"\n      ],\n      \"expected\": \"Se visualiza mensaje de cuenta bloqueada tras 5 intentos fallidos\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-01-03\",\n      \"title\": \"Expiración de enlace de recuperación de contraseña\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Enlace de recuperación generado previamente\",\n      \"steps\": [\n        \"Esperar un lapso mayor a 15 minutos desde la generación\",\n        \"Acceder al enlace de restablecimiento\"\n      ],\n      \"expected\": \"El enlace muestra error de token expirado por superar los 15 minutos\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-01-04\",\n      \"title\": \"Persistencia de sesión con casilla recordar activa\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Navegador web limpio\",\n      \"steps\": [\n        \"Marcar la casilla recordar credenciales\",\n        \"Autenticarse con éxito y reiniciar el navegador\"\n      ],\n      \"expected\": \"La cookie de persistencia mantiene la sesión iniciada sin pedir login\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01-01",
+          "title": "Inicio de sesión exitoso con credenciales válidas",
+          "level": "smoke",
+          "preconditions": "Usuario registrado con email usuario@ejemplo.com y clave válida",
+          "steps": [
+            "Navegar a la pantalla de login",
+            "Ingresar email usuario@ejemplo.com y contraseña correcta",
+            "Hacer clic en Iniciar Sesión"
+          ],
+          "expected": "Redirección exitosa al dashboard principal con token de sesión activo",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-01-02",
+          "title": "Bloqueo temporal de cuenta tras superar intentos fallidos",
+          "level": "negative",
+          "preconditions": "Cuenta activa en la plataforma",
+          "steps": [
+            "Ingresar contraseña incorrecta consecutivamente durante 5 intentos",
+            "Presionar Enviar en cada intento"
+          ],
+          "expected": "Se visualiza mensaje de cuenta bloqueada tras 5 intentos fallidos",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-01-03",
+          "title": "Expiración de enlace de recuperación de contraseña",
+          "level": "edge",
+          "preconditions": "Enlace de recuperación generado previamente",
+          "steps": [
+            "Esperar un lapso mayor a 15 minutos desde la generación",
+            "Acceder al enlace de restablecimiento"
+          ],
+          "expected": "El enlace muestra error de token expirado por superar los 15 minutos",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-01-04",
+          "title": "Persistencia de sesión con casilla recordar activa",
+          "level": "functional",
+          "preconditions": "Navegador web limpio",
+          "steps": [
+            "Marcar la casilla recordar credenciales",
+            "Autenticarse con éxito y reiniciar el navegador"
+          ],
+          "expected": "La cookie de persistencia mantiene la sesión iniciada sin pedir login",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-02",
+      "requirement_title": "Registro de nuevos clientes y validación de credenciales",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-02-01\",\n      \"title\": \"Validación de formato de correo electrónico en registro\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Formulario de registro abierto\",\n      \"steps\": [\n        \"Ingresar un correo sin dominio válido como 'usuario_sin_arroba'\",\n        \"Intentar registrar la cuenta\"\n      ],\n      \"expected\": \"El sistema muestra advertencia de correo inválido por falta de @ y dominio\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02-02\",\n      \"title\": \"Exigencia de longitud y caracteres especiales en contraseña\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Pantalla de creación de cuenta\",\n      \"steps\": [\n        \"Probar contraseña con menos de 8 caracteres\",\n        \"Probar contraseña válida con al menos 8 caracteres, número y símbolo especial\"\n      ],\n      \"expected\": \"Se valida requisito de al menos 8 caracteres con mayúscula y símbolo especial\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-02-03\",\n      \"title\": \"Rechazo de registro con correo ya existente\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Correo cliente@ejemplo.com ya registrado en base de datos\",\n      \"steps\": [\n        \"Llenar formulario con cliente@ejemplo.com\",\n        \"Enviar solicitud de registro\"\n      ],\n      \"expected\": \"Se presenta el error exacto: El correo ya está registrado\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-02-04\",\n      \"title\": \"Obligatoriedad de aceptación de términos y condiciones\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Datos válidos ingresados\",\n      \"steps\": [\n        \"Desmarcar el checkbox de términos y condiciones\",\n        \"Hacer clic en el botón Registrarse\"\n      ],\n      \"expected\": \"El sistema exige marcar la casilla de términos y condiciones para continuar\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-02-01",
+          "title": "Validación de formato de correo electrónico en registro",
+          "level": "negative",
+          "preconditions": "Formulario de registro abierto",
+          "steps": [
+            "Ingresar un correo sin dominio válido como 'usuario_sin_arroba'",
+            "Intentar registrar la cuenta"
+          ],
+          "expected": "El sistema muestra advertencia de correo inválido por falta de @ y dominio",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02-02",
+          "title": "Exigencia de longitud y caracteres especiales en contraseña",
+          "level": "edge",
+          "preconditions": "Pantalla de creación de cuenta",
+          "steps": [
+            "Probar contraseña con menos de 8 caracteres",
+            "Probar contraseña válida con al menos 8 caracteres, número y símbolo especial"
+          ],
+          "expected": "Se valida requisito de al menos 8 caracteres con mayúscula y símbolo especial",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-02-03",
+          "title": "Rechazo de registro con correo ya existente",
+          "level": "negative",
+          "preconditions": "Correo cliente@ejemplo.com ya registrado en base de datos",
+          "steps": [
+            "Llenar formulario con cliente@ejemplo.com",
+            "Enviar solicitud de registro"
+          ],
+          "expected": "Se presenta el error exacto: El correo ya está registrado",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-02-04",
+          "title": "Obligatoriedad de aceptación de términos y condiciones",
+          "level": "functional",
+          "preconditions": "Datos válidos ingresados",
+          "steps": [
+            "Desmarcar el checkbox de términos y condiciones",
+            "Hacer clic en el botón Registrarse"
+          ],
+          "expected": "El sistema exige marcar la casilla de términos y condiciones para continuar",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-03",
+      "requirement_title": "Búsqueda y filtrado de productos en catálogo",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-03-01\",\n      \"title\": \"Búsqueda por término clave en catálogo de productos\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Catálogo con productos indexados\",\n      \"steps\": [\n        \"Escribir término de búsqueda 'auriculares' en la barra\",\n        \"Presionar tecla Enter\"\n      ],\n      \"expected\": \"El catálogo retorna lista con coincidencia de query en título o descripción\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-03-02\",\n      \"title\": \"Filtrado de productos por categoría seleccionada\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Página de resultados con múltiples categorías\",\n      \"steps\": [\n        \"Seleccionar la categoría 'Electrónica' en el panel lateral\",\n        \"Aplicar filtro de catálogo\"\n      ],\n      \"expected\": \"La vista actualiza mostrando únicamente productos pertenecientes a la categoría\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03-03\",\n      \"title\": \"Filtrado por rango de precio mínimo y máximo\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Listado de artículos con precios diversos\",\n      \"steps\": [\n        \"Establecer precio mínimo en 20 y precio máximo en 100\",\n        \"Filtrar por rango de precio\"\n      ],\n      \"expected\": \"Los artículos mostrados cumplen el rango de precio entre mínimo y máximo\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-03-04\",\n      \"title\": \"Mensaje informativo ante búsqueda sin resultados\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Barra de búsqueda accesible\",\n      \"steps\": [\n        \"Ingresar cadena aleatoria sin coincidencias 'xyz999abc'\",\n        \"Ejecutar búsqueda\"\n      ],\n      \"expected\": \"Se muestra el mensaje amigable: No encontramos productos para la búsqueda\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-03-01",
+          "title": "Búsqueda por término clave en catálogo de productos",
+          "level": "smoke",
+          "preconditions": "Catálogo con productos indexados",
+          "steps": [
+            "Escribir término de búsqueda 'auriculares' en la barra",
+            "Presionar tecla Enter"
+          ],
+          "expected": "El catálogo retorna lista con coincidencia de query en título o descripción",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-03-02",
+          "title": "Filtrado de productos por categoría seleccionada",
+          "level": "functional",
+          "preconditions": "Página de resultados con múltiples categorías",
+          "steps": [
+            "Seleccionar la categoría 'Electrónica' en el panel lateral",
+            "Aplicar filtro de catálogo"
+          ],
+          "expected": "La vista actualiza mostrando únicamente productos pertenecientes a la categoría",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03-03",
+          "title": "Filtrado por rango de precio mínimo y máximo",
+          "level": "functional",
+          "preconditions": "Listado de artículos con precios diversos",
+          "steps": [
+            "Establecer precio mínimo en 20 y precio máximo en 100",
+            "Filtrar por rango de precio"
+          ],
+          "expected": "Los artículos mostrados cumplen el rango de precio entre mínimo y máximo",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-03-04",
+          "title": "Mensaje informativo ante búsqueda sin resultados",
+          "level": "negative",
+          "preconditions": "Barra de búsqueda accesible",
+          "steps": [
+            "Ingresar cadena aleatoria sin coincidencias 'xyz999abc'",
+            "Ejecutar búsqueda"
+          ],
+          "expected": "Se muestra el mensaje amigable: No encontramos productos para la búsqueda",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-04",
+      "requirement_title": "Gestión del carrito de compras",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-04-01\",\n      \"title\": \"Adición de producto al carrito según stock disponible\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Producto con stock disponible de 10 unidades\",\n      \"steps\": [\n        \"Seleccionar cantidad de 2 unidades\",\n        \"Hacer clic en agregar al carrito\"\n      ],\n      \"expected\": \"El ítem se incorpora exitosamente respetando el stock disponible\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-04-02\",\n      \"title\": \"Recálculo automático del total al variar cantidades\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Carrito con 1 producto agregado a $15 USD\",\n      \"steps\": [\n        \"Incrementar unidades de 1 a 3 en el selector\",\n        \"Esperar recálculo automático\"\n      ],\n      \"expected\": \"El subtotal y total actualizado reflejan el nuevo monto tras recalcular\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-04-03\",\n      \"title\": \"Bloqueo al solicitar cantidad mayor al inventario\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Producto con únicamente 3 unidades en stock\",\n      \"steps\": [\n        \"Ingresar manualmente cantidad 10 en el carrito\",\n        \"Intentar actualizar el pedido\"\n      ],\n      \"expected\": \"Se visualiza alerta de stock insuficiente indicando el máximo disponible\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-04-04\",\n      \"title\": \"Eliminación de producto y actualización de contador\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Carrito con un solo producto\",\n      \"steps\": [\n        \"Pulsar el botón eliminar ítem\",\n        \"Confirmar remoción\"\n      ],\n      \"expected\": \"El producto se logra quitar y el contador del carrito vuelve a cero\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-04-01",
+          "title": "Adición de producto al carrito según stock disponible",
+          "level": "smoke",
+          "preconditions": "Producto con stock disponible de 10 unidades",
+          "steps": [
+            "Seleccionar cantidad de 2 unidades",
+            "Hacer clic en agregar al carrito"
+          ],
+          "expected": "El ítem se incorpora exitosamente respetando el stock disponible",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-04-02",
+          "title": "Recálculo automático del total al variar cantidades",
+          "level": "functional",
+          "preconditions": "Carrito con 1 producto agregado a $15 USD",
+          "steps": [
+            "Incrementar unidades de 1 a 3 en el selector",
+            "Esperar recálculo automático"
+          ],
+          "expected": "El subtotal y total actualizado reflejan el nuevo monto tras recalcular",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-04-03",
+          "title": "Bloqueo al solicitar cantidad mayor al inventario",
+          "level": "negative",
+          "preconditions": "Producto con únicamente 3 unidades en stock",
+          "steps": [
+            "Ingresar manualmente cantidad 10 en el carrito",
+            "Intentar actualizar el pedido"
+          ],
+          "expected": "Se visualiza alerta de stock insuficiente indicando el máximo disponible",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04-04",
+          "title": "Eliminación de producto y actualización de contador",
+          "level": "edge",
+          "preconditions": "Carrito con un solo producto",
+          "steps": [
+            "Pulsar el botón eliminar ítem",
+            "Confirmar remoción"
+          ],
+          "expected": "El producto se logra quitar y el contador del carrito vuelve a cero",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-05",
+      "requirement_title": "Aplicación de cupones de descuento y promociones",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-05-01\",\n      \"title\": \"Aplicación de cupón de descuento porcentual vigente\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Carrito con productos elegibles por valor de $80 USD\",\n      \"steps\": [\n        \"Ingresar código de cupon válido 'PROMO10'\",\n        \"Presionar botón Aplicar cupón\"\n      ],\n      \"expected\": \"Se aplica el porcentaje de descuento y disminuye el valor a pagar\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-05-02\",\n      \"title\": \"Rechazo de cupón con fecha vencida\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Código promocional vencido el mes pasado\",\n      \"steps\": [\n        \"Ingresar el código vencido en el carrito\",\n        \"Hacer clic en Aplicar\"\n      ],\n      \"expected\": \"Se despliega el mensaje de error: Cupón expirado o no vigente\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-05-03\",\n      \"title\": \"Control de monto mínimo de compra para descuento\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Cupón condicionado a compra mínima de 50 USD\",\n      \"steps\": [\n        \"Intentar aplicar cupón con carrito de $35 USD\",\n        \"Aumentar productos hasta sumar 50 USD o más\"\n      ],\n      \"expected\": \"El sistema exige compra mínima de 50 USD para activar el beneficio\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-05-04\",\n      \"title\": \"Impedimento de reutilización en cupón de un solo uso\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Cupón de un solo uso previamente canjeado por el cliente\",\n      \"steps\": [\n        \"Digitar nuevamente el código promocional en un nuevo pedido\",\n        \"Enviar validación\"\n      ],\n      \"expected\": \"El sistema notifica que el código ya utilizado era de un solo uso\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-05-01",
+          "title": "Aplicación de cupón de descuento porcentual vigente",
+          "level": "smoke",
+          "preconditions": "Carrito con productos elegibles por valor de $80 USD",
+          "steps": [
+            "Ingresar código de cupon válido 'PROMO10'",
+            "Presionar botón Aplicar cupón"
+          ],
+          "expected": "Se aplica el porcentaje de descuento y disminuye el valor a pagar",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-05-02",
+          "title": "Rechazo de cupón con fecha vencida",
+          "level": "negative",
+          "preconditions": "Código promocional vencido el mes pasado",
+          "steps": [
+            "Ingresar el código vencido en el carrito",
+            "Hacer clic en Aplicar"
+          ],
+          "expected": "Se despliega el mensaje de error: Cupón expirado o no vigente",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-05-03",
+          "title": "Control de monto mínimo de compra para descuento",
+          "level": "edge",
+          "preconditions": "Cupón condicionado a compra mínima de 50 USD",
+          "steps": [
+            "Intentar aplicar cupón con carrito de $35 USD",
+            "Aumentar productos hasta sumar 50 USD o más"
+          ],
+          "expected": "El sistema exige compra mínima de 50 USD para activar el beneficio",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-05-04",
+          "title": "Impedimento de reutilización en cupón de un solo uso",
+          "level": "functional",
+          "preconditions": "Cupón de un solo uso previamente canjeado por el cliente",
+          "steps": [
+            "Digitar nuevamente el código promocional en un nuevo pedido",
+            "Enviar validación"
+          ],
+          "expected": "El sistema notifica que el código ya utilizado era de un solo uso",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-06",
+      "requirement_title": "Pasarela de pago y confirmación de pedidos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-06-01\",\n      \"title\": \"Validación de tarjeta de crédito con 16 dígitos\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Paso de pago en proceso de compra\",\n      \"steps\": [\n        \"Ingresar número de tarjeta de 16 dígitos\",\n        \"Seleccionar fecha de vencimiento futura\"\n      ],\n      \"expected\": \"Se valida tarjeta y fecha de vencimiento sin arrojar advertencias\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-06-02\",\n      \"title\": \"Verificación estricta de código de seguridad CVV\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Formulario de pago con tarjeta\",\n      \"steps\": [\n        \"Probar CVV con 2 dígitos (inválido)\",\n        \"Probar CVV con 3 o 4 dígitos según franquicia\"\n      ],\n      \"expected\": \"El campo cvv exige con exactitud 3 o 4 dígitos numéricos\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-06-03\",\n      \"title\": \"Mecanismo de reintento automático por timeout de pasarela\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Pasarela de pago simulando respuesta tardía\",\n      \"steps\": [\n        \"Generar solicitud de cobro con latencia alta\",\n        \"Monitorear reintento tras timeout\"\n      ],\n      \"expected\": \"El sistema maneja el timeout realizando hasta 2 veces el reintento de conexión\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-06-04\",\n      \"title\": \"Generación de número de orden y confirmación por correo\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Pago aprobado por el banco\",\n      \"steps\": [\n        \"Finalizar la transacción de compra\",\n        \"Consultar la pantalla de confirmación y bandeja de entrada\"\n      ],\n      \"expected\": \"Se visualiza orden creada con formato ORD-12345 y llega correo de confirmación\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-06-01",
+          "title": "Validación de tarjeta de crédito con 16 dígitos",
+          "level": "smoke",
+          "preconditions": "Paso de pago en proceso de compra",
+          "steps": [
+            "Ingresar número de tarjeta de 16 dígitos",
+            "Seleccionar fecha de vencimiento futura"
+          ],
+          "expected": "Se valida tarjeta y fecha de vencimiento sin arrojar advertencias",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-06-02",
+          "title": "Verificación estricta de código de seguridad CVV",
+          "level": "functional",
+          "preconditions": "Formulario de pago con tarjeta",
+          "steps": [
+            "Probar CVV con 2 dígitos (inválido)",
+            "Probar CVV con 3 o 4 dígitos según franquicia"
+          ],
+          "expected": "El campo cvv exige con exactitud 3 o 4 dígitos numéricos",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06-03",
+          "title": "Mecanismo de reintento automático por timeout de pasarela",
+          "level": "edge",
+          "preconditions": "Pasarela de pago simulando respuesta tardía",
+          "steps": [
+            "Generar solicitud de cobro con latencia alta",
+            "Monitorear reintento tras timeout"
+          ],
+          "expected": "El sistema maneja el timeout realizando hasta 2 veces el reintento de conexión",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06-04",
+          "title": "Generación de número de orden y confirmación por correo",
+          "level": "functional",
+          "preconditions": "Pago aprobado por el banco",
+          "steps": [
+            "Finalizar la transacción de compra",
+            "Consultar la pantalla de confirmación y bandeja de entrada"
+          ],
+          "expected": "Se visualiza orden creada con formato ORD-12345 y llega correo de confirmación",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-07",
+      "requirement_title": "Libreta de direcciones de entrega",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-07-01\",\n      \"title\": \"Validación de formato de código postal de 5 dígitos\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Formulario de registro de direcciones\",\n      \"steps\": [\n        \"Ingresar código postal numérico de 5 dígitos\",\n        \"Guardar dirección de entrega\"\n      ],\n      \"expected\": \"El código postal es aceptado al ajustarse al patrón de 5 dígitos\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-07-02\",\n      \"title\": \"Asignación de dirección predeterminada de envío\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Usuario con dos direcciones guardadas\",\n      \"steps\": [\n        \"Marcar la opción dirección predeterminada en la segunda dirección\",\n        \"Confirmar cambios en perfil\"\n      ],\n      \"expected\": \"La dirección marcada queda como dirección predeterminada por defecto\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-07-03\",\n      \"title\": \"Restricción de cupo máximo de 5 direcciones por cuenta\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Usuario con 5 direcciones ya registradas\",\n      \"steps\": [\n        \"Intentar agregar una sexta dirección en la libreta\",\n        \"Enviar formulario\"\n      ],\n      \"expected\": \"El sistema frena la acción e informa el límite de 5 direcciones registradas\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-07-04\",\n      \"title\": \"Sanitización contra inyección de scripts en dirección\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Campo de texto de calle habilitado\",\n      \"steps\": [\n        \"Introducir cadena '<script>alert(1)</script>' en la dirección\",\n        \"Guardar información\"\n      ],\n      \"expected\": \"El sistema rechaza o sanitiza caracteres inválidos evitando inyección de código\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-07-01",
+          "title": "Validación de formato de código postal de 5 dígitos",
+          "level": "functional",
+          "preconditions": "Formulario de registro de direcciones",
+          "steps": [
+            "Ingresar código postal numérico de 5 dígitos",
+            "Guardar dirección de entrega"
+          ],
+          "expected": "El código postal es aceptado al ajustarse al patrón de 5 dígitos",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07-02",
+          "title": "Asignación de dirección predeterminada de envío",
+          "level": "smoke",
+          "preconditions": "Usuario con dos direcciones guardadas",
+          "steps": [
+            "Marcar la opción dirección predeterminada en la segunda dirección",
+            "Confirmar cambios en perfil"
+          ],
+          "expected": "La dirección marcada queda como dirección predeterminada por defecto",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-07-03",
+          "title": "Restricción de cupo máximo de 5 direcciones por cuenta",
+          "level": "edge",
+          "preconditions": "Usuario con 5 direcciones ya registradas",
+          "steps": [
+            "Intentar agregar una sexta dirección en la libreta",
+            "Enviar formulario"
+          ],
+          "expected": "El sistema frena la acción e informa el límite de 5 direcciones registradas",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07-04",
+          "title": "Sanitización contra inyección de scripts en dirección",
+          "level": "negative",
+          "preconditions": "Campo de texto de calle habilitado",
+          "steps": [
+            "Introducir cadena '<script>alert(1)</script>' en la dirección",
+            "Guardar información"
+          ],
+          "expected": "El sistema rechaza o sanitiza caracteres inválidos evitando inyección de código",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-08",
+      "requirement_title": "Solicitud de devoluciones y reembolsos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-08-01\",\n      \"title\": \"Control del plazo máximo de 30 días para devolución\",\n      \"level\": \"edge\",\n      \"preconditions\": \"Pedido entregado hace 35 días\",\n      \"steps\": [\n        \"Solicitar reembolso en el panel de mis pedidos\",\n        \"Comprobar validación de fecha de entrega\"\n      ],\n      \"expected\": \"Se rechaza la solicitud por superar los 30 días hábiles desde la fecha de entrega\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-08-02\",\n      \"title\": \"Requerimiento de foto adjunta para producto dañado\",\n      \"level\": \"functional\",\n      \"preconditions\": \"Devolución por concepto de daño de fábrica\",\n      \"steps\": [\n        \"Seleccionar motivo de daño sin adjuntar imagen\",\n        \"Adjuntar evidencia fotográfica en formato JPG\"\n      ],\n      \"expected\": \"El formulario exige adjuntar imagen o foto clara del daño como evidencia\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-08-03\",\n      \"title\": \"Selección de método de reembolso o crédito en tienda\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"Devolución aprobada por el área de soporte\",\n      \"steps\": [\n        \"Elegir entre crédito en tienda o reintegro al método original\",\n        \"Confirmar preferencia de reembolso\"\n      ],\n      \"expected\": \"El reembolso se programa hacia el método original o crédito en tienda según elección\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-08-04\",\n      \"title\": \"Exclusión de devolución en artículos de higiene personal\",\n      \"level\": \"negative\",\n      \"preconditions\": \"Pedido con prendas de ropa interior o higiene\",\n      \"steps\": [\n        \"Intentar radicar devolución para artículo clasificado en higiene\",\n        \"Enviar requerimiento\"\n      ],\n      \"expected\": \"El sistema indica que el artículo de higiene no admite devolución por política\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-08-01",
+          "title": "Control del plazo máximo de 30 días para devolución",
+          "level": "edge",
+          "preconditions": "Pedido entregado hace 35 días",
+          "steps": [
+            "Solicitar reembolso en el panel de mis pedidos",
+            "Comprobar validación de fecha de entrega"
+          ],
+          "expected": "Se rechaza la solicitud por superar los 30 días hábiles desde la fecha de entrega",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-08-02",
+          "title": "Requerimiento de foto adjunta para producto dañado",
+          "level": "functional",
+          "preconditions": "Devolución por concepto de daño de fábrica",
+          "steps": [
+            "Seleccionar motivo de daño sin adjuntar imagen",
+            "Adjuntar evidencia fotográfica en formato JPG"
+          ],
+          "expected": "El formulario exige adjuntar imagen o foto clara del daño como evidencia",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-08-03",
+          "title": "Selección de método de reembolso o crédito en tienda",
+          "level": "smoke",
+          "preconditions": "Devolución aprobada por el área de soporte",
+          "steps": [
+            "Elegir entre crédito en tienda o reintegro al método original",
+            "Confirmar preferencia de reembolso"
+          ],
+          "expected": "El reembolso se programa hacia el método original o crédito en tienda según elección",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-08-04",
+          "title": "Exclusión de devolución en artículos de higiene personal",
+          "level": "negative",
+          "preconditions": "Pedido con prendas de ropa interior o higiene",
+          "steps": [
+            "Intentar radicar devolución para artículo clasificado en higiene",
+            "Enviar requerimiento"
+          ],
+          "expected": "El sistema indica que el artículo de higiene no admite devolución por política",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    }
+  ]
+}

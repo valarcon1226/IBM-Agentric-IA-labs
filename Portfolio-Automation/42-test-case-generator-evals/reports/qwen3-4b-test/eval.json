@@ -1,0 +1,540 @@
+{
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "split": "test",
+  "timestamp_utc": "2026-11-11T07:04:32.631568+00:00",
+  "total_requirements": 4,
+  "total_test_cases": 31,
+  "metrics": {
+    "schema_valid_rate": {
+      "score": 0.75,
+      "threshold": 0.9,
+      "operator": ">=",
+      "passed": false
+    },
+    "declared_coverage": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "verified_coverage": {
+      "score": 0.9375,
+      "threshold": 0.7,
+      "operator": ">=",
+      "passed": true
+    },
+    "hallucinated_refs": {
+      "score": 0.0323,
+      "threshold": 0.02,
+      "operator": "<=",
+      "passed": false
+    },
+    "duplicate_rate": {
+      "score": 0.0645,
+      "threshold": 0.1,
+      "operator": "<=",
+      "passed": true
+    },
+    "negative_presence": {
+      "score": 1.0,
+      "threshold": 1.0,
+      "operator": ">=",
+      "passed": true
+    }
+  },
+  "requirements_results": [
+    {
+      "requirement_id": "REQ-09",
+      "requirement_title": "Seguimiento y trazabilidad de pedidos",
+      "valid_on_first_try": false,
+      "retries_used": 1,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Verificar que el estado del pedido refleje etapas en tiempo real\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El sistema debe estar en ejecución y el pedido debe existir en la base de datos.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Navegar a la sección de seguimiento de pedidos.\",\n        \"Seleccionar un pedido en estado de preparación.\",\n        \"Verificar el estado actual del pedido en la interfaz.\"\n      ],\n      \"expected\": \"El estado del pedido debe mostrarse como 'en preparación'.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC--02\",\n      \"title\": \"Validar que al enviar un pedido se muestre el número de guía con enlace de rastreo\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El pedido debe estar en estado de preparación y debe haber sido procesado para envío.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Seleccionar un pedido que ya ha sido enviado.\",\n        \"Verificar la sección de detalles del pedido.\"\n      ],\n      \"expected\": \"Debe aparecer el número de guía de mensajería y un enlace de rastreo funcional al courier.\",\n      \"covers\": [\"AC-02\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Validar que el comprador pueda cancelar solo mientras el pedido está en preparación\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El pedido debe estar en estado 'enviado' o 'entregado'.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Seleccionar un pedido que ya ha sido enviado.\",\n        \"Intentar acceder a la opción de cancelación del pedido.\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que la cancelación solo es posible mientras el pedido está en preparación.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Validar que al ingresar un número de seguimiento inexistente se muestre el aviso de no encontrado\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema debe permitir la búsqueda de seguimiento por número.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Acceder a la sección de búsqueda de seguimiento.\",\n        \"Ingresar un número de seguimiento que no exista en la base de datos.\",\n        \"Realizar la búsqueda.\"\n      ],\n      \"expected\": \"Debe desplegarse el aviso 'Número de seguimiento no encontrado'.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Validar que el estado del pedido cambie correctamente al enviarlo\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El pedido debe estar en estado de preparación y debe tener datos completos para envío.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Seleccionar un pedido en estado de preparación.\",\n        \"Hacer clic en el botón de 'enviar pedido'.\",\n        \"Verificar el estado del pedido después del envío.\"\n      ],\n      \"expected\": \"El estado del pedido debe cambiar a 'enviado' y debe aparecer el número de guía.\",\n      \"covers\": [\"AC-01\", \"AC-02\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Validar que no se permita la cancelación una vez que el pedido ha sido entregado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El pedido debe haber sido entregado por el courier.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Seleccionar un pedido que ya ha sido entregado.\",\n        \"Intentar acceder a la opción de cancelación del pedido.\"\n      ],\n      \"expected\": \"Debe mostrarse un mensaje de error indicando que la cancelación no está disponible para pedidos entregados.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Validar que el sistema no permita el seguimiento de un número de guía vacío o nulo\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El sistema debe permitir la búsqueda de seguimiento por número.\",\n      \"steps\": [\n        \"Iniciar sesión en el sistema de seguimiento de pedidos.\",\n        \"Acceder a la sección de búsqueda de seguimiento.\",\n        \"Ingresar un número de seguimiento vacío o nulo.\",\n        \"Realizar la búsqueda.\"\n      ],\n      \"expected\": \"Debe mostrarse el aviso 'Número de seguimiento no encontrado'.\",\n      \"covers\": [\"AC-04\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Verificar que el estado del pedido refleje etapas en tiempo real",
+          "level": "smoke",
+          "preconditions": "El sistema debe estar en ejecución y el pedido debe existir en la base de datos.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Navegar a la sección de seguimiento de pedidos.",
+            "Seleccionar un pedido en estado de preparación.",
+            "Verificar el estado actual del pedido en la interfaz."
+          ],
+          "expected": "El estado del pedido debe mostrarse como 'en preparación'.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC--02",
+          "title": "Validar que al enviar un pedido se muestre el número de guía con enlace de rastreo",
+          "level": "functional",
+          "preconditions": "El pedido debe estar en estado de preparación y debe haber sido procesado para envío.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Seleccionar un pedido que ya ha sido enviado.",
+            "Verificar la sección de detalles del pedido."
+          ],
+          "expected": "Debe aparecer el número de guía de mensajería y un enlace de rastreo funcional al courier.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Validar que el comprador pueda cancelar solo mientras el pedido está en preparación",
+          "level": "negative",
+          "preconditions": "El pedido debe estar en estado 'enviado' o 'entregado'.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Seleccionar un pedido que ya ha sido enviado.",
+            "Intentar acceder a la opción de cancelación del pedido."
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que la cancelación solo es posible mientras el pedido está en preparación.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Validar que al ingresar un número de seguimiento inexistente se muestre el aviso de no encontrado",
+          "level": "edge",
+          "preconditions": "El sistema debe permitir la búsqueda de seguimiento por número.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Acceder a la sección de búsqueda de seguimiento.",
+            "Ingresar un número de seguimiento que no exista en la base de datos.",
+            "Realizar la búsqueda."
+          ],
+          "expected": "Debe desplegarse el aviso 'Número de seguimiento no encontrado'.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Validar que el estado del pedido cambie correctamente al enviarlo",
+          "level": "functional",
+          "preconditions": "El pedido debe estar en estado de preparación y debe tener datos completos para envío.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Seleccionar un pedido en estado de preparación.",
+            "Hacer clic en el botón de 'enviar pedido'.",
+            "Verificar el estado del pedido después del envío."
+          ],
+          "expected": "El estado del pedido debe cambiar a 'enviado' y debe aparecer el número de guía.",
+          "covers": [
+            "AC-01",
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Validar que no se permita la cancelación una vez que el pedido ha sido entregado",
+          "level": "negative",
+          "preconditions": "El pedido debe haber sido entregado por el courier.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Seleccionar un pedido que ya ha sido entregado.",
+            "Intentar acceder a la opción de cancelación del pedido."
+          ],
+          "expected": "Debe mostrarse un mensaje de error indicando que la cancelación no está disponible para pedidos entregados.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Validar que el sistema no permita el seguimiento de un número de guía vacío o nulo",
+          "level": "edge",
+          "preconditions": "El sistema debe permitir la búsqueda de seguimiento por número.",
+          "steps": [
+            "Iniciar sesión en el sistema de seguimiento de pedidos.",
+            "Acceder a la sección de búsqueda de seguimiento.",
+            "Ingresar un número de seguimiento vacío o nulo.",
+            "Realizar la búsqueda."
+          ],
+          "expected": "Debe mostrarse el aviso 'Número de seguimiento no encontrado'.",
+          "covers": [
+            "AC-04"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-10",
+      "requirement_title": "Administración de listas de deseos y favoritos",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Agregar producto a la lista de deseos desde el catálogo\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El usuario está autenticado y ha accedido al catálogo de productos.\",\n      \"steps\": [\n        \"El usuario selecciona un producto en el catálogo.\",\n        \"El usuario hace clic en el botón 'Agregar a lista de deseos'.\"\n      ],\n      \"expected\": \"El producto se agrega correctamente a la lista de deseos del usuario y se muestra en la lista de deseos.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Mover producto de lista de deseos al carrito de compras\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario tiene al menos un producto en su lista de deseos.\",\n      \"steps\": [\n        \"El usuario selecciona un producto en su lista de deseos.\",\n        \"El usuario hace clic en el botón 'Mover al carrito'.\"\n      ],\n      \"expected\": \"El producto se transfiere al carrito de compras y se elimina de la lista de deseos.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Configurar lista de deseos en modo público para compartir\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario tiene al menos un producto en su lista de deseos.\",\n      \"steps\": [\n        \"El usuario accede a la sección de lista de deseos.\",\n        \"El usuario selecciona la opción 'Hacer lista pública' y confirma la acción.\"\n      ],\n      \"expected\": \"La lista de deseos se configura como pública y se genera un enlace compartible que puede ser copiado y usado por otros usuarios.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Intentar agregar más de 100 productos a una lista de deseos\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario tiene una lista de deseos ya existente con 100 productos.\",\n      \"steps\": [\n        \"El usuario intenta agregar un producto número 101 a la lista de deseos.\"\n      ],\n      \"expected\": \"El sistema rechaza la acción y muestra un mensaje de error indicando que el límite de 100 artículos ha sido alcanzado.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Intentar agregar producto a lista de deseos sin estar autenticado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario no está autenticado en el sistema.\",\n      \"steps\": [\n        \"El usuario intenta acceder al botón 'Agregar a lista de deseos' en el catálogo.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error solicitando autenticación y no permite agregar productos a la lista de deseos.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Intentar mover producto de lista de deseos al carrito cuando no existe en la lista\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario tiene una lista de deseos vacía.\",\n      \"steps\": [\n        \"El usuario intenta hacer clic en el botón 'Mover al carrito' para un producto que no está en su lista de deseos.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error indicando que el producto no está en la lista de deseos.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Compartir lista de deseos pública con enlace inválido\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario ha configurado una lista de deseos como pública y ha generado un enlace compartible.\",\n      \"steps\": [\n        \"El usuario copia el enlace de la lista de deseos y lo pega en una URL inválida o sin acceso.\",\n        \"El usuario intenta acceder al enlace desde otro dispositivo o navegador.\"\n      ],\n      \"expected\": \"El sistema muestra una página de error o mensaje indicando que el enlace no es válido o ha expirado.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Eliminar producto de lista de deseos después de moverlo al carrito\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario ha movido un producto al carrito de compras.\",\n      \"steps\": [\n        \"El usuario accede a su lista de deseos.\",\n        \"El usuario intenta eliminar un producto que ya fue movido al carrito.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje indicando que el producto ya no está disponible en la lista de deseos, ya que fue movido al carrito.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Agregar producto a la lista de deseos desde el catálogo",
+          "level": "smoke",
+          "preconditions": "El usuario está autenticado y ha accedido al catálogo de productos.",
+          "steps": [
+            "El usuario selecciona un producto en el catálogo.",
+            "El usuario hace clic en el botón 'Agregar a lista de deseos'."
+          ],
+          "expected": "El producto se agrega correctamente a la lista de deseos del usuario y se muestra en la lista de deseos.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Mover producto de lista de deseos al carrito de compras",
+          "level": "functional",
+          "preconditions": "El usuario tiene al menos un producto en su lista de deseos.",
+          "steps": [
+            "El usuario selecciona un producto en su lista de deseos.",
+            "El usuario hace clic en el botón 'Mover al carrito'."
+          ],
+          "expected": "El producto se transfiere al carrito de compras y se elimina de la lista de deseos.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Configurar lista de deseos en modo público para compartir",
+          "level": "functional",
+          "preconditions": "El usuario tiene al menos un producto en su lista de deseos.",
+          "steps": [
+            "El usuario accede a la sección de lista de deseos.",
+            "El usuario selecciona la opción 'Hacer lista pública' y confirma la acción."
+          ],
+          "expected": "La lista de deseos se configura como pública y se genera un enlace compartible que puede ser copiado y usado por otros usuarios.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Intentar agregar más de 100 productos a una lista de deseos",
+          "level": "edge",
+          "preconditions": "El usuario tiene una lista de deseos ya existente con 100 productos.",
+          "steps": [
+            "El usuario intenta agregar un producto número 101 a la lista de deseos."
+          ],
+          "expected": "El sistema rechaza la acción y muestra un mensaje de error indicando que el límite de 100 artículos ha sido alcanzado.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Intentar agregar producto a lista de deseos sin estar autenticado",
+          "level": "negative",
+          "preconditions": "El usuario no está autenticado en el sistema.",
+          "steps": [
+            "El usuario intenta acceder al botón 'Agregar a lista de deseos' en el catálogo."
+          ],
+          "expected": "El sistema muestra un mensaje de error solicitando autenticación y no permite agregar productos a la lista de deseos.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Intentar mover producto de lista de deseos al carrito cuando no existe en la lista",
+          "level": "negative",
+          "preconditions": "El usuario tiene una lista de deseos vacía.",
+          "steps": [
+            "El usuario intenta hacer clic en el botón 'Mover al carrito' para un producto que no está en su lista de deseos."
+          ],
+          "expected": "El sistema muestra un mensaje de error indicando que el producto no está en la lista de deseos.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Compartir lista de deseos pública con enlace inválido",
+          "level": "edge",
+          "preconditions": "El usuario ha configurado una lista de deseos como pública y ha generado un enlace compartible.",
+          "steps": [
+            "El usuario copia el enlace de la lista de deseos y lo pega en una URL inválida o sin acceso.",
+            "El usuario intenta acceder al enlace desde otro dispositivo o navegador."
+          ],
+          "expected": "El sistema muestra una página de error o mensaje indicando que el enlace no es válido o ha expirado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Eliminar producto de lista de deseos después de moverlo al carrito",
+          "level": "functional",
+          "preconditions": "El usuario ha movido un producto al carrito de compras.",
+          "steps": [
+            "El usuario accede a su lista de deseos.",
+            "El usuario intenta eliminar un producto que ya fue movido al carrito."
+          ],
+          "expected": "El sistema muestra un mensaje indicando que el producto ya no está disponible en la lista de deseos, ya que fue movido al carrito.",
+          "covers": [
+            "AC-02"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-11",
+      "requirement_title": "Sistema de reseñas y valoraciones de producto",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Verifica que el usuario pueda asignar una valoración de 1 a 5 estrellas\",\n      \"level\": \"smoke\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario selecciona una valoración de 1 estrella.\",\n        \"El usuario confirma la selección y completa el formulario.\"\n      ],\n      \"expected\": \"La valoración de 1 estrella se registra correctamente en el sistema.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Valida que la reseña tenga entre 10 y 1000 caracteres\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario escribe una reseña de 5 caracteres.\",\n        \"El usuario intenta publicar la reseña.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error indicando que la reseña debe tener al menos 10 caracteres.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"Valida que la reseña tenga entre 10 y 1000 caracteres (límite superior)\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario escribe una reseña de 1001 caracteres.\",\n        \"El usuario intenta publicar la reseña.\"\n      ],\n      \"expected\": \"El sistema bloquea la publicación y muestra un mensaje de error indicando que la reseña debe tener como máximo 1000 caracteres.\",\n      \"covers\": [\n        \"AC-02\"\n      ]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Verifica que se muestre la insignia de comprador verificado\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario ha comprado un producto en la plataforma y tiene el estado de comprador verificado.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario revisa la sección de reseñas.\"\n      ],\n      \"expected\": \"Se muestra una insignia indicando que el comprador es verificado.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Verifica que se muestre la insignia de comprador verificado cuando no está verificado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario ha comprado un producto en la plataforma y no tiene el estado de comprador verificado.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario revisa la sección de reseñas.\"\n      ],\n      \"expected\": \"No se muestra la insignia de comprador verificado.\",\n      \"covers\": [\n        \"AC-03\"\n      ]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Valida que el sistema bloquee la publicación de palabras ofensivas\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario escribe una reseña que contiene la palabra 'puta'.\",\n        \"El usuario intenta publicar la reseña.\"\n      ],\n      \"expected\": \"El sistema detecta la palabra ofensiva y bloquea la publicación, mostrando un mensaje de advertencia.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Valida que el sistema no bloquee palabras que no son ofensivas\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario escribe una reseña que contiene la palabra 'muy bueno'.\",\n        \"El usuario intenta publicar la reseña.\"\n      ],\n      \"expected\": \"La reseña se publica correctamente sin bloqueo.\",\n      \"covers\": [\n        \"AC-04\"\n      ]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Verifica que el sistema no permita valoraciones fuera del rango 1-5 estrellas\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El usuario está autenticado y ha comprado un producto en la plataforma.\",\n      \"steps\": [\n        \"El usuario abre la página de reseñas del producto.\",\n        \"El usuario intenta seleccionar 6 estrellas.\",\n        \"El usuario intenta seleccionar 0 estrellas.\"\n      ],\n      \"expected\": \"El sistema no permite seleccionar valoraciones fuera del rango de 1 a 5 estrellas y muestra un mensaje de error.\",\n      \"covers\": [\n        \"AC-01\"\n      ]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Verifica que el usuario pueda asignar una valoración de 1 a 5 estrellas",
+          "level": "smoke",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario selecciona una valoración de 1 estrella.",
+            "El usuario confirma la selección y completa el formulario."
+          ],
+          "expected": "La valoración de 1 estrella se registra correctamente en el sistema.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Valida que la reseña tenga entre 10 y 1000 caracteres",
+          "level": "functional",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario escribe una reseña de 5 caracteres.",
+            "El usuario intenta publicar la reseña."
+          ],
+          "expected": "El sistema muestra un mensaje de error indicando que la reseña debe tener al menos 10 caracteres.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "Valida que la reseña tenga entre 10 y 1000 caracteres (límite superior)",
+          "level": "edge",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario escribe una reseña de 1001 caracteres.",
+            "El usuario intenta publicar la reseña."
+          ],
+          "expected": "El sistema bloquea la publicación y muestra un mensaje de error indicando que la reseña debe tener como máximo 1000 caracteres.",
+          "covers": [
+            "AC-02"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Verifica que se muestre la insignia de comprador verificado",
+          "level": "functional",
+          "preconditions": "El usuario ha comprado un producto en la plataforma y tiene el estado de comprador verificado.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario revisa la sección de reseñas."
+          ],
+          "expected": "Se muestra una insignia indicando que el comprador es verificado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Verifica que se muestre la insignia de comprador verificado cuando no está verificado",
+          "level": "negative",
+          "preconditions": "El usuario ha comprado un producto en la plataforma y no tiene el estado de comprador verificado.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario revisa la sección de reseñas."
+          ],
+          "expected": "No se muestra la insignia de comprador verificado.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Valida que el sistema bloquee la publicación de palabras ofensivas",
+          "level": "functional",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario escribe una reseña que contiene la palabra 'puta'.",
+            "El usuario intenta publicar la reseña."
+          ],
+          "expected": "El sistema detecta la palabra ofensiva y bloquea la publicación, mostrando un mensaje de advertencia.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Valida que el sistema no bloquee palabras que no son ofensivas",
+          "level": "negative",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario escribe una reseña que contiene la palabra 'muy bueno'.",
+            "El usuario intenta publicar la reseña."
+          ],
+          "expected": "La reseña se publica correctamente sin bloqueo.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Verifica que el sistema no permita valoraciones fuera del rango 1-5 estrellas",
+          "level": "edge",
+          "preconditions": "El usuario está autenticado y ha comprado un producto en la plataforma.",
+          "steps": [
+            "El usuario abre la página de reseñas del producto.",
+            "El usuario intenta seleccionar 6 estrellas.",
+            "El usuario intenta seleccionar 0 estrellas."
+          ],
+          "expected": "El sistema no permite seleccionar valoraciones fuera del rango de 1 a 5 estrellas y muestra un mensaje de error.",
+          "covers": [
+            "AC-01"
+          ]
+        }
+      ]
+    },
+    {
+      "requirement_id": "REQ-12",
+      "requirement_title": "Alertas automáticas de reposición de inventario",
+      "valid_on_first_try": true,
+      "retries_used": 0,
+      "error": null,
+      "raw_response": "{\n  \"test_cases\": [\n    {\n      \"id\": \"TC-01\",\n      \"title\": \"Usuario puede ingresar correo para recibir alertas cuando hay stock\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto está agotado y el sistema muestra el botón 'Notificar cuando haya stock'.\",\n      \"steps\": [\n        \"El usuario navega a la página de producto agotado.\",\n        \"El usuario hace clic en el botón 'Notificar cuando haya stock'.\",\n        \"El usuario ingresa un correo válido en el campo de entrada.\",\n        \"El usuario hace clic en el botón 'Guardar' o 'Enviar'.\"\n      ],\n      \"expected\": \"El sistema registra correctamente el correo del usuario para recibir alertas de reposición del producto.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-02\",\n      \"title\": \"Se emite correo de alerta dentro de 10 minutos tras reponer inventario\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto está agotado y tiene una suscripción activa para alertas de reposición.\",\n      \"steps\": [\n        \"El producto se agota y se elimina del inventario.\",\n        \"Se reponen los productos en el inventario.\",\n        \"Se espera que se active la notificación de reposición.\"\n      ],\n      \"expected\": \"Un correo de alerta se envía al correo registrado dentro de un lapso no superior a 10 minutos tras la reposición.\",\n      \"covers\": [\"AC-0-2\"]\n    },\n    {\n      \"id\": \"TC-03\",\n      \"title\": \"El correo de alerta incluye un enlace para cancelar suscripción\",\n      \"level\": \"functional\",\n      \"preconditions\": \"El producto está agotado y tiene una suscripción activa para alertas de reposición.\",\n      \"steps\": [\n        \"Se reponen los productos en el inventario.\",\n        \"Se recibe el correo de alerta de reposición.\"\n      ],\n      \"expected\": \"El correo contiene un enlace de 'Cancelar suscripción' que permite al usuario dejar de recibir notificaciones futuras para ese producto.\",\n      \"covers\": [\"AC-03\"]\n    },\n    {\n      \"id\": \"TC-04\",\n      \"title\": \"Sistema previene suscripciones duplicadas para el mismo correo y producto\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El producto está agotado y un usuario ha registrado un correo para recibir alertas.\",\n      \"steps\": [\n        \"El usuario intenta registrar el mismo correo para el mismo producto nuevamente.\",\n        \"El sistema valida la existencia de una suscripción activa para ese correo y producto.\"\n      ],\n      \"expected\": \"El sistema rechaza la suscripción duplicada y muestra un mensaje de error indicando que ya existe una suscripción activa para ese correo y producto.\",\n      \"covers\": [\"AC-04\"]\n    },\n    {\n      \"id\": \"TC-05\",\n      \"title\": \"Usuario intenta ingresar correo inválido para suscripción\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto está agotado y el sistema muestra el botón 'Notificar cuando haya stock'.\",\n      \"steps\": [\n        \"El usuario ingresa un correo inválido (por ejemplo, sin formato o con caracteres no válidos).\",\n        \"El usuario hace clic en el botón 'Guardar'.\"\n      ],\n      \"expected\": \"El sistema muestra un mensaje de error indicando que el correo no es válido y no se registra la suscripción.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-06\",\n      \"title\": \"Sistema no envía alerta si el producto no está agotado\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto tiene stock disponible y no está agotado.\",\n      \"steps\": [\n        \"El usuario visita la página de producto con stock disponible.\",\n        \"El usuario intenta suscribirse a alertas de reposición.\"\n      ],\n      \"expected\": \"El sistema no permite la suscripción y no se envía ninguna alerta, ya que el producto no está agotado.\",\n      \"covers\": [\"AC-01\"]\n    },\n    {\n      \"id\": \"TC-07\",\n      \"title\": \"Sistema no envía alerta si el correo registrado no es válido\",\n      \"level\": \"edge\",\n      \"preconditions\": \"El producto está agotado y un correo inválido ha sido registrado.\",\n      \"steps\": [\n        \"Se registra un correo inválido (por ejemplo, sin dirección de correo).\",\n        \"Se reponen los productos en el inventario.\"\n      ],\n      \"expected\": \"El sistema no envía correo de alerta al correo inválido, y no se procesa la notificación.\",\n      \"covers\": [\"AC-02\", \"AC-03\"]\n    },\n    {\n      \"id\": \"TC-08\",\n      \"title\": \"Sistema no envía alerta si el producto no tiene suscripción activa\",\n      \"level\": \"negative\",\n      \"preconditions\": \"El producto está agotado pero no tiene ninguna suscripción registrada.\",\n      \"steps\": [\n        \"Se reponen los productos en el inventario.\",\n        \"Se verifica si se envía un correo de alerta.\"\n      ],\n      \"expected\": \"No se envía ningún correo de alerta, ya que no existe una suscripción activa para el producto.\",\n      \"covers\": [\"AC-02\"]\n    }\n  ]\n}",
+      "test_cases": [
+        {
+          "id": "TC-01",
+          "title": "Usuario puede ingresar correo para recibir alertas cuando hay stock",
+          "level": "functional",
+          "preconditions": "El producto está agotado y el sistema muestra el botón 'Notificar cuando haya stock'.",
+          "steps": [
+            "El usuario navega a la página de producto agotado.",
+            "El usuario hace clic en el botón 'Notificar cuando haya stock'.",
+            "El usuario ingresa un correo válido en el campo de entrada.",
+            "El usuario hace clic en el botón 'Guardar' o 'Enviar'."
+          ],
+          "expected": "El sistema registra correctamente el correo del usuario para recibir alertas de reposición del producto.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-02",
+          "title": "Se emite correo de alerta dentro de 10 minutos tras reponer inventario",
+          "level": "functional",
+          "preconditions": "El producto está agotado y tiene una suscripción activa para alertas de reposición.",
+          "steps": [
+            "El producto se agota y se elimina del inventario.",
+            "Se reponen los productos en el inventario.",
+            "Se espera que se active la notificación de reposición."
+          ],
+          "expected": "Un correo de alerta se envía al correo registrado dentro de un lapso no superior a 10 minutos tras la reposición.",
+          "covers": [
+            "AC-0-2"
+          ]
+        },
+        {
+          "id": "TC-03",
+          "title": "El correo de alerta incluye un enlace para cancelar suscripción",
+          "level": "functional",
+          "preconditions": "El producto está agotado y tiene una suscripción activa para alertas de reposición.",
+          "steps": [
+            "Se reponen los productos en el inventario.",
+            "Se recibe el correo de alerta de reposición."
+          ],
+          "expected": "El correo contiene un enlace de 'Cancelar suscripción' que permite al usuario dejar de recibir notificaciones futuras para ese producto.",
+          "covers": [
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-04",
+          "title": "Sistema previene suscripciones duplicadas para el mismo correo y producto",
+          "level": "edge",
+          "preconditions": "El producto está agotado y un usuario ha registrado un correo para recibir alertas.",
+          "steps": [
+            "El usuario intenta registrar el mismo correo para el mismo producto nuevamente.",
+            "El sistema valida la existencia de una suscripción activa para ese correo y producto."
+          ],
+          "expected": "El sistema rechaza la suscripción duplicada y muestra un mensaje de error indicando que ya existe una suscripción activa para ese correo y producto.",
+          "covers": [
+            "AC-04"
+          ]
+        },
+        {
+          "id": "TC-05",
+          "title": "Usuario intenta ingresar correo inválido para suscripción",
+          "level": "negative",
+          "preconditions": "El producto está agotado y el sistema muestra el botón 'Notificar cuando haya stock'.",
+          "steps": [
+            "El usuario ingresa un correo inválido (por ejemplo, sin formato o con caracteres no válidos).",
+            "El usuario hace clic en el botón 'Guardar'."
+          ],
+          "expected": "El sistema muestra un mensaje de error indicando que el correo no es válido y no se registra la suscripción.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-06",
+          "title": "Sistema no envía alerta si el producto no está agotado",
+          "level": "negative",
+          "preconditions": "El producto tiene stock disponible y no está agotado.",
+          "steps": [
+            "El usuario visita la página de producto con stock disponible.",
+            "El usuario intenta suscribirse a alertas de reposición."
+          ],
+          "expected": "El sistema no permite la suscripción y no se envía ninguna alerta, ya que el producto no está agotado.",
+          "covers": [
+            "AC-01"
+          ]
+        },
+        {
+          "id": "TC-07",
+          "title": "Sistema no envía alerta si el correo registrado no es válido",
+          "level": "edge",
+          "preconditions": "El producto está agotado y un correo inválido ha sido registrado.",
+          "steps": [
+            "Se registra un correo inválido (por ejemplo, sin dirección de correo).",
+            "Se reponen los productos en el inventario."
+          ],
+          "expected": "El sistema no envía correo de alerta al correo inválido, y no se procesa la notificación.",
+          "covers": [
+            "AC-02",
+            "AC-03"
+          ]
+        },
+        {
+          "id": "TC-08",
+          "title": "Sistema no envía alerta si el producto no tiene suscripción activa",
+          "level": "negative",
+          "preconditions": "El producto está agotado pero no tiene ninguna suscripción registrada.",
+          "steps": [
+            "Se reponen los productos en el inventario.",
+            "Se verifica si se envía un correo de alerta."
+          ],
+          "expected": "No se envía ningún correo de alerta, ya que no existe una suscripción activa para el producto.",
+          "covers": [
+            "AC-02"
+          ]
+        }
+      ]
+    }
+  ]
+}

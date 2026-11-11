@@ -1,0 +1,36 @@
+{
+  "id": "REQ-06",
+  "title": "Pasarela de pago y confirmación de pedidos",
+  "description": "Procesa pagos con tarjeta de crédito validando formato de número, CVV, reintentos por timeout y confirmación.",
+  "split": "dev",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "El número de tarjeta debe tener exactamente 16 dígitos y fecha de vencimiento posterior al mes actual.",
+      "must_have": [
+        "16\\s*d[ií]gitos|fecha\\s+de\\s+vencimiento|tarjeta"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "El código de seguridad CVV debe contener exactamente 3 o 4 dígitos numéricos según la franquicia.",
+      "must_have": [
+        "cvv|cvc|3\\s*o\\s*4\\s*d[ií]gitos"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "Ante un timeout de la pasarela bancaria, el sistema realiza hasta 2 reintentos automáticos antes de fallar.",
+      "must_have": [
+        "timeout|tiempo\\s+de\\s+espera|reintento|2\\s*veces"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Una transacción aprobada genera número de orden con prefijo ORD- y envía correo de confirmación al cliente.",
+      "must_have": [
+        "ord-[0-9a-z]+|orden\\s+creada|correo\\s+de\\s+confirmaci[oó]n"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "REQ-10",
+  "title": "Administración de listas de deseos y favoritos",
+  "description": "Permite guardar productos en una lista personal, transferirlos directamente al carrito y compartirla públicamente.",
+  "split": "test",
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "text": "Permite agregar productos a la lista de deseos o wishlist desde el catálogo con un solo clic.",
+      "must_have": [
+        "lista\\s+de\\s+deseos|wishlist",
+        "agregar"
+      ]
+    },
+    {
+      "id": "AC-02",
+      "text": "El botón mover al carrito transfiere el producto al carrito de compras y lo retira de la lista de deseos.",
+      "must_have": [
+        "mover\\s+al\\s+carrito|transferir|carrito"
+      ]
+    },
+    {
+      "id": "AC-03",
+      "text": "La lista puede configurarse en modo público para compartirla mediante un enlace compartible.",
+      "must_have": [
+        "p[uú]blica|privada",
+        "enlace\\s+compartible"
+      ]
+    },
+    {
+      "id": "AC-04",
+      "text": "Se impone un límite máximo de 100 artículos almacenados por lista de deseos.",
+      "must_have": [
+        "100\\s*art[ií]culos|l[ií]mite\\s+de\\s+100|m[aá]ximo\\s+100"
+      ]
+    }
+  ]
+}
