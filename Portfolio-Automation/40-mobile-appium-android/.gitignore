@@ -1,0 +1,27 @@
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Byte-compiled / Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+
+# Test artifacts and test execution output
+artifacts/
+results/
+*.log
+*.png
+*.xml
+junit*.xml
+
+# Downloaded Android binaries
+apps/*.apk
+*.apk
+
+# OS artifacts
+.DS_Store
+Thumbs.db
