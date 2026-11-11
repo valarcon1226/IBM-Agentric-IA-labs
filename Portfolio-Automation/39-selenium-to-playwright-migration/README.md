@@ -171,7 +171,7 @@ Numbers come from [CI run 42949800072](https://github.com/valarcon1226/qa-automa
 - The Selenium suite starts one Edge process per test; the Playwright suite starts Edge once and opens a fresh context per test. Both isolate tests, and that difference is part of the speedup.
 - A failure rate of 0 over a few runs does not prove a suite is stable; raise --runs to look for intermittent failures.
 
-The three Selenium failures happened in one of the five repetitions, which is also why its P95 is far above its median. Five repetitions are a small sample: the failure rates are an observation, not an estimate.
+The three Selenium failures fell in two of the five repetitions. Repetition 1 had a driver session that timed out while starting Edge (120 s, which is why the P95 is far above the median) and an `ElementClickInterceptedException`; repetition 5 had a `StaleElementReferenceException`. The Playwright suite hit none of them. Five repetitions are a small sample: the failure rates are an observation, not an estimate.
 
 ---
 
