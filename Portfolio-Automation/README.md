@@ -3,13 +3,13 @@
 Thirty-one automation, backend, AI and QA projects: twelve core services (data intake, cleaning,
 notifications, scheduling, OCR, scraping, observability, CI/CD) designed to run together as one
 self-hosted stack, eleven client-facing builds for restaurants, e-commerce, AI agents and QA,
-three QA automation suites (24, 26, 27) and five QA projects on production open-source systems (34–38).
+three QA automation suites (24, 26, 27), five QA projects on production open-source systems (34–38), and three further automation projects (39–41): a Selenium to Playwright migration, Android automation and a performance gate.
 
 Every row below has code and tests. The *Evidence* column says where the tests ran: **CI** means
 a GitHub Actions workflow runs them on every push that touches the project; otherwise they were run locally
 (or in Docker) during review. *Nightly* means a scheduled run of the heavier suites, which GitHub starts only from the default branch. Each project README lists its limits.
 
-## Current status (2026-11-09)
+## Current status (2026-11-11)
 
 ### Core services (01–12)
 
@@ -51,6 +51,14 @@ a GitHub Actions workflow runs them on every push that touches the project; othe
 | 24 | [Playwright + TypeScript on ParaBank](24-playwright-ts-parabank/) | Banking UI tests checked against the REST API (transfers verified by balance), page objects as fixtures, one visual test | Playwright, TypeScript, Docker | 25 tests (10 API + 15 Edge) · CI ([workflow](../.github/workflows/24-playwright-ts-parabank.yml)); Firefox and WebKit on manual runs · 3 bugs |
 | 26 | [Cypress + TypeScript on OWASP Juice Shop](26-cypress-juice-shop/) | Login, catalog, basket, checkout, API and network-failure tests, with security defects written up | Cypress, TypeScript, Docker | 23 tests on Edge · CI ([workflow](../.github/workflows/26-cypress-juice-shop.yml)) · 4 bugs |
 | 27 | [API Contract Quality](27-api-contract-quality/) | Pact consumer contracts for the project 22 → 13 chat API, Schemathesis fuzzing of project 20's OpenAPI, Newman regression on Petstore | Pact, Pact Broker, Schemathesis, Newman | 3 contract tests + 17 Newman requests (49 assertions) · CI ([workflow](../.github/workflows/27-api-contract-quality.yml)); provider verification and fuzzing on manual runs · 3 bug reports: two defects in project 13 (fixed since) and 7 schema mismatches in project 20 |
+
+### Automation frameworks, second set (39–41)
+
+| #  | Project | What it does | Stack | Evidence |
+| -- | ------- | ------------ | ----- | -------- |
+| 39 | [Selenium to Playwright migration](39-selenium-to-playwright-migration/) | The same 8 Juice Shop scenarios written in Selenium 4 and in Playwright, benchmarked over repeated runs for duration and intermittent failures | Python, Selenium 4, Playwright, Edge, Docker | 16 UI tests + 6 unit tests · CI ([workflow](../.github/workflows/39-selenium-to-playwright-migration.yml)) publishes the benchmark table on every run |
+| 40 | [Mobile automation on Android](40-mobile-appium-android/) | Catalog, sorting, cart and login scenarios on the Sauce Labs My Demo App with screen objects and explicit waits | Appium 3, UiAutomator2, Python, pytest | 7 tests on an Android 14 emulator · CI ([workflow](../.github/workflows/40-mobile-appium-android.yml)) |
+| 41 | [Performance gate with k6](41-performance-k6/) | Smoke, load, spike and forged-signature scenarios against the order service of project 20, absolute thresholds, a baseline comparison and a trend table across runs | k6, Docker, Python | 4 scenarios + 6 script tests · CI ([workflow](../.github/workflows/41-performance-k6.yml)) · 1 defect found in project 20, fixed |
 
 ### QA on production open-source systems (34–38)
 
