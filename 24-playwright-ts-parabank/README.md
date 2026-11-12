@@ -178,7 +178,7 @@ docker compose down -v
 
 ## 7. CI/CD Policy (GitHub Actions)
 
-Workflow file: [`.github/workflows/24-playwright-ts-parabank.yml`](../../.github/workflows/24-playwright-ts-parabank.yml)
+Workflow file: [`.github/workflows/24-playwright-ts-parabank.yml`](../.github/workflows/24-playwright-ts-parabank.yml)
 
 - **Push Policy:** Triggered on changes to `24-playwright-ts-parabank/**` or the workflow itself. Runs `lint`, `typecheck`, `test:api`, and `test:ui` (Edge) to provide rapid feedback (< 2 minutes).
 - **Manual Policy (`workflow_dispatch`):** Executes full cross-browser testing across Edge, Firefox, and WebKit.

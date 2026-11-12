@@ -33,7 +33,7 @@ El transporte `stdio` es el método recomendado para uso local con Claude Deskto
       "command": "uv",
       "args": [
         "--directory",
-        "C:\\Users\\your-user\\Documents\\PER\\Cursos\\Claudia\\Portfolio Gemini\\Portfolio-Automation\\18-mcp-agent-evals",
+        "C:\\Users\\your-user\\Documents\\PER\\Cursos\\Claudia\\Portfolio Gemini\\18-mcp-agent-evals",
         "run",
         "python",
         "-m",
@@ -58,7 +58,7 @@ El transporte `stdio` es el método recomendado para uso local con Claude Deskto
       "command": "uv",
       "args": [
         "--directory",
-        "/ruta/a/Portfolio-Automation/18-mcp-agent-evals",
+        "/ruta/a/18-mcp-agent-evals",
         "run",
         "python",
         "-m",

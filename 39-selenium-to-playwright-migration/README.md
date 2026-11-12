@@ -29,7 +29,7 @@ An objective, measured migration case study: the **identical 8 end-to-end user j
 
 ## 2. Test Coverage & Scenario Mapping
 
-All 8 scenarios are sourced from the verified user flows in `Portfolio-Automation/26-cypress-juice-shop/cypress/e2e`:
+All 8 scenarios are sourced from the verified user flows in `26-cypress-juice-shop/cypress/e2e`:
 
 | Scenario ID | Test Function Name | Module | Description | Isolation Strategy |
 | :---: | :--- | :--- | :--- | :--- |
@@ -85,7 +85,7 @@ flowchart TD
 
 ```bash
 # Navigate to the project directory
-cd Portfolio-Automation/39-selenium-to-playwright-migration
+cd 39-selenium-to-playwright-migration
 
 # Create virtual environment and install exact pinned dependencies
 uv venv .venv

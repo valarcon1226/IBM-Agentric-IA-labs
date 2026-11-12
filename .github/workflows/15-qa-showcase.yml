@@ -3,7 +3,7 @@ name: 15-qa-showcase
 on:
   push:
     paths:
-      - 'Portfolio-Automation/15-qa-showcase/**'
+      - '15-qa-showcase/**'
       - '.github/workflows/15-qa-showcase.yml'
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Portfolio-Automation/15-qa-showcase
+        working-directory: 15-qa-showcase
     steps:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
-          cache-dependency-path: 'Portfolio-Automation/15-qa-showcase/requirements.txt'
+          cache-dependency-path: '15-qa-showcase/requirements.txt'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -42,5 +42,5 @@ jobs:
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: qa-showcase-reports
-          path: Portfolio-Automation/15-qa-showcase/reports/
+          path: 15-qa-showcase/reports/
           retention-days: 14

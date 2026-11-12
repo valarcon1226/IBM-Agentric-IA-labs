@@ -3,13 +3,13 @@ name: 34-commerce-order-integrity
 on:
   push:
     paths:
-      - 'Portfolio-Automation/34-commerce-order-integrity/**'
-      - 'Portfolio-Automation/qa_common/**'
+      - '34-commerce-order-integrity/**'
+      - 'qa_common/**'
       - '.github/workflows/34-commerce-order-integrity.yml'
   pull_request:
     paths:
-      - 'Portfolio-Automation/34-commerce-order-integrity/**'
-      - 'Portfolio-Automation/qa_common/**'
+      - '34-commerce-order-integrity/**'
+      - 'qa_common/**'
       - '.github/workflows/34-commerce-order-integrity.yml'
   schedule:
     - cron: '0 3 * * *'
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: Portfolio-Automation/34-commerce-order-integrity
+        working-directory: 34-commerce-order-integrity
     steps:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -97,8 +97,8 @@ jobs:
         with:
           name: pr-gate-results
           path: |
-            Portfolio-Automation/34-commerce-order-integrity/results/
-            Portfolio-Automation/34-commerce-order-integrity/docs/TRACEABILITY.md
+            34-commerce-order-integrity/results/
+            34-commerce-order-integrity/docs/TRACEABILITY.md
           retention-days: 14
 
   nightly-suite:
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 60
     defaults:
       run:
-        working-directory: Portfolio-Automation/34-commerce-order-integrity
+        working-directory: 34-commerce-order-integrity
     steps:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -160,6 +160,6 @@ jobs:
         with:
           name: nightly-metrics
           path: |
-            Portfolio-Automation/34-commerce-order-integrity/results/
-            Portfolio-Automation/34-commerce-order-integrity/docs/TRACEABILITY.md
+            34-commerce-order-integrity/results/
+            34-commerce-order-integrity/docs/TRACEABILITY.md
           retention-days: 30

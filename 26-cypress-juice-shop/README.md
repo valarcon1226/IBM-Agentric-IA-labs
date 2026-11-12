@@ -95,7 +95,7 @@ flowchart TD
 
 ```bash
 # Clone and navigate to the project directory
-cd Portfolio-Automation/26-cypress-juice-shop
+cd 26-cypress-juice-shop
 
 # Install exact dependencies
 npm ci

@@ -33,7 +33,7 @@ Source of truth: `README.md`.
   - `docker-compose.yml`: Services `db` (`postgres:16-alpine`) and `api` (`127.0.0.1:8022:8000`), with discrete healthchecks and isolated network.
   - `.env.example`: Configuration template with `change_me_` defaults.
 - [x] GitHub Actions workflow `.github/workflows/12-ci-cd.yml`:
-  - Path filters: `Portfolio-Automation/12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`.
+  - Path filters: `12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`.
   - Matrix testing: Python 3.11 and 3.12.
   - Quality gates: Ruff check, Ruff format check, Mypy type-check, Bandit SAST scan.
   - Tests: Pytest unit tests with coverage enforcement (>= 80%) + Testcontainers integration tests.

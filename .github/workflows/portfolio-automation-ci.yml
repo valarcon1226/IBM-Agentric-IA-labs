@@ -3,13 +3,17 @@ name: Portfolio Automation CI
 on:
   pull_request:
     paths:
-      - "Portfolio-Automation/**"
+      - "04-data-cleaning-api/**"
+      - "05-invoice-processor/**"
+      - "10-docker-compose-lab/**"
       - ".github/workflows/portfolio-automation-ci.yml"
   push:
     branches:
       - main
     paths:
-      - "Portfolio-Automation/**"
+      - "04-data-cleaning-api/**"
+      - "05-invoice-processor/**"
+      - "10-docker-compose-lab/**"
       - ".github/workflows/portfolio-automation-ci.yml"
   workflow_dispatch:
 
@@ -41,7 +45,7 @@ jobs:
             slug: 10-backend
     defaults:
       run:
-        working-directory: Portfolio-Automation/${{ matrix.project }}
+        working-directory: ${{ matrix.project }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -51,7 +55,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Portfolio-Automation/${{ matrix.project }}/requirements*.txt
+          cache-dependency-path: ${{ matrix.project }}/requirements*.txt
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
@@ -72,7 +76,7 @@ jobs:
           --junitxml=test-results/junit.xml
 
       - name: Run integration tests
-        if: ${{ hashFiles(format('Portfolio-Automation/{0}/tests/integration/**', matrix.project)) != '' }}
+        if: ${{ hashFiles(format('{0}/tests/integration/**', matrix.project)) != '' }}
         env:
           REQUIRE_DOCKER: "1"
         run: pytest -m integration --timeout=300 --junitxml=test-results/junit-integration.xml
@@ -83,8 +87,8 @@ jobs:
         with:
           name: ${{ matrix.slug }}-test-results-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            Portfolio-Automation/${{ matrix.project }}/test-results/
-            Portfolio-Automation/${{ matrix.project }}/coverage.xml
+            ${{ matrix.project }}/test-results/
+            ${{ matrix.project }}/coverage.xml
           if-no-files-found: ignore
           retention-days: 7
 
@@ -102,5 +106,5 @@ jobs:
           python-version: "3.12"
 
       - name: README sections match .env.example, docker-compose.yml and init-db.sh
-        working-directory: Portfolio-Automation/10-docker-compose-lab
+        working-directory: 10-docker-compose-lab
         run: python scripts/sync_readme.py --check

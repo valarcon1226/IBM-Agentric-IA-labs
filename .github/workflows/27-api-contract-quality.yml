@@ -3,7 +3,7 @@ name: 27-api-contract-quality
 on:
   push:
     paths:
-      - 'Portfolio-Automation/27-api-contract-quality/**'
+      - '27-api-contract-quality/**'
       - '.github/workflows/27-api-contract-quality.yml'
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Portfolio-Automation/27-api-contract-quality
+        working-directory: 27-api-contract-quality
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: 'Portfolio-Automation/27-api-contract-quality/package-lock.json'
+          cache-dependency-path: '27-api-contract-quality/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: newman-junit-report
-          path: Portfolio-Automation/27-api-contract-quality/reports/newman-junit.xml
+          path: 27-api-contract-quality/reports/newman-junit.xml
           retention-days: 14
 
   heavy-gate:
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Portfolio-Automation/27-api-contract-quality
+        working-directory: 27-api-contract-quality
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: 'Portfolio-Automation/27-api-contract-quality/package-lock.json'
+          cache-dependency-path: '27-api-contract-quality/package-lock.json'
 
       - name: Install Node dependencies
         run: npm ci

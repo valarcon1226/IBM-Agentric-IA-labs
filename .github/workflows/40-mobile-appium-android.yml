@@ -3,7 +3,7 @@ name: 40-mobile-appium-android
 on:
   push:
     paths:
-      - 'Portfolio-Automation/40-mobile-appium-android/**'
+      - '40-mobile-appium-android/**'
       - '.github/workflows/40-mobile-appium-android.yml'
   workflow_dispatch:
 
@@ -49,13 +49,13 @@ jobs:
           ls -la /dev/kvm || true
 
       - name: Install Python dependencies
-        working-directory: Portfolio-Automation/40-mobile-appium-android
+        working-directory: 40-mobile-appium-android
         run: |
           uv venv .venv
           uv pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Lint and code quality checks (Ruff)
-        working-directory: Portfolio-Automation/40-mobile-appium-android
+        working-directory: 40-mobile-appium-android
         run: |
           .venv/bin/ruff check .
 
@@ -65,7 +65,7 @@ jobs:
           appium driver install uiautomator2@8.7.3
 
       - name: Download and verify Android APK
-        working-directory: Portfolio-Automation/40-mobile-appium-android
+        working-directory: 40-mobile-appium-android
         run: |
           .venv/bin/python scripts/get_apk.py
 
@@ -78,7 +78,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: bash Portfolio-Automation/40-mobile-appium-android/scripts/run_ci.sh
+          script: bash 40-mobile-appium-android/scripts/run_ci.sh
 
       - name: Upload test artifacts and reports
         if: always()
@@ -87,5 +87,5 @@ jobs:
           name: mobile-test-artifacts
           if-no-files-found: warn
           path: |
-            Portfolio-Automation/40-mobile-appium-android/artifacts/**
-            Portfolio-Automation/40-mobile-appium-android/results/**
+            40-mobile-appium-android/artifacts/**
+            40-mobile-appium-android/results/**

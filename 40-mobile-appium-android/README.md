@@ -191,11 +191,11 @@ pytest -v -m auth
 
 ## 7. CI/CD Policy (GitHub Actions)
 
-Workflow file: [`.github/workflows/40-mobile-appium-android.yml`](../../.github/workflows/40-mobile-appium-android.yml)
+Workflow file: [`.github/workflows/40-mobile-appium-android.yml`](../.github/workflows/40-mobile-appium-android.yml)
 
 **CI status:** 7 of 7 scenarios passed on the Android 14 (API 34) emulator in [run 42949836540](https://github.com/valarcon1226/qa-automation-portfolio/actions/runs/42949836540).
 
-The automated pipeline executes on push to `Portfolio-Automation/40-mobile-appium-android/**` and manually via `workflow_dispatch`:
+The automated pipeline executes on push to `40-mobile-appium-android/**` and manually via `workflow_dispatch`:
 
 1. **Hardware Virtualization:** Configures `/dev/kvm` permissions on `ubuntu-latest` for accelerated hardware emulation.
 2. **Environment Provisioning:** Configures Java 17, Node.js 20, Python 3.12, and `uv`.

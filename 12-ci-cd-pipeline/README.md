@@ -59,7 +59,7 @@ flowchart TD
 
 ## 4. File Structure
 ```
-Portfolio-Automation/
+
 ├── .github/
 │   └── workflows/
 │       ├── 12-ci-cd.yml                     # Unified CI/CD workflow (root)
@@ -118,7 +118,7 @@ The sample service manages deployment records in PostgreSQL:
    - The `publish` job explicitly requests only `packages: write`.
    - All actions are pinned to specific version tags (`@v4.2.2`, `@v5.3.0`, `@v3.8.0`, `@v3.3.0`, `@v6.11.0`, `@v4.5.0`, `@v1.2.0`, `0.28.0`).
 5. **Path Filtering:**
-   The workflow triggers only on modifications to `Portfolio-Automation/12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`, avoiding unnecessary CI runs when other projects change.
+   The workflow triggers only on modifications to `12-ci-cd-pipeline/**` and `.github/workflows/12-ci-cd.yml`, avoiding unnecessary CI runs when other projects change.
 
 ---
 

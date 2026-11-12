@@ -3,11 +3,11 @@ name: 39-selenium-to-playwright-migration
 on:
   push:
     paths:
-      - 'Portfolio-Automation/39-selenium-to-playwright-migration/**'
+      - '39-selenium-to-playwright-migration/**'
       - '.github/workflows/39-selenium-to-playwright-migration.yml'
   pull_request:
     paths:
-      - 'Portfolio-Automation/39-selenium-to-playwright-migration/**'
+      - '39-selenium-to-playwright-migration/**'
       - '.github/workflows/39-selenium-to-playwright-migration.yml'
   workflow_dispatch:
     inputs:
@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: Portfolio-Automation/39-selenium-to-playwright-migration
+        working-directory: 39-selenium-to-playwright-migration
     steps:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -78,5 +78,5 @@ jobs:
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: benchmark-results
-          path: Portfolio-Automation/39-selenium-to-playwright-migration/results/
+          path: 39-selenium-to-playwright-migration/results/
           retention-days: 14

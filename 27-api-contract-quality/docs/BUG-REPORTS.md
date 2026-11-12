@@ -20,7 +20,7 @@ widget_dir = os.path.join(os.path.dirname(__file__), "..", "..", "22-web-chat-wi
 fastapi_app.mount("/widget", StaticFiles(directory=widget_dir, html=True), name="widget")
 ```
 
-When running locally from a shell, `__file__` is inside the monorepo, so traversing two levels up reaches `Portfolio-Automation/22-web-chat-widget`.
+When running locally from a shell, `__file__` is inside the monorepo, so traversing two levels up reaches `22-web-chat-widget`.
 However, inside the Docker image produced by `13-whatsapp-restaurant-assistant/Dockerfile`:
 
 - `WORKDIR` is `/code`
